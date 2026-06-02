@@ -9,9 +9,9 @@ const PROJECTS = [
     tag: "Web",
   },
   {
-    title: "Your Project Name",
-    description: "What it does in one sentence.",
-    url: "https://duckie-jr.github.io/Projects/",
+    title: "Jr's Movies",
+    description: "A personal movie and TV streaming front-end that lets users browse/search titles, watch via embedded players, and manage watch history and playlists under a student ID login.",
+    url: "https://duckie-jr.github.io/Projects/Movie/",
     tag: "Web",
   },
   {
