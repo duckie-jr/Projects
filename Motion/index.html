@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motion Detector</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Hidden video source element -->
+  <video id="camera-feed" autoplay playsinline muted></video>
+
+  <!-- Main viewport: layered camera + overlay canvases -->
+  <div id="viewport">
+    <canvas id="camera-canvas"></canvas>
+    <canvas id="overlay-canvas"></canvas>
+
+    <!-- Top-left status badge -->
+    <div id="status-badge" class="badge badge--inactive">● INACTIVE</div>
+  </div>
+
+  <!-- HUD panel -->
+  <aside id="hud">
+    <header class="hud__header">
+      <span class="hud__title">Motion Detector</span>
+      <button id="toggle-hud-btn" title="Collapse panel">‹</button>
+    </header>
+
+    <!-- Start / Stop -->
+    <div class="hud__section">
+      <button id="start-stop-btn" class="btn btn--primary">Start Camera</button>
+    </div>
+
+    <!-- Live stats -->
+    <div class="hud__section">
+      <div class="stat-row">
+        <span class="stat-label">Motion Level</span>
+        <span id="motion-percent" class="stat-value">0%</span>
+      </div>
+
+      <!-- Motion bar meter -->
+      <div class="meter">
+        <div id="meter-fill" class="meter__fill"></div>
+        <div class="meter__zones">
+          <span>Low</span><span>Med</span><span>High</span>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Peak</span>
+        <span id="peak-percent" class="stat-value">0%</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">FPS</span>
+        <span id="fps-display" class="stat-value">—</span>
+      </div>
+
+      <!-- Recording status — visible only while MediaRecorder is active -->
+      <div class="stat-row" id="recording-status-row" style="display:none;">
+        <span class="stat-label">Recording</span>
+        <span class="recording-indicator">⏺ REC</span>
+      </div>
+
+      <!-- Motion history sparkline -->
+      <div class="graph-label">History (60 s)</div>
+      <canvas id="history-graph" class="history-graph"></canvas>
+    </div>
+
+    <!-- Controls -->
+    <div class="hud__section">
+      <label class="control-label" for="sensitivity-slider">
+        Sensitivity
+        <span id="sensitivity-value" class="control-value">30</span>
+      </label>
+      <input
+        id="sensitivity-slider"
+        type="range"
+        min="5"
+        max="100"
+        value="30"
+        class="slider"
+      />
+    </div>
+
+    <div class="hud__section">
+      <label class="control-label" for="noise-reduction-slider">
+        Noise Reduction
+        <span id="noise-reduction-value" class="control-value">0</span>
+      </label>
+      <input
+        id="noise-reduction-slider"
+        type="range"
+        min="0"
+        max="8"
+        value="0"
+        class="slider"
+      />
+      <p class="hint-text">Blurs frames before diffing — reduces false triggers from sensor noise.</p>
+    </div>
+
+    <div class="hud__section">
+      <label class="control-label" for="overlay-opacity-slider">
+        Overlay Opacity
+        <span id="overlay-opacity-value" class="control-value">70%</span>
+      </label>
+      <input
+        id="overlay-opacity-slider"
+        type="range"
+        min="10"
+        max="100"
+        value="70"
+        class="slider"
+      />
+    </div>
+
+    <div class="hud__section">
+      <label class="control-label" for="overlay-mode-select">Overlay Mode</label>
+      <select id="overlay-mode-select" class="select">
+        <option value="highlight">Highlight</option>
+        <option value="heatmap">Heatmap (thermal)</option>
+      </select>
+      <!-- Hidden when heatmap is active (color is determined by the LUT) -->
+      <div id="overlay-color-row" style="display:flex; flex-direction:column; gap:8px;">
+        <label class="control-label" for="overlay-color-select">Overlay Color</label>
+        <select id="overlay-color-select" class="select">
+          <option value="255,50,50">Red</option>
+          <option value="50,255,100">Green</option>
+          <option value="50,150,255">Blue</option>
+          <option value="255,200,50">Yellow</option>
+          <option value="255,100,255">Magenta</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="hud__section">
+      <label class="toggle-row">
+        <input type="checkbox" id="show-overlay-toggle" checked />
+        <span class="toggle-label">Show overlay</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="mirror-toggle" checked />
+        <span class="toggle-label">Mirror camera</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="grayscale-toggle" />
+        <span class="toggle-label">Grayscale mode</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="alert-toggle" />
+        <span class="toggle-label">Alert on high motion</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="auto-record-toggle" />
+        <span class="toggle-label">Auto-record clips</span>
+      </label>
+    </div>
+
+    <!-- Alert threshold (shown only when alert is enabled) -->
+    <div class="hud__section" id="alert-threshold-section" style="display:none;">
+      <label class="control-label" for="alert-threshold-slider">
+        Trigger threshold
+        <span id="alert-threshold-value" class="control-value">20%</span>
+      </label>
+      <input
+        id="alert-threshold-slider"
+        type="range"
+        min="1"
+        max="100"
+        value="20"
+        class="slider"
+      />
+    </div>
+
+    <!-- Detection Zone (ROI) -->
+    <div class="hud__section">
+      <div class="section-title">Detection Zone</div>
+      <p class="hint-text">Drag on the camera view to set a zone. Drag again to redraw.</p>
+      <button id="clear-zone-btn" class="btn btn--secondary" disabled>✕ Clear Zone</button>
+    </div>
+
+    <div class="hud__section">
+      <button id="reset-peak-btn" class="btn btn--secondary">Reset Peak</button>
+      <button id="snapshot-btn" class="btn btn--secondary">📸 Save Snapshot</button>
+    </div>
+
+    <!-- Motion event log -->
+    <div class="hud__section">
+      <div class="section-title">Event Log</div>
+      <ul id="event-log" class="event-log">
+        <li class="event-log__empty">No events yet</li>
+      </ul>
+      <button id="clear-log-btn" class="btn btn--secondary">Clear Log</button>
+    </div>
+  </aside>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
