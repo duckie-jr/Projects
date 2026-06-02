@@ -9,10 +9,10 @@ const PROJECTS = [
     tag: "Web",
   },
   {
-    title: "Another Project",
-    description: "What makes this one interesting or different.",
+    title: "Your Project Name",
+    description: "What it does in one sentence.",
     url: "https://github.com/duckie-jr",
-    tag: "Tool",
+    tag: "Web",
   },
   {
     title: "Cool Experiment",
