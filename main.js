@@ -5,19 +5,19 @@ const PROJECTS = [
   {
     title: "My First Project",
     description: "A short description of what this project does.",
-    url: "https://github.com/duckie-jr",
+    url: "https://github.com/duckie-jr/Projects",
     tag: "Web",
   },
   {
     title: "Your Project Name",
     description: "What it does in one sentence.",
-    url: "https://github.com/duckie-jr",
+    url: "https://github.com/duckie-jr/Projects",
     tag: "Web",
   },
   {
     title: "Morse Code",
     description: "A Morse code trainer with a Type mode (tap dot/dash to compose text) and a Learn mode (quizzes you on characters one at a time, with a picker to choose which letters/numbers to practice).",
-    url: "https://github.com/duckie-jr/Morse",
+    url: "https://github.com/duckie-jr/Projects/Morse",
     tag: "Web",
   },
 ];
