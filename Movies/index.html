@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jr's Movies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="./style.css"/>
+</head>
+<body>
+
+<!-- Login gate (shown when trying to watch without being logged in) -->
+<div id="loginGate" class="overlay hidden">
+  <div class="gate-box">
+    <div class="gate-title">Sign in to watch</div>
+    <p class="gate-sub">Enter your 6-digit Student ID</p>
+
+    <input id="gateInput" class="input spaced" type="text"
+      inputmode="numeric" maxlength="6" placeholder="· · · · · ·"
+      autocomplete="off" spellcheck="false"/>
+    <p class="field-err hidden" id="gateErr">Must be exactly 6 digits</p>
+
+    <div class="tc-expand">
+      <button class="tc-link" id="gateTcToggle" type="button">View Terms &amp; Conditions ▾</button>
+      <div id="gateTcBox" class="tc-box hidden">
+        <p>Jr's Movies does not own, host, or control any of the movies or TV shows available through this service. All content is sourced from third-party providers. If you have a legal concern regarding any content, please contact the original content owner or distributor — not Jr's Movies. Jr's Movies accepts no liability for any third-party content. This service is for personal, non-commercial use only. You agree not to distribute or reproduce any content. Use of this service is entirely at your own risk.</p>
+      </div>
+    </div>
+
+    <div class="tc-row">
+      <input type="checkbox" id="gateTcCheck" class="tc-checkbox"/>
+      <label for="gateTcCheck" class="tc-label">I agree to the Terms &amp; Conditions</label>
+    </div>
+    <p class="field-err hidden" id="gateTcErr">You must agree to the Terms &amp; Conditions</p>
+
+    <div class="gate-btns">
+      <button class="btn btn-full" id="gateSubmit">Watch Now</button>
+      <button class="btn-ghost btn-full" id="gateCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add-to-playlist picker -->
+<div id="plPicker" class="overlay hidden">
+  <div class="pl-picker-box">
+    <div class="pl-picker-title">Add to Playlist</div>
+    <div class="pl-picker-list" id="plPickerList"></div>
+    <button class="btn-ghost" id="plPickerClose" style="margin-top:10px;width:100%">Cancel</button>
+  </div>
+</div>
+
+<!-- Player modal -->
+<div id="playerModal" class="overlay hidden">
+  <div class="player-outer" id="playerOuter">
+
+    <div class="player-box">
+      <div class="player-head">
+        <span class="player-title" id="playerTitle">—</span>
+        <div class="player-head-right">
+          <button class="btn-ghost" id="addToPlaylistBtn" title="Save to playlist">+ Playlist</button>
+          <button class="btn-ghost" id="devToggleBtn" title="Dev controls">⚙</button>
+          <button class="btn-ghost" id="playerClose">x</button>
+        </div>
+      </div>
+      <div class="player-frame">
+        <iframe id="playerIframe" src="" frameborder="0" allowfullscreen
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          referrerpolicy="no-referrer" loading="eager"></iframe>
+      </div>
+      <div class="player-bar">
+        <div class="prog-rail"><div class="prog-fill" id="progFill"></div></div>
+        <span class="prog-time" id="progTime">—</span>
+      </div>
+    </div>
+
+    <!-- Dev panel (toggle with backtick / tilde while player is open) -->
+    <div class="dev-panel hidden" id="devPanel">
+      <div class="dev-head">
+        <span>Dev Controls</span>
+        <kbd class="dev-key">` / ~</kbd>
+      </div>
+      <div class="dev-body">
+        <label class="dev-label">Media ID</label>
+        <input id="devId" class="dev-input" type="text" placeholder="tt… or TMDB number" autocomplete="off"/>
+
+        <label class="dev-label">Type</label>
+        <select id="devType" class="dev-input dev-select">
+          <option value="movie">Movie</option>
+          <option value="tv">TV Show</option>
+        </select>
+
+        <div id="devTvRow" class="dev-tv-row hidden">
+          <div class="dev-row">
+            <div>
+              <label class="dev-label">Season</label>
+              <input id="devSeason" class="dev-input dev-num" type="number" min="1" value="1"/>
+            </div>
+            <div>
+              <label class="dev-label">Episode</label>
+              <input id="devEpisode" class="dev-input dev-num" type="number" min="1" value="1"/>
+            </div>
+          </div>
+          <div class="dev-ep-nav">
+            <button class="dev-btn-sm" id="devPrevEp">← Ep</button>
+            <button class="dev-btn-sm" id="devNextEp">Ep →</button>
+            <button class="dev-btn-sm" id="devPrevSeason">← Season</button>
+            <button class="dev-btn-sm" id="devNextSeason">Season →</button>
+          </div>
+        </div>
+
+        <label class="dev-label">Custom URL <span class="dev-hint">(overrides fields above)</span></label>
+        <input id="devCustomUrl" class="dev-input" type="text" placeholder="https://vaplayer.ru/embed/…" autocomplete="off"/>
+
+        <button class="dev-apply" id="devApply">Apply</button>
+        <div class="dev-info" id="devInfo"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════ -->
+<header class="topbar" id="topbar">
+  <span class="brand">Jr's <span class="brand-accent">Movies</span></span>
+
+  <nav class="tabs">
+    <!-- Movies tab -->
+    <button class="tab active" data-section="movies">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="2"/>
+        <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 7h5M17 17h5"/>
+      </svg>
+      Movies
+    </button>
+
+    <!-- TV tab -->
+    <button class="tab" data-section="tv">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8m-4-4v4"/>
+      </svg>
+      TV Shows
+    </button>
+
+    <!-- Profile tab -->
+    <button class="tab" data-section="profile">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/>
+      </svg>
+      Profile
+    </button>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="search-row">
+      <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search or paste ID…" autocomplete="off" spellcheck="false"/>
+    </div>
+  </div>
+</header>
+
+<!-- ══ MAIN ═══════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- Search results -->
+  <section class="section hidden" id="searchSection">
+    <div class="sec-bar">
+      <span class="sec-lbl">Results for "<em id="searchQuery"></em>"</span>
+      <button class="btn-ghost" id="backBtn">← Back</button>
+    </div>
+    <div class="search-status" id="searchStatusBar">
+      <span id="searchStatus" class="search-status-txt"></span>
+      <button class="btn-ghost" id="searchStopBtn" style="display:none">Stop</button>
+    </div>
+    <div class="sec-bar hidden" id="searchPagerBar">
+      <span id="searchResultCount" class="search-status-txt"></span>
+      <div class="pager">
+        <button class="pg" id="searchPrev" disabled>&#8249;</button>
+        <span class="pg-num" id="searchPageNum">1 / 1</span>
+        <button class="pg" id="searchNext">&#8250;</button>
+      </div>
+    </div>
+    <div class="grid" id="searchGrid"></div>
+  </section>
+
+  <!-- Movies -->
+  <section class="section" id="moviesSection">
+    <div class="sec-bar">
+      <h2 class="sec-lbl">Latest Movies</h2>
+      <div class="pager">
+        <button class="pg" id="moviesPrev" disabled>&#8249;</button>
+        <span class="pg-num" id="moviesPage">1 / —</span>
+        <button class="pg" id="moviesNext">&#8250;</button>
+      </div>
+    </div>
+    <div class="grid" id="moviesGrid"></div>
+  </section>
+
+  <!-- TV Shows -->
+  <section class="section hidden" id="tvSection">
+    <div class="sec-bar">
+      <h2 class="sec-lbl">Latest TV Shows</h2>
+      <div class="pager">
+        <button class="pg" id="tvPrev" disabled>&#8249;</button>
+        <span class="pg-num" id="tvPage">1 / —</span>
+        <button class="pg" id="tvNext">&#8250;</button>
+      </div>
+    </div>
+    <div class="grid" id="tvGrid"></div>
+  </section>
+
+  <!-- ── Profile ───────────────────────────────── -->
+  <section class="section hidden" id="profileSection">
+
+    <!-- NOT logged in: sign-in card -->
+    <div id="profileLoginView">
+      <div class="profile-login-card">
+        <h2 class="profile-login-title">Sign In</h2>
+        <p class="profile-login-sub">Enter your 6-digit Student ID to access your profile and start watching</p>
+
+        <input id="profileInput" class="input spaced" type="text"
+          inputmode="numeric" maxlength="6" placeholder="· · · · · ·"
+          autocomplete="off" spellcheck="false"/>
+        <p class="field-err hidden" id="profileInputErr">Must be exactly 6 digits</p>
+
+        <div class="tc-expand">
+          <button class="tc-link" id="profileTcToggle" type="button">View Terms &amp; Conditions ▾</button>
+          <div id="profileTcBox" class="tc-box hidden">
+            <p>Jr's Movies does not own, host, or control any of the movies or TV shows available through this service. All content is sourced from independent third-party providers. Jr's Movies is simply a interface to that content and holds no rights over it.</p>
+            <br/>
+            <p>If you have a legal concern — such as a copyright claim — regarding any content, you must contact the original content owner or distributor directly. Jr's Movies is not the correct point of contact and cannot be held responsible.</p>
+            <br/>
+            <p>This service is for personal, non-commercial use only. You agree not to distribute or reproduce any content. Use of this service is entirely at your own risk.</p>
+          </div>
+        </div>
+
+        <div class="tc-row">
+          <input type="checkbox" id="profileTcCheck" class="tc-checkbox"/>
+          <label for="profileTcCheck" class="tc-label">I have read and agree to the Terms &amp; Conditions</label>
+        </div>
+        <p class="field-err hidden" id="profileTcErr">You must agree to the Terms &amp; Conditions</p>
+
+        <button class="btn btn-full" id="profileSignInBtn">Sign In</button>
+      </div>
+    </div>
+
+    <!-- LOGGED IN: account + history + playlists -->
+    <div id="profileLoggedInView" class="hidden">
+
+      <div class="profile-header-bar">
+        <div class="profile-user-info">
+          <div>
+            <div class="profile-user-id" id="profileUserId">#——</div>
+            <div class="profile-user-label">Student Account</div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-ghost" id="exportBtn" title="Export all data as JSON">Export</button>
+          <label class="btn-ghost" title="Import playlist JSON files" style="cursor:pointer">
+            Import
+            <input id="importInput" type="file" accept=".json" multiple style="display:none"/>
+          </label>
+          <button class="btn-ghost danger" id="logoutBtn">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="panel-tabs">
+        <button class="ptab active" data-ptab="history">Watch History</button>
+        <button class="ptab" data-ptab="playlists">Playlists</button>
+      </div>
+
+      <div class="ptab-content" id="ptabHistory">
+        <div class="panel-toolbar">
+          <span class="panel-count" id="historyCount">0 items</span>
+          <button class="btn-ghost danger" id="clearHistoryBtn">Clear History</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <p class="empty-msg">No history yet</p>
+        </div>
+      </div>
+
+      <div class="ptab-content hidden" id="ptabPlaylists">
+        <div class="panel-toolbar">
+          <button class="btn" id="newPlaylistBtn">+ New Playlist</button>
+        </div>
+        <div class="new-pl-form hidden" id="newPlForm">
+          <input id="newPlName" class="input" type="text" placeholder="Playlist name…" maxlength="40"/>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn" id="createPlBtn">Create</button>
+            <button class="btn-ghost" id="cancelPlBtn">Cancel</button>
+          </div>
+        </div>
+        <div class="playlist-list" id="playlistList">
+          <p class="empty-msg">No playlists yet</p>
+        </div>
+      </div>
+
+    </div><!-- /profileLoggedInView -->
+
+  </section><!-- /profileSection -->
+
+</main>
+
+<footer class="footer">Jr's Movies</footer>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
