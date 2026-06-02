@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+  <script type="module" src="./main.js"></script>
+  <title>Morse</title>
+</head>
+<body>
+
+  <div id="page">
+
+    <!-- ── Top bar ── -->
+    <header class="topbar">
+      <span class="logo">MORSE</span>
+
+      <!-- Type / Learn mode switcher -->
+      <div class="mode-tabs">
+        <button id="mode-type"  class="mode-tab active">Type</button>
+        <button id="mode-learn" class="mode-tab">Learn</button>
+      </div>
+
+      <div class="topbar-right">
+        <button id="ref-toggle"    class="topbar-btn">A–Z</button>
+        <button id="sound-toggle"  class="topbar-btn" title="Toggle sound">🔊</button>
+      </div>
+    </header>
+
+    <!-- ── Collapsible A–Z reference ── -->
+    <div id="ref-panel" class="ref-panel">
+      <div id="ref-content"></div>
+    </div>
+
+    <!-- ── Type mode: text output ── -->
+    <div id="type-panel" class="notes-section">
+      <div class="notes-meta">
+        <span id="char-count" class="meta-stat">0 chars</span>
+        <span id="wpm-display" class="meta-stat wpm">– wpm</span>
+        <button id="copy-btn" class="copy-btn">copy</button>
+      </div>
+      <div id="notes" class="notes">
+        <span class="notes-hint">tap the keys below…</span>
+      </div>
+    </div>
+
+    <!-- ── Learn mode ── -->
+    <div id="learn-panel" class="learn-panel" style="display:none">
+
+      <div class="learn-stats">
+        <span id="learn-streak" class="learn-stat">streak: 0</span>
+        <span id="learn-score"  class="learn-stat">score: 0</span>
+      </div>
+
+      <div class="learn-card">
+        <div id="learn-char"     class="learn-char">E</div>
+        <div id="learn-morse"    class="learn-morse">·</div>
+        <div id="learn-feedback" class="learn-feedback"></div>
+      </div>
+
+      <p class="learn-instruction">Enter the morse code shown above, then wait</p>
+
+      <button id="learn-skip" class="learn-skip-btn">skip →</button>
+
+      <!-- ── Character picker ── -->
+      <div class="learn-picker-bar">
+        <span id="learn-practicing-label" class="learn-practicing-label">practicing: all</span>
+        <button id="learn-edit-btn" class="learn-edit-btn">edit ▾</button>
+      </div>
+
+      <div id="learn-picker" class="learn-picker" style="display:none">
+        <div class="picker-presets">
+          <button class="picker-preset" data-preset="letters">Letters</button>
+          <button class="picker-preset" data-preset="numbers">Numbers</button>
+          <button class="picker-preset" data-preset="all">All</button>
+        </div>
+        <div id="picker-grid" class="picker-grid"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /#page -->
+
+  <!-- ── Fixed keyboard ── -->
+  <div class="keyboard" id="keyboard">
+
+    <div class="pending-bar">
+      <span id="pend-syms"  class="pend-syms"></span>
+      <span id="pend-arrow" class="pend-arrow"></span>
+      <span id="pend-char"  class="pend-char"></span>
+    </div>
+
+    <div class="kb-main">
+      <button id="btn-dot"  class="kb-btn dot-btn">
+        <span class="kb-sym">·</span>
+        <span class="kb-lbl">dot</span>
+      </button>
+      <button id="btn-dash" class="kb-btn dash-btn">
+        <span class="kb-sym">—</span>
+        <span class="kb-lbl">dash</span>
+      </button>
+    </div>
+
+    <div class="kb-util">
+      <button id="btn-left"  class="kb-util-btn">‹</button>
+      <button id="btn-back"  class="kb-util-btn">⌫</button>
+      <button id="btn-space" class="kb-util-btn kb-space">space</button>
+      <button id="btn-clear" class="kb-util-btn kb-clear">clear</button>
+      <button id="btn-right" class="kb-util-btn">›</button>
+    </div>
+
+  </div>
+
+</body>
+</html>
