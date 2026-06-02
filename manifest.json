@@ -1,17 +1,14 @@
 {
-  "name": "My GitHub Projects",
-  "short_name": "My Projects",
-  "description": "Browse my open-source GitHub repositories",
+  "name": "Duckie",
+  "short_name": "Duckie",
+  "description": "Duckie's project homepage",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
-  "orientation": "any",
-  "scope": "/",
-  "lang": "en",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d1117'/><text y='72' x='50' text-anchor='middle' font-size='60'>🐙</text></svg>",
+      "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
