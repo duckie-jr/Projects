@@ -15,10 +15,10 @@ const PROJECTS = [
     tag: "Web",
   },
   {
-    title: "Cool Experiment",
-    description: "Something I tried out just for fun.",
-    url: "https://github.com/duckie-jr",
-    tag: "Experiment",
+    title: "Morse Code",
+    description: "A Morse code trainer with a Type mode (tap dot/dash to compose text) and a Learn mode (quizzes you on characters one at a time, with a picker to choose which letters/numbers to practice).",
+    url: "https://github.com/duckie-jr/Morse",
+    tag: "Web",
   },
 ];
 // ============================================================
