@@ -1,2 +1,15 @@
-# Projects
-This is my home page and will show all of my Projects
+# My Projects
+
+A collection of my personal projects and experiments.
+
+## Projects
+
+| Project -----|----- Description |
+
+
+
+|---------------------------------|
+
+## About
+
+Feel free to explore the code and reach out with any questions!
