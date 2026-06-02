@@ -1,99 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="duckie-jr's project showcase" />
-    <meta name="theme-color" content="#6c63ff" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>duckie-jr</title>
+    <title>Duckie</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
 
-    <!-- ── Nav ──────────────────────────────────────────────── -->
-    <nav class="nav">
-      <div class="nav-inner">
-        <span class="nav-logo">duckie-jr</span>
-        <div class="nav-links">
-          <a href="https://github.com/duckie-jr" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <button id="theme-toggle-btn" class="theme-btn" aria-label="Toggle theme">
-            <span class="theme-icon theme-icon--dark">🌙</span>
-            <span class="theme-icon theme-icon--light">☀️</span>
-          </button>
-        </div>
-      </div>
+    <nav>
+      <span class="logo">Duckie</span>
+
     </nav>
 
-    <!-- ── Hero ─────────────────────────────────────────────── -->
     <header class="hero">
-      <div class="hero-inner">
-        <img id="avatar" class="hero-avatar" src="" alt="duckie-jr" />
-        <div class="hero-badge">👋 Welcome</div>
-        <h1 class="hero-heading">Hey, I'm <span class="gradient-text">duckie-jr</span></h1>
-        <p class="hero-sub">Here's a collection of things I've been building. Take a look around!</p>
-        <a href="https://github.com/duckie-jr/Projects" target="_blank" rel="noopener noreferrer" class="hero-cta">
-          View on GitHub
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 8h10M9 4l4 4-4 4"/>
-          </svg>
-        </a>
+      <p class="eyebrow">Welcome</p>
+      <h1>Hey, I'm <span>Duckie</span></h1>
+      <p class="hero-sub">Developer and builder. Here's everything I've been working on.</p>
+      <div class="hero-links">
+        <a href="https://github.com/duckie-jr" target="_blank" rel="noopener noreferrer" class="btn btn-primary">GitHub</a>
+        <a href="#projects" class="btn btn-ghost">See projects</a>
       </div>
-      <div class="hero-glow" aria-hidden="true"></div>
     </header>
 
-    <!-- ── Projects ─────────────────────────────────────────── -->
-    <section class="projects-section">
-      <div class="section-inner">
+    <main id="projects">
+      <p class="section-label">Projects</p>
+      <div id="project-grid" class="grid"></div>
+    </main>
 
-        <div class="section-header">
-          <h2 class="section-title">Projects</h2>
-          <div class="search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input id="search-input" type="search" placeholder="Search…" aria-label="Search projects" />
-          </div>
-        </div>
-
-        <!-- Loading -->
-        <div id="loading-grid" class="card-grid">
-          <div class="project-card skeleton"></div>
-          <div class="project-card skeleton"></div>
-          <div class="project-card skeleton"></div>
-        </div>
-
-        <!-- Cards -->
-        <div id="project-grid" class="card-grid" hidden></div>
-
-        <!-- Empty -->
-        <div id="empty-state" class="feedback-state" hidden>
-          <div class="feedback-icon">📂</div>
-          <p id="empty-message">No projects yet — add a folder to the repository to get started.</p>
-          <a href="https://github.com/duckie-jr/Projects" target="_blank" rel="noopener noreferrer" class="btn-outline">
-            Open Repository
-          </a>
-        </div>
-
-        <!-- Error -->
-        <div id="error-state" class="feedback-state" hidden>
-          <div class="feedback-icon">⚠️</div>
-          <p id="error-message">Couldn't load projects.</p>
-          <button id="retry-btn" class="btn-outline">Try again</button>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ── Footer ────────────────────────────────────────────── -->
-    <footer class="footer">
-      <p>Made by <a href="https://github.com/duckie-jr" target="_blank" rel="noopener noreferrer">duckie-jr</a></p>
+    <footer>
+      <p>2026 — Duckie</p>
     </footer>
 
-    <script type="module" src="/main.js"></script>
+    <script src="/main.js"></script>
   </body>
 </html>
