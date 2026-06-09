@@ -11,6 +11,22 @@ let currentUsername = "";
 let localStream     = null;
 let isMuted         = false;
 let isCamOff        = false;
+let isForceMutedByHost  = false;  // guest: host locked mic off
+let isForceCamOffByHost = false;  // guest: host locked camera off (one-way)
+
+// ─── Screen sharing ───────────────────────────────
+let isScreenSharing   = false;
+let screenShareStream = null;
+
+// ─── Raise hand ──────────────────────────────────
+let   localHandRaised   = false;
+const raisedHandPeerIds = new Set();
+
+// ─── Speaking indicator ───────────────────────────
+let   audioContextInstance = null;
+const peerIdToAnalyser     = new Map();  // peerId → { analyser, source }
+let   speakingLoopActive   = false;
+const speakingDataBuffer   = new Uint8Array(64);
 
 // ─── Screen name (set once on the username screen, used everywhere) ───────────
 let screenName = "";
@@ -20,6 +36,162 @@ const bannedUsernames    = new Set();
 let   hostConnection     = null;
 let   connectedUsers     = [];
 const mediaCallMap       = new Map();  // peerId → PeerJS Call
+
+const forceMutedPeerIds        = new Set();  // host: peerIds that have been force-muted
+const forceCamOffPeerIds       = new Set();  // host: peerIds whose cameras have been forced off
+let   hostActionMenuTargetPeerId = null;      // peerId the action menu is currently open for
+let   hostPeerId               = "";          // peerId of the room owner (known on both sides)
+
+// ═══════════════════════════════════════════════════
+//  PERSISTENCE — USERNAME & RECENT ROOMS
+// ═══════════════════════════════════════════════════
+
+const STORAGE_KEY_USERNAME     = "dropin_username";
+const STORAGE_KEY_RECENT_ROOMS = "dropin_recent_rooms";
+const MAX_RECENT_ROOMS         = 20;
+
+// ─── Username helpers ─────────────────────────────
+
+function loadSavedUsername() {
+  return localStorage.getItem(STORAGE_KEY_USERNAME) ?? "";
+}
+
+function persistUsername(name) {
+  localStorage.setItem(STORAGE_KEY_USERNAME, name);
+}
+
+// ─── Recent-rooms helpers ─────────────────────────
+
+function loadRecentRooms() {
+  try   { return JSON.parse(localStorage.getItem(STORAGE_KEY_RECENT_ROOMS) ?? "[]"); }
+  catch (_) { return []; }
+}
+
+function saveRecentRoom(roomId, wasHost) {
+  const rooms = loadRecentRooms().filter(r => r.id !== roomId); // dedupe
+  rooms.unshift({ id: roomId, joinedAt: Date.now(), wasHost });
+  localStorage.setItem(STORAGE_KEY_RECENT_ROOMS, JSON.stringify(rooms.slice(0, MAX_RECENT_ROOMS)));
+  renderRecentRoomsList();
+}
+
+function deleteRecentRoom(roomId) {
+  const rooms = loadRecentRooms().filter(r => r.id !== roomId);
+  localStorage.setItem(STORAGE_KEY_RECENT_ROOMS, JSON.stringify(rooms));
+  renderRecentRoomsList();
+}
+
+function clearAllRecentRooms() {
+  localStorage.removeItem(STORAGE_KEY_RECENT_ROOMS);
+  renderRecentRoomsList();
+}
+
+function exportRecentRooms() {
+  const blob   = new Blob([JSON.stringify(loadRecentRooms(), null, 2)], { type: "application/json" });
+  const anchor = document.createElement("a");
+  anchor.href     = URL.createObjectURL(blob);
+  anchor.download = "dropin-recent-rooms.json";
+  anchor.click();
+  URL.revokeObjectURL(anchor.href);
+}
+
+// Accepts: array of room-id strings, or objects with at least { id }
+function importRoomsFromArray(items) {
+  const existing    = loadRecentRooms();
+  const existingIds = new Set(existing.map(r => r.id));
+  let   added       = 0;
+
+  for (const item of items) {
+    const roomId = (typeof item === "string" ? item : String(item.id ?? "")).trim();
+    if (!roomId || existingIds.has(roomId)) continue;
+    existing.push({ id: roomId, joinedAt: item.joinedAt ?? Date.now(), wasHost: item.wasHost ?? false });
+    existingIds.add(roomId);
+    added++;
+  }
+
+  existing.sort((a, b) => b.joinedAt - a.joinedAt);
+  localStorage.setItem(STORAGE_KEY_RECENT_ROOMS, JSON.stringify(existing.slice(0, MAX_RECENT_ROOMS)));
+  renderRecentRoomsList();
+  return added;
+}
+
+async function importRoomsFromUrl(urlString) {
+  const response = await fetch(urlString);
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const data  = await response.json();
+  const items = Array.isArray(data) ? data : [data];
+  return importRoomsFromArray(items);
+}
+
+// ─── Relative time helper ─────────────────────────
+
+function formatRelativeTime(timestamp) {
+  const diffMs  = Date.now() - timestamp;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1)          return "just now";
+  if (diffMin < 60)         return diffMin + "m ago";
+  const diffHr  = Math.floor(diffMin / 60);
+  if (diffHr  < 24)         return diffHr + "h ago";
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7)          return diffDay + "d ago";
+  return new Date(timestamp).toLocaleDateString();
+}
+
+// ─── Recent-rooms DOM refs ─────────────────────────
+
+const recentRoomsSectionEl = document.getElementById("recent-rooms-section");
+const recentRoomsListEl    = document.getElementById("recent-rooms-list");
+const exportRecentsBtnEl   = document.getElementById("export-recents-btn");
+const clearRecentsBtnEl    = document.getElementById("clear-recents-btn");
+const importFileInputEl    = document.getElementById("import-file-input");
+const importUrlInputEl     = document.getElementById("import-url-input");
+const importUrlBtnEl       = document.getElementById("import-url-btn");
+
+// ─── Render recent-rooms list ─────────────────────
+
+function renderRecentRoomsList() {
+  const rooms = loadRecentRooms();
+
+  if (rooms.length === 0) {
+    recentRoomsSectionEl.classList.add("hidden");
+    return;
+  }
+
+  recentRoomsSectionEl.classList.remove("hidden");
+  recentRoomsListEl.innerHTML = "";
+
+  for (const room of rooms) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "recent-room-row";
+
+    // Clicking the ID fills the join input
+    const idBtnEl       = document.createElement("button");
+    idBtnEl.className   = "recent-room-id";
+    idBtnEl.textContent = room.id;
+    idBtnEl.title       = "Click to fill join field";
+    idBtnEl.addEventListener("click", () => {
+      roomIdInputEl.value = room.id;
+      roomIdInputEl.focus();
+    });
+
+    const tagEl       = document.createElement("span");
+    tagEl.className   = "recent-room-tag";
+    tagEl.textContent = room.wasHost ? "Host" : "Guest";
+
+    const timeEl       = document.createElement("span");
+    timeEl.className   = "recent-room-time";
+    timeEl.textContent = formatRelativeTime(room.joinedAt);
+
+    const delBtnEl = document.createElement("button");
+    delBtnEl.className = "recent-room-delete";
+    delBtnEl.title     = "Remove";
+    delBtnEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    delBtnEl.addEventListener("click", () => deleteRecentRoom(room.id));
+
+    rowEl.append(idBtnEl, tagEl, timeEl, delBtnEl);
+    recentRoomsListEl.appendChild(rowEl);
+  }
+}
+
 
 // ═══════════════════════════════════════════════════
 //  PROFANITY FILTER
@@ -93,6 +265,13 @@ const joinRoomBtnEl    = document.getElementById("join-room-btn");
 const lobbyStatusEl    = document.getElementById("lobby-status");
 const roomIdLabelEl    = document.getElementById("room-id-label");
 const copyIdBtnEl      = document.getElementById("copy-id-btn");
+const roomCodeOverlayEl     = document.getElementById("room-code-overlay");
+const roomCodeOverlayTextEl = document.getElementById("room-code-overlay-text");
+const usersCountBtnEl       = document.getElementById("users-count-btn");
+const usersCountEl          = document.getElementById("users-count");
+const participantsPanelEl   = document.getElementById("participants-panel");
+const participantsListEl    = participantsPanelEl.querySelector(".participants-list");
+const closePanelBtnEl       = document.getElementById("close-panel-btn");
 const usersBarEl       = document.getElementById("users-bar");
 const chatLogEl        = document.getElementById("chat-log");
 const chatInputEl      = document.getElementById("chat-input");
@@ -101,6 +280,9 @@ const leaveBtnEl       = document.getElementById("leave-btn");
 const videoGridEl      = document.getElementById("video-grid");
 const muteBtnEl        = document.getElementById("mute-btn");
 const camBtnEl         = document.getElementById("cam-btn");
+const hostActionMenuEl = document.getElementById("host-action-menu");
+const screenShareBtnEl = document.getElementById("screen-share-btn");
+const raiseHandBtnEl   = document.getElementById("raise-hand-btn");
 
 // ═══════════════════════════════════════════════════
 //  DOM REFS — RANDOM
@@ -169,7 +351,9 @@ function createRoom() {
 
   peer.on("open", (assignedId) => {
     currentRoomId  = assignedId;
+    hostPeerId     = assignedId;
     connectedUsers = [{ peerId: assignedId, username: currentUsername }];
+    saveRecentRoom(assignedId, true);
     showAppScreen();
     renderUsersList();
     appendSystemMessage("Room created! Share the Room ID to invite others.");
@@ -187,6 +371,9 @@ function registerGuestConnection(conn) {
   conn.on("close", ()     => {
     const guest = guestConnectionMap.get(conn.peer);
     if (!guest) return;
+    forceMutedPeerIds.delete(conn.peer);
+    forceCamOffPeerIds.delete(conn.peer);
+    raisedHandPeerIds.delete(conn.peer);
     appendSystemMessage(guest.username + " left the room.");
     guestConnectionMap.delete(conn.peer);
     connectedUsers = connectedUsers.filter((u) => u.peerId !== conn.peer);
@@ -215,6 +402,17 @@ function handleDataFromGuest(fromPeerId, data) {
       break;
     }
     case "chat": { renderChatMessage(data); relayToOthers(fromPeerId, data); break; }
+    case "hand_raise": {
+      if (data.raised) {
+        raisedHandPeerIds.add(fromPeerId);
+        appendSystemMessage(data.username + " raised their hand");
+      } else {
+        raisedHandPeerIds.delete(fromPeerId);
+      }
+      renderUsersList();
+      relayToOthers(fromPeerId, data);
+      break;
+    }
   }
 }
 
@@ -225,6 +423,9 @@ function handleDataFromGuest(fromPeerId, data) {
 function kickUser(peerId) {
   const guest = guestConnectionMap.get(peerId);
   if (!guest) return;
+  forceMutedPeerIds.delete(peerId);
+  forceCamOffPeerIds.delete(peerId);
+  raisedHandPeerIds.delete(peerId);
   guest.conn.send({ type: "kicked" });
   guest.conn.close();
   if (mediaCallMap.has(peerId)) { mediaCallMap.get(peerId).close(); mediaCallMap.delete(peerId); }
@@ -268,6 +469,8 @@ function handleDataFromHost(data) {
   switch (data.type) {
     case "full_sync": {
       connectedUsers = data.users;
+      hostPeerId     = data.users[0]?.peerId ?? "";
+      saveRecentRoom(currentRoomId, false);
       renderUsersList();
       appendSystemMessage("Synced with room!");
       initMedia(data.users);
@@ -278,6 +481,55 @@ function handleDataFromHost(data) {
     case "user_list":   { connectedUsers = data.users; renderUsersList(); break; }
     case "kicked":      { appendSystemMessage("You were kicked."); setTimeout(() => location.reload(), 2500); break; }
     case "banned":      { appendSystemMessage("You have been banned."); setTimeout(() => location.reload(), 3000); break; }
+    case "force_mute": {
+      isMuted            = true;
+      isForceMutedByHost = true;
+      if (localStream) for (const track of localStream.getAudioTracks()) track.enabled = false;
+      muteBtnEl.textContent = "Muted";
+      muteBtnEl.classList.add("btn-muted");
+      muteBtnEl.disabled = true;
+      appendSystemMessage("The host muted your microphone.");
+      break;
+    }
+    case "force_unmute": {
+      isMuted            = false;
+      isForceMutedByHost = false;
+      if (localStream) for (const track of localStream.getAudioTracks()) track.enabled = true;
+      muteBtnEl.textContent = "Mute";
+      muteBtnEl.classList.remove("btn-muted");
+      muteBtnEl.disabled = false;
+      appendSystemMessage("The host unmuted your microphone.");
+      break;
+    }
+    case "force_cam_off": {
+      isCamOff            = true;
+      isForceCamOffByHost = true;
+      if (localStream) for (const track of localStream.getVideoTracks()) track.enabled = false;
+      camBtnEl.textContent = "Cam Off";
+      camBtnEl.classList.add("btn-muted");
+      camBtnEl.disabled = true;
+      appendSystemMessage("The host turned off your camera.");
+      break;
+    }
+    case "force_cam_on": {
+      isCamOff            = false;
+      isForceCamOffByHost = false;
+      if (localStream) for (const track of localStream.getVideoTracks()) track.enabled = true;
+      camBtnEl.textContent = "Cam Off";
+      camBtnEl.classList.remove("btn-muted");
+      camBtnEl.disabled = false;
+      appendSystemMessage("The host re-enabled your camera.");
+      break;
+    }
+    case "hand_raise": {
+      if (data.raised) {
+        raisedHandPeerIds.add(data.peerId);
+      } else {
+        raisedHandPeerIds.delete(data.peerId);
+      }
+      renderUsersList();
+      break;
+    }
   }
 }
 
@@ -285,9 +537,47 @@ function handleDataFromHost(data) {
 //  ROOMS — MEDIA
 // ═══════════════════════════════════════════════════
 
-async function initMedia(existingUsers) {
+// Computes the tightest square-ish grid that fills the panel without scrolling.
+// Called whenever a tile is added or removed, and on panel resize.
+function recomputeGridLayout() {
+  const tileCount = videoGridEl.children.length;
+  if (tileCount === 0) return;
+
+  const columns = tileCount === 1 ? 1 : Math.ceil(Math.sqrt(tileCount));
+  const rows    = Math.ceil(tileCount / columns);
+
+  videoGridEl.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+  videoGridEl.style.gridTemplateRows    = `repeat(${rows}, 1fr)`;
+}
+
+// Returns ideal video constraints for a given participant count.
+// More participants → lower resolution to conserve bandwidth.
+function getVideoConstraintsForCount(participantCount) {
+  if (participantCount <= 3)  return { width: { ideal: 1280 }, height: { ideal: 720  }, frameRate: { ideal: 30 } };
+  if (participantCount <= 6)  return { width: { ideal: 640  }, height: { ideal: 480  }, frameRate: { ideal: 24 } };
+  if (participantCount <= 12) return { width: { ideal: 320  }, height: { ideal: 240  }, frameRate: { ideal: 20 } };
+  return                             { width: { ideal: 160  }, height: { ideal: 120  }, frameRate: { ideal: 15 } };
+}
+
+// Applies updated constraints to the local video track without restarting the stream.
+async function updateVideoQualityForParticipantCount() {
+  if (!localStream) return;
+  const videoTrack = localStream.getVideoTracks()[0];
+  if (!videoTrack) return;
+  const constraints = getVideoConstraintsForCount(connectedUsers.length);
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    await videoTrack.applyConstraints(constraints);
+  } catch (_) {
+    // applyConstraints is not universally supported — silently ignore
+  }
+}
+
+async function initMedia(existingUsers) {
+  const participantCount  = existingUsers.length + 1; // +1 for self
+  const videoConstraints  = getVideoConstraintsForCount(participantCount);
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true });
   } catch (_) {
     try { localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true }); }
     catch (err) { appendSystemMessage("Could not access mic/camera: " + err.message); return; }
@@ -335,10 +625,18 @@ function addMediaTile(peerId, username, stream) {
     tileEl.append(avatarEl, nameEl);
     videoGridEl.appendChild(tileEl);
   }
+
+  recomputeGridLayout();
+  updateVideoQualityForParticipantCount();
+  attachSpeakingAnalyser(peerId, stream);
+  ensureSpeakingLoopActive();
 }
 
 function removeMediaTile(peerId) {
   document.querySelector(`[data-peer-id="${peerId}"]`)?.remove();
+  detachSpeakingAnalyser(peerId);
+  recomputeGridLayout();
+  updateVideoQualityForParticipantCount();
 }
 
 // ═══════════════════════════════════════════════════
@@ -346,18 +644,133 @@ function removeMediaTile(peerId) {
 // ═══════════════════════════════════════════════════
 
 function renderUsersList() {
-  usersBarEl.innerHTML = "";
+  const count = connectedUsers.length;
+  usersCountEl.textContent = count;
+
+  participantsListEl.innerHTML = "";
   for (const user of connectedUsers) {
-    const chipEl = document.createElement("span");
-    chipEl.className   = "user-chip";
-    chipEl.textContent = user.username;
-    if (isHost && user.peerId !== peer.id) {
-      const kickBtnEl = document.createElement("button"); kickBtnEl.className = "kick-btn"; kickBtnEl.textContent = "Kick"; kickBtnEl.addEventListener("click", () => kickUser(user.peerId));
-      const banBtnEl  = document.createElement("button"); banBtnEl.className  = "ban-btn";  banBtnEl.textContent  = "Ban";  banBtnEl.addEventListener("click",  () => banUser(user.peerId));
-      chipEl.append(kickBtnEl, banBtnEl);
+    const rowEl  = document.createElement("div");  rowEl.className  = "participant-row";
+    const nameEl = document.createElement("span"); nameEl.className = "participant-name"; nameEl.textContent = user.username;
+
+    if (user.peerId === peer?.id) {
+      const youTagEl = document.createElement("span"); youTagEl.className = "participant-you-tag"; youTagEl.textContent = " (you)";
+      nameEl.appendChild(youTagEl);
     }
-    usersBarEl.appendChild(chipEl);
+    rowEl.appendChild(nameEl);
+
+    if (user.peerId === hostPeerId) {
+      const hostBadgeEl       = document.createElement("span");
+      hostBadgeEl.className   = "participant-host-badge";
+      hostBadgeEl.textContent = "Host";
+      hostBadgeEl.title       = "Room owner";
+      rowEl.appendChild(hostBadgeEl);
+    }
+
+    if (raisedHandPeerIds.has(user.peerId)) {
+      const handIconEl       = document.createElement("span");
+      handIconEl.className   = "participant-status-icon";
+      handIconEl.innerHTML    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>`;
+      handIconEl.title       = "Hand raised";
+      rowEl.appendChild(handIconEl);
+    }
+
+    if (isHost && user.peerId !== peer.id) {
+      nameEl.classList.add("participant-name--clickable");
+      nameEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openHostActionMenu(user.peerId, user.username, e);
+      });
+
+      if (forceMutedPeerIds.has(user.peerId)) {
+        const mutedIconEl       = document.createElement("span");
+        mutedIconEl.className   = "participant-status-icon";
+        mutedIconEl.innerHTML    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+        mutedIconEl.title       = "Force muted by host";
+        rowEl.appendChild(mutedIconEl);
+      }
+
+      if (forceCamOffPeerIds.has(user.peerId)) {
+        const camOffIconEl       = document.createElement("span");
+        camOffIconEl.className   = "participant-status-icon";
+        camOffIconEl.innerHTML    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+        camOffIconEl.title       = "Camera disabled by host";
+        rowEl.appendChild(camOffIconEl);
+      }
+    }
+    participantsListEl.appendChild(rowEl);
   }
+}
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — HOST ACTION MENU
+// ═══════════════════════════════════════════════════
+
+function openHostActionMenu(targetPeerId, targetUsername, clickEvent) {
+  hostActionMenuTargetPeerId = targetPeerId;
+
+  const nameEl    = hostActionMenuEl.querySelector(".host-action-menu-name");
+  const muteBtn   = hostActionMenuEl.querySelector(".host-action-mute-btn");
+  const camOffBtn = hostActionMenuEl.querySelector(".host-action-cam-off-btn");
+
+  nameEl.textContent  = targetUsername;
+  muteBtn.textContent   = forceMutedPeerIds.has(targetPeerId)  ? "Unmute"          : "Mute";
+  camOffBtn.textContent = forceCamOffPeerIds.has(targetPeerId) ? "Re-enable Camera" : "Turn Off Camera";
+  camOffBtn.disabled    = false;
+  camOffBtn.title       = "";
+
+  // Position near the click, clamped so it never overflows the viewport
+  const menuWidth  = 180;
+  const menuHeight = 170;
+  let   menuLeft   = clickEvent.clientX;
+  let   menuTop    = clickEvent.clientY;
+
+  if (menuLeft + menuWidth  > window.innerWidth)  menuLeft = menuLeft - menuWidth;
+  if (menuTop  + menuHeight > window.innerHeight) menuTop  = menuTop  - menuHeight;
+
+  hostActionMenuEl.style.left = menuLeft + "px";
+  hostActionMenuEl.style.top  = menuTop  + "px";
+  hostActionMenuEl.classList.remove("hidden");
+}
+
+function closeHostActionMenu() {
+  hostActionMenuEl.classList.add("hidden");
+  hostActionMenuTargetPeerId = null;
+}
+
+function forceMuteGuest(peerId) {
+  const guest = guestConnectionMap.get(peerId);
+  if (!guest) return;
+
+  if (forceMutedPeerIds.has(peerId)) {
+    forceMutedPeerIds.delete(peerId);
+    guest.conn.send({ type: "force_unmute" });
+    appendSystemMessage(guest.username + "'s microphone was re-enabled.");
+  } else {
+    forceMutedPeerIds.add(peerId);
+    guest.conn.send({ type: "force_mute" });
+    appendSystemMessage(guest.username + " was muted by the host.");
+  }
+
+  closeHostActionMenu();
+  renderUsersList();
+}
+
+function forceCamOffGuest(peerId) {
+  const guest = guestConnectionMap.get(peerId);
+  if (!guest) return;
+
+  if (forceCamOffPeerIds.has(peerId)) {
+    forceCamOffPeerIds.delete(peerId);
+    guest.conn.send({ type: "force_cam_on" });
+    appendSystemMessage(guest.username + "'s camera was re-enabled by the host.");
+  } else {
+    forceCamOffPeerIds.add(peerId);
+    guest.conn.send({ type: "force_cam_off" });
+    appendSystemMessage(guest.username + "'s camera was turned off by the host.");
+  }
+
+  closeHostActionMenu();
+  renderUsersList();
 }
 
 function renderChatMessage(message) {
@@ -386,6 +799,133 @@ function setLobbyStatus(text, isError = false) {
 function resetLobbyButtons() {
   createRoomBtnEl.disabled = false;
   joinRoomBtnEl.disabled   = false;
+}
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — SCREEN SHARING
+// ═══════════════════════════════════════════════════
+
+async function startScreenShare() {
+  if (!localStream) return;
+  try {
+    screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+  } catch (_) {
+    appendSystemMessage("Screen share cancelled.");
+    return;
+  }
+
+  const screenVideoTrack = screenShareStream.getVideoTracks()[0];
+  if (!screenVideoTrack) { screenShareStream.getTracks().forEach(t => t.stop()); screenShareStream = null; return; }
+
+  // Replace video sender in every active peer connection
+  for (const call of mediaCallMap.values()) {
+    if (!call.peerConnection) continue;
+    const videoSender = call.peerConnection.getSenders().find(s => s.track?.kind === "video");
+    if (videoSender) videoSender.replaceTrack(screenVideoTrack).catch(() => {});
+  }
+
+  // Update local preview tile to show the screen instead of the camera
+  const localTile = document.querySelector('[data-peer-id="local"]');
+  if (localTile) {
+    const videoEl = localTile.querySelector("video");
+    if (videoEl) {
+      videoEl.srcObject = new MediaStream([screenVideoTrack, ...localStream.getAudioTracks()]);
+    }
+  }
+
+  // When the user stops sharing from the browser's native controls
+  screenVideoTrack.addEventListener("ended", () => { if (isScreenSharing) stopScreenShare(); });
+
+  isScreenSharing = true;
+  screenShareBtnEl.textContent = "Stop Sharing";
+  screenShareBtnEl.classList.add("btn-muted");
+  appendSystemMessage("You are now sharing your screen.");
+}
+
+async function stopScreenShare() {
+  if (!isScreenSharing) return;
+
+  const cameraVideoTrack = localStream.getVideoTracks()[0];
+
+  // Restore camera track in all peer connections
+  for (const call of mediaCallMap.values()) {
+    if (!call.peerConnection) continue;
+    const videoSender = call.peerConnection.getSenders().find(s => s.track?.kind === "video");
+    if (videoSender && cameraVideoTrack) videoSender.replaceTrack(cameraVideoTrack).catch(() => {});
+  }
+
+  // Restore local preview tile
+  const localTile = document.querySelector('[data-peer-id="local"]');
+  if (localTile) {
+    const videoEl = localTile.querySelector("video");
+    if (videoEl) videoEl.srcObject = localStream;
+  }
+
+  // Stop all screen-share tracks
+  screenShareStream?.getTracks().forEach(t => t.stop());
+  screenShareStream = null;
+
+  isScreenSharing = false;
+  screenShareBtnEl.textContent = "Share Screen";
+  screenShareBtnEl.classList.remove("btn-muted");
+  appendSystemMessage("Screen sharing stopped.");
+}
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — SPEAKING INDICATOR
+// ═══════════════════════════════════════════════════
+
+function getOrCreateAudioContext() {
+  if (!audioContextInstance) {
+    audioContextInstance = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioContextInstance.state === "suspended") audioContextInstance.resume();
+  return audioContextInstance;
+}
+
+function attachSpeakingAnalyser(peerId, stream) {
+  if (stream.getAudioTracks().length === 0) return;
+  try {
+    const ctx      = getOrCreateAudioContext();
+    const source   = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize               = 256;
+    analyser.smoothingTimeConstant = 0.5;
+    source.connect(analyser);
+    peerIdToAnalyser.set(peerId, { analyser, source });
+  } catch (_) {
+    // AudioContext not available in this environment — silently skip
+  }
+}
+
+function detachSpeakingAnalyser(peerId) {
+  const entry = peerIdToAnalyser.get(peerId);
+  if (!entry) return;
+  try { entry.source.disconnect(); } catch (_) {}
+  peerIdToAnalyser.delete(peerId);
+}
+
+function ensureSpeakingLoopActive() {
+  if (speakingLoopActive) return;
+  speakingLoopActive = true;
+  tickSpeakingDetection();
+}
+
+function tickSpeakingDetection() {
+  for (const [peerId, { analyser }] of peerIdToAnalyser.entries()) {
+    analyser.getByteFrequencyData(speakingDataBuffer);
+    const averageLevel = speakingDataBuffer.reduce((sum, val) => sum + val, 0) / speakingDataBuffer.length;
+    const isSpeaking   = averageLevel > 12;
+
+    // Don't highlight local user as speaking when they are muted
+    if (peerId === "local" && isMuted) {
+      document.querySelector('[data-peer-id="local"]')?.classList.remove("speaking");
+      continue;
+    }
+
+    document.querySelector(`[data-peer-id="${peerId}"]`)?.classList.toggle("speaking", isSpeaking);
+  }
+  requestAnimationFrame(tickSpeakingDetection);
 }
 
 // ═══════════════════════════════════════════════════
@@ -420,7 +960,33 @@ copyIdBtnEl.addEventListener("click", () => {
   });
 });
 
-leaveBtnEl.addEventListener("click", () => { peer?.destroy(); location.reload(); });
+roomIdLabelEl.addEventListener("click", () => {
+  roomCodeOverlayTextEl.textContent = currentRoomId;
+  roomCodeOverlayEl.classList.remove("hidden");
+});
+
+roomCodeOverlayEl.addEventListener("click", () => {
+  roomCodeOverlayEl.classList.add("hidden");
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    roomCodeOverlayEl.classList.add("hidden");
+    participantsPanelEl.classList.add("hidden");
+    closeHostActionMenu();
+  }
+});
+
+leaveBtnEl.addEventListener("click", () => {
+  // Stop screen share cleanly before leaving
+  if (isScreenSharing) {
+    screenShareStream?.getTracks().forEach(t => t.stop());
+    screenShareStream = null;
+    isScreenSharing   = false;
+  }
+  peer?.destroy();
+  location.reload();
+});
 
 sendBtnEl.addEventListener("click", () => {
   const text = chatInputEl.value.trim();
@@ -439,7 +1005,7 @@ chatInputEl.addEventListener("keydown", (e) => {
 });
 
 muteBtnEl.addEventListener("click", () => {
-  if (!localStream) return;
+  if (!localStream || isForceMutedByHost) return;
   isMuted = !isMuted;
   for (const track of localStream.getAudioTracks()) track.enabled = !isMuted;
   muteBtnEl.textContent = isMuted ? "Unmute" : "Mute";
@@ -447,11 +1013,113 @@ muteBtnEl.addEventListener("click", () => {
 });
 
 camBtnEl.addEventListener("click", () => {
-  if (!localStream) return;
+  if (!localStream || isForceCamOffByHost) return;
   isCamOff = !isCamOff;
   for (const track of localStream.getVideoTracks()) track.enabled = !isCamOff;
   camBtnEl.textContent = isCamOff ? "Cam On" : "Cam Off";
   camBtnEl.classList.toggle("btn-muted", isCamOff);
+});
+
+usersCountBtnEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  participantsPanelEl.classList.toggle("hidden");
+});
+
+closePanelBtnEl.addEventListener("click", () => {
+  participantsPanelEl.classList.add("hidden");
+});
+
+// Close panel and host action menu when clicking outside of them
+document.addEventListener("click", (e) => {
+  if (
+    !participantsPanelEl.classList.contains("hidden") &&
+    !participantsPanelEl.contains(e.target) &&
+    e.target !== usersCountBtnEl
+  ) {
+    participantsPanelEl.classList.add("hidden");
+  }
+
+  if (
+    !hostActionMenuEl.classList.contains("hidden") &&
+    !hostActionMenuEl.contains(e.target)
+  ) {
+    closeHostActionMenu();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — HOST ACTION MENU BUTTONS
+// ═══════════════════════════════════════════════════
+
+hostActionMenuEl.querySelector(".host-action-mute-btn").addEventListener("click", () => {
+  if (hostActionMenuTargetPeerId) forceMuteGuest(hostActionMenuTargetPeerId);
+});
+
+hostActionMenuEl.querySelector(".host-action-cam-off-btn").addEventListener("click", () => {
+  if (hostActionMenuTargetPeerId) forceCamOffGuest(hostActionMenuTargetPeerId);
+});
+
+hostActionMenuEl.querySelector(".host-action-kick-btn").addEventListener("click", () => {
+  if (!hostActionMenuTargetPeerId) return;
+  kickUser(hostActionMenuTargetPeerId);
+  closeHostActionMenu();
+});
+
+hostActionMenuEl.querySelector(".host-action-ban-btn").addEventListener("click", () => {
+  if (!hostActionMenuTargetPeerId) return;
+  banUser(hostActionMenuTargetPeerId);
+  closeHostActionMenu();
+});
+
+// Recompute grid on panel resize (e.g. window resize or sidebar toggle)
+const gridResizeObserver = new ResizeObserver(() => recomputeGridLayout());
+gridResizeObserver.observe(videoGridEl.parentElement);
+
+
+// ═══════════════════════════════════════════════════
+//  RECENT ROOMS — EVENT LISTENERS
+// ═══════════════════════════════════════════════════
+
+exportRecentsBtnEl.addEventListener("click", () => exportRecentRooms());
+
+clearRecentsBtnEl.addEventListener("click", () => {
+  if (loadRecentRooms().length === 0) return;
+  clearAllRecentRooms();
+});
+
+importFileInputEl.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data  = JSON.parse(ev.target.result);
+      const items = Array.isArray(data) ? data : [data];
+      const added = importRoomsFromArray(items);
+      setLobbyStatus("Imported " + added + " new room" + (added !== 1 ? "s" : "") + ".");
+    } catch (_) {
+      setLobbyStatus("Could not parse JSON file.", true);
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
+importUrlBtnEl.addEventListener("click", async () => {
+  const url = importUrlInputEl.value.trim();
+  if (!url) return;
+  importUrlBtnEl.disabled    = true;
+  importUrlBtnEl.textContent = "Fetching…";
+  try {
+    const added = await importRoomsFromUrl(url);
+    setLobbyStatus("Imported " + added + " new room" + (added !== 1 ? "s" : "") + ".");
+    importUrlInputEl.value = "";
+  } catch (err) {
+    setLobbyStatus("Fetch failed: " + err.message, true);
+  } finally {
+    importUrlBtnEl.disabled    = false;
+    importUrlBtnEl.textContent = "Fetch";
+  }
 });
 
 // ═══════════════════════════════════════════════════
@@ -461,6 +1129,7 @@ camBtnEl.addEventListener("click", () => {
 document.getElementById("select-rooms-btn").addEventListener("click", () => {
   homeScreenEl.classList.add("hidden");
   lobbyScreenEl.classList.remove("hidden");
+  renderRecentRoomsList();
 });
 
 document.getElementById("select-random-btn").addEventListener("click", () => {
@@ -494,8 +1163,16 @@ function attemptContinue() {
     return;
   }
   screenName = screenNameInputEl.value.trim();
+  persistUsername(screenName);
   usernameScreenEl.classList.add("hidden");
   homeScreenEl.classList.remove("hidden");
+}
+
+// Pre-fill saved username (if any) so the user doesn't have to retype it
+const savedUsername = loadSavedUsername();
+if (savedUsername) {
+  screenNameInputEl.value         = savedUsername;
+  screenNameCounterEl.textContent = savedUsername.length + " / 20";
 }
 
 // Update the live character counter as the user types
@@ -662,7 +1339,7 @@ function handleRandomGuestArrived(dataConn) {
     if (message.type === "random_hello") {
       const outgoingCall = randomPeer.call(dataConn.peer, randomLocalStream);
       randomActiveCall   = outgoingCall;
-      outgoingCall.on("stream", (remoteStream) => { randomRemoteVideoEl.srcObject = remoteStream; hideRandomWaitingOverlay(); appendRandomSystemMsg("Connected! Say hi 👋"); });
+      outgoingCall.on("stream", (remoteStream) => { randomRemoteVideoEl.srcObject = remoteStream; hideRandomWaitingOverlay(); appendRandomSystemMsg("Connected! Say hi"); });
       outgoingCall.on("close",  () => onStrangerLeft("Stranger disconnected."));
     } else if (message.type === "random_bye")  { onStrangerLeft("Stranger ended the chat."); }
       else if (message.type === "random_chat") { appendRandomChatMessage(message); }
@@ -673,7 +1350,7 @@ function handleRandomGuestArrived(dataConn) {
 function handleRandomIncomingCall(call) {
   randomActiveCall = call;
   call.answer(randomLocalStream);
-  call.on("stream", (remoteStream) => { randomRemoteVideoEl.srcObject = remoteStream; hideRandomWaitingOverlay(); appendRandomSystemMsg("Connected! Say hi 👋"); });
+  call.on("stream", (remoteStream) => { randomRemoteVideoEl.srcObject = remoteStream; hideRandomWaitingOverlay(); appendRandomSystemMsg("Connected! Say hi"); });
   call.on("close",  () => onStrangerLeft("Stranger disconnected."));
 }
 
@@ -805,4 +1482,25 @@ randomCamBtnEl.addEventListener("click", () => {
   for (const track of randomLocalStream.getVideoTracks()) track.enabled = !randomIsCamOff;
   randomCamBtnEl.textContent = randomIsCamOff ? "Cam On" : "Cam Off";
   randomCamBtnEl.classList.toggle("btn-muted", randomIsCamOff);
+});
+
+screenShareBtnEl.addEventListener("click", () => {
+  if (isScreenSharing) stopScreenShare();
+  else                 startScreenShare();
+});
+
+raiseHandBtnEl.addEventListener("click", () => {
+  if (!peer) return;
+  localHandRaised = !localHandRaised;
+
+  if (localHandRaised) {
+    raisedHandPeerIds.add(peer.id);
+    raiseHandBtnEl.classList.add("btn-hand-active");
+  } else {
+    raisedHandPeerIds.delete(peer.id);
+    raiseHandBtnEl.classList.remove("btn-hand-active");
+  }
+
+  sendToAll({ type: "hand_raise", peerId: peer.id, username: currentUsername, raised: localHandRaised });
+  renderUsersList();
 });
