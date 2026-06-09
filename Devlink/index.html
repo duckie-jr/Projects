@@ -4,24 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Devlink</title>
-  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
-  <link rel="stylesheet" href="./style.css" />
-  <script src="./main.js" defer></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="main.js" defer></script>
 </head>
 <body>
 
-  <!-- LOBBY SCREEN -->
+  <!-- ========== LOBBY SCREEN ========== -->
   <div id="lobby-screen">
     <div class="lobby-card">
+
       <div class="lobby-logo">
-        <img src="./logo.svg" class="logo-icon" alt="Devlink" />
+        <img src="logo.svg" class="logo-icon" alt="Devlink" />
         Devlink
       </div>
-      <p class="lobby-subtitle">Real-time code editor &amp; chat. No account needed.</p>
+      <p class="lobby-subtitle">Code together, chat, or jump on a call. No account needed.</p>
 
       <input type="text" id="username-input" placeholder="Your name" maxlength="20" autocomplete="off" />
+
+      <!-- Room type — only applies when creating -->
+      <div id="room-type-selector">
+        <p class="room-type-label">Room type</p>
+        <div class="room-type-options">
+
+          <!-- Text: chat-focused, code editor available -->
+          <label class="room-type-option">
+            <input type="radio" name="room-type" value="text" checked />
+            <div class="room-type-card">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>Text</span>
+              <small>Chat + code sharing</small>
+            </div>
+          </label>
+
+          <!-- Code: editor-focused, chat available -->
+          <label class="room-type-option">
+            <input type="radio" name="room-type" value="code" />
+            <div class="room-type-card">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 76">
+                <path fill="currentColor" d="M 30,51L 19,40L 19,37L 30,26L 30,31L 23,38L 30,45L 30,51 Z M 42.9999,21.0001L 37,55L 33,55L 39,21.0001L 42.9999,21.0001 Z M 46,51L 46,45L 53,38L 46,31L 46,26L 57,37L 57,40L 46,51 Z"/>
+              </svg>
+              <span>Code</span>
+              <small>Editor + chat</small>
+            </div>
+          </label>
+
+          <!-- Video Call: video/audio + chat, code editor toggleable -->
+          <label class="room-type-option">
+            <input type="radio" name="room-type" value="video" />
+            <div class="room-type-card">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span>Video Call</span>
+              <small>Video + chat, code optional</small>
+            </div>
+          </label>
+
+        </div>
+        <p class="room-type-note">Joining a room uses the host setting.</p>
+      </div>
 
       <div class="lobby-actions">
         <button id="create-room-btn" class="btn btn-primary">Create Room</button>
@@ -36,12 +83,16 @@
     </div>
   </div>
 
-  <!-- APP SCREEN -->
+  <!-- ========== APP SCREEN ========== -->
   <div id="app-screen" class="hidden">
 
+    <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <span class="app-logo"><img src="logo.svg" class="logo-icon" alt="" /> Devlink</span>
+        <span class="app-logo">
+          <img src="logo.svg" class="logo-icon" alt="" />
+          Devlink
+        </span>
         <select id="language-select">
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
@@ -50,21 +101,47 @@
           <option value="htmlmixed">HTML</option>
           <option value="css">CSS</option>
         </select>
+        <!--
+          Toggle code editor — only shown in Video Call rooms.
+          In Text and Code rooms the editor is always visible.
+        -->
+        <button id="toggle-code-btn" class="btn btn-sm btn-secondary hidden">Show Code</button>
       </div>
+
       <div class="toolbar-center">
         <span id="room-id-label"></span>
         <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
       </div>
+
       <div class="toolbar-right">
+        <!-- Mute / cam controls — shown for video rooms only -->
+        <div id="media-controls" class="hidden">
+          <button id="mute-btn" class="btn btn-sm btn-secondary">Mute</button>
+          <button id="cam-btn" class="btn btn-sm btn-secondary">Cam Off</button>
+        </div>
         <div id="users-bar"></div>
         <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
       </div>
     </div>
 
+    <!-- Video grid — visible for video rooms only -->
+    <div id="media-panel" class="hidden">
+      <div id="video-grid"></div>
+    </div>
+
+    <!-- Main workspace: editor left, chat right -->
     <div class="workspace">
-      <div class="editor-pane">
+
+      <!--
+        Editor pane:
+        - Text rooms:  always visible, chat is wider
+        - Code rooms:  always visible, editor is wider
+        - Video rooms: hidden by default, toggled by #toggle-code-btn
+      -->
+      <div id="editor-pane" class="editor-pane">
         <textarea id="code-editor"></textarea>
       </div>
+
       <div class="chat-pane">
         <div class="chat-header">Chat</div>
         <div id="chat-log"></div>
@@ -73,11 +150,11 @@
           <button id="send-btn" class="btn btn-primary btn-sm">Send</button>
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 
-  <!-- CDN scripts: sync so globals exist before deferred module executes -->
+  <!-- CDN scripts — loaded sync so globals are ready before the deferred module runs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
