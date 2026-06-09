@@ -14,6 +14,90 @@
 </head>
 <body>
 
+    <!-- ========== TERMS OF SERVICE MODAL (shown on first visit only) ========== -->
+  <div id="tos-overlay" class="tos-overlay hidden">
+    <div class="tos-card">
+
+      <div class="tos-header">
+        <img src="logo.svg" class="tos-logo-icon" alt="DropIn logo" />
+        <span class="tos-logo-name">DropIn</span>
+      </div>
+
+      <h2 class="tos-title">Terms of Service</h2>
+      <p class="tos-intro">
+        Before using DropIn, please read and agree to the following terms.
+        You must accept these terms to access the platform.
+      </p>
+
+      <div class="tos-body">
+
+        <div class="tos-section">
+          <h3>1. Acceptable Use</h3>
+          <p>You agree not to use DropIn for any unlawful purpose, including but not limited to
+            sharing illegal content, harassment, threats, distribution of CSAM, or any
+            activity that violates applicable law.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>2. Platform Monitoring &amp; Moderation</h3>
+          <p><strong>By using DropIn you expressly consent to the following:</strong></p>
+          <ul>
+            <li>The platform owner and authorised developers may join any active room or
+                Random session at any time for the purposes of safety review, abuse
+                investigation, or legal compliance.</li>
+            <li>Such oversight may occur without prior notice and without appearing in
+                the visible participant list.</li>
+            <li>Sessions may be observed in real time. If evidence of illegal activity
+                is identified it may be preserved and reported to relevant authorities.</li>
+          </ul>
+          <p>This monitoring capability exists solely to keep the platform safe and to
+             comply with applicable law. It will not be used for commercial purposes.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>3. No Expectation of Privacy in Rooms</h3>
+          <p>Rooms and Random sessions are not end-to-end encrypted against the platform
+             operator. You should not share information in a session that you consider
+             strictly private.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>4. Age Requirement</h3>
+          <p>You must be at least 13 years of age to use DropIn. If you are under 18,
+             you must have a parent or guardian's permission.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>5. Enforcement</h3>
+          <p>Violations may result in removal from a session, a temporary or permanent ban,
+             and/or reporting to law-enforcement agencies where required by law.</p>
+        </div>
+
+      </div>
+
+      <div class="tos-actions">
+        <button id="tos-decline-btn" class="btn btn-secondary">Decline</button>
+        <button id="tos-accept-btn"  class="btn btn-primary">I Agree →</button>
+      </div>
+
+      <p class="tos-note">
+        Declining will prevent access to DropIn. You can clear your browser data to
+        be shown these terms again.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ========== DECLINED SCREEN (shown if user declines ToS) ========== -->
+  <div id="tos-declined-screen" class="tos-declined-screen hidden">
+    <div class="tos-declined-card">
+      <div class="tos-declined-icon">🚫</div>
+      <h2>Access Denied</h2>
+      <p>You must accept the Terms of Service to use DropIn.</p>
+      <button id="tos-review-btn" class="btn btn-secondary">Review Terms Again</button>
+    </div>
+  </div>
+
   <!-- ========== USERNAME SCREEN (shown first) ========== -->
   <div id="username-screen">
     <div class="username-card">
@@ -429,6 +513,7 @@
         </div>
         <div class="dev-dashboard-header-actions">
           <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
+          <button id="dev-reload-all-btn"    class="btn btn-sm btn-secondary" title="Force every connected client to reload">⟳ Reload All</button>
           <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
         </div>
       </div>
@@ -439,6 +524,13 @@
           <div class="dev-panel-header">
             <span class="dev-panel-title">Random Users</span>
             <div class="dev-panel-controls">
+              <input
+                type="text"
+                id="dev-random-filter"
+                class="dev-panel-filter-input"
+                placeholder="Filter by ID or name…"
+                autocomplete="off"
+              />
               <label class="dev-control-label">Ban:</label>
               <select id="dev-ban-duration">
                 <option value="10">10 min</option>
@@ -473,6 +565,27 @@
           </div>
         </div>
 
+        <!-- ─── Broadcast panel (spans full width) ──────────────── -->
+        <div class="dev-panel dev-panel--broadcast">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">📢 Broadcast to All Rooms</span>
+          </div>
+          <div class="dev-broadcast-body">
+            <div class="dev-broadcast-row">
+              <input
+                type="text"
+                id="dev-broadcast-input"
+                class="dev-broadcast-input"
+                placeholder="Type a message to send to every active room…"
+                autocomplete="off"
+                maxlength="200"
+              />
+              <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send to All</button>
+            </div>
+            <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -486,6 +599,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+
+  <!-- ========== GHOST OBSERVER PANEL (creator only) ========== -->
+  <!-- Shown when the creator silently observes a room.           -->
+  <!-- Participants cannot see this peer in their UI.             -->
+  <div id="ghost-observer-panel" class="ghost-observer-panel hidden">
+    <div class="ghost-observer-header">
+      <div class="ghost-observer-title-group">
+        <span class="ghost-observer-eyecon">👁</span>
+        <span class="ghost-observer-title">Observer Mode</span>
+        <span class="ghost-observer-badge">INVISIBLE</span>
+        <span class="ghost-observer-room-label">
+          Room&nbsp;<strong id="ghost-observer-room-id"></strong>
+        </span>
+      </div>
+      <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">✕ Stop Observing</button>
+    </div>
+    <div id="ghost-observer-status" class="ghost-observer-status"></div>
+    <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+  </div>
 
 </body>
 </html>
