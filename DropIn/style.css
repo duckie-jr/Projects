@@ -1840,3 +1840,356 @@ select {
   padding: 24px 14px;
   font-style: italic;
 }
+
+/* ═══════════════════════════════════════════════════
+   TERMS OF SERVICE MODAL
+═══════════════════════════════════════════════════ */
+
+.tos-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #0f1117);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  z-index: 9999;
+  padding: 2rem 1rem;
+}
+
+.tos-card {
+  background: var(--surface, #1a1d26);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  padding: 2rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.tos-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.tos-logo-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.tos-logo-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent, #6c63ff);
+}
+
+.tos-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text, #e8eaf6);
+}
+
+.tos-intro {
+  margin: 0;
+  color: var(--text-muted, #8b92b2);
+  font-size: .9rem;
+}
+
+.tos-body {
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  max-height: 45vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: .875rem;
+  color: var(--text, #e8eaf6);
+  line-height: 1.6;
+}
+
+.tos-body h3 {
+  margin: 0 0 .4rem;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--accent, #6c63ff);
+}
+
+.tos-body p {
+  margin: 0;
+}
+
+.tos-body ul {
+  margin: .4rem 0 .4rem 1.2rem;
+  padding: 0;
+}
+
+.tos-body li {
+  margin-bottom: .3rem;
+}
+
+.tos-section {
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  padding-bottom: .8rem;
+}
+
+.tos-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tos-actions {
+  display: flex;
+  gap: .75rem;
+  justify-content: flex-end;
+  margin-top: .5rem;
+}
+
+.tos-note {
+  margin: 0;
+  font-size: .78rem;
+  color: var(--text-muted, #8b92b2);
+  text-align: center;
+}
+
+/* ─── Declined screen ──────────────────────────── */
+
+.tos-declined-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #0f1117);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.tos-declined-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.tos-declined-icon {
+  font-size: 3rem;
+}
+
+.tos-declined-card h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--text, #e8eaf6);
+}
+
+.tos-declined-card p {
+  margin: 0;
+  color: var(--text-muted, #8b92b2);
+}
+
+
+/* ═══════════════════════════════════════════════════
+   GHOST OBSERVER PANEL
+═══════════════════════════════════════════════════ */
+
+.ghost-observer-panel {
+  position: fixed;
+  inset: 0;
+  background: #07080d;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: .75rem;
+  overflow: hidden;
+}
+
+.ghost-observer-panel.hidden {
+  display: none;
+}
+
+.ghost-observer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 1rem;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ghost-observer-title-group {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.ghost-observer-eyecon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ghost-observer-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #e8eaf6;
+}
+
+.ghost-observer-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: .18rem .5rem;
+  border-radius: 4px;
+  background: rgba(108, 99, 255, .22);
+  color: #9d97ff;
+  border: 1px solid rgba(108, 99, 255, .35);
+}
+
+.ghost-observer-room-label {
+  font-size: .8rem;
+  color: #8b92b2;
+}
+
+.ghost-observer-status {
+  font-size: .82rem;
+  color: #8b92b2;
+  text-align: center;
+  min-height: 1.2em;
+  flex-shrink: 0;
+}
+
+.ghost-observer-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: .75rem;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.ghost-observer-tile {
+  position: relative;
+  background: #111319;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-observer-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ghost-observer-tile .ghost-observer-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #2e3147;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #e8eaf6;
+}
+
+.ghost-observer-label {
+  position: absolute;
+  bottom: .45rem;
+  left: .45rem;
+  font-size: .78rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  padding: .2rem .45rem;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.ghost-observer-tile-waiting {
+  font-size: .82rem;
+  color: #8b92b2;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEV DASHBOARD — BROADCAST PANEL
+═══════════════════════════════════════════════════ */
+
+.dev-panel--broadcast {
+  grid-column: 1 / -1;   /* span all three columns */
+  min-height: unset;
+}
+
+.dev-broadcast-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dev-broadcast-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dev-broadcast-input {
+  flex: 1;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.dev-broadcast-input:focus {
+  border-color: #6c63ff;
+}
+
+.dev-broadcast-status {
+  font-size: 0.78rem;
+  color: #8b949e;
+  min-height: 1.1em;
+  margin: 0;
+}
+
+/* ═══ GHOST OBSERVER — TILE ACTION BAR ═════════ */
+.ghost-observer-actions {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; gap: 4px; padding: 6px 8px; flex-wrap: wrap;
+  background: linear-gradient(transparent, rgba(0,0,0,.82));
+  opacity: 0; transition: opacity .18s ease;
+}
+.ghost-observer-tile:hover .ghost-observer-actions { opacity: 1; }
+
+/* ═══ DEV DASHBOARD — PERSISTENT USER ID BADGE ═ */
+.dev-uid-badge {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 0.82rem !important; font-weight: 700 !important;
+  color: #9d97ff !important; letter-spacing: 0.03em;
+}
+
+/* ═══ DEV DASHBOARD — PANEL FILTER INPUT ══════ */
+.dev-panel-filter-input {
+  background: #0d1117; border: 1px solid #30363d; border-radius: 5px;
+  color: #e6edf3; font-size: 0.75rem; padding: 3px 7px;
+  outline: none; width: 140px; transition: border-color .15s;
+}
+.dev-panel-filter-input:focus { border-color: #6c63ff; }
