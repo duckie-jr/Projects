@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devlink</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <!-- LOBBY SCREEN -->
+  <div id="lobby-screen">
+    <div class="lobby-card">
+      <div class="lobby-logo">
+        <img src="logo.svg" class="logo-icon" alt="Devlink" />
+        Devlink
+      </div>
+      <p class="lobby-subtitle">Real-time code editor &amp; chat. No account needed.</p>
+
+      <input type="text" id="username-input" placeholder="Your name" maxlength="20" autocomplete="off" />
+
+      <div class="lobby-actions">
+        <button id="create-room-btn" class="btn btn-primary">Create Room</button>
+        <div class="lobby-divider">or join existing room</div>
+        <div class="join-row">
+          <input type="text" id="room-id-input" placeholder="Paste Room ID" autocomplete="off" />
+          <button id="join-room-btn" class="btn btn-secondary">Join</button>
+        </div>
+      </div>
+
+      <p id="lobby-status"></p>
+    </div>
+  </div>
+
+  <!-- APP SCREEN -->
+  <div id="app-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo"><img src="logo.svg" class="logo-icon" alt="" /> Devlink</span>
+        <select id="language-select">
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="text/x-csrc">C / C++</option>
+          <option value="text/x-java">Java</option>
+          <option value="htmlmixed">HTML</option>
+          <option value="css">CSS</option>
+        </select>
+      </div>
+      <div class="toolbar-center">
+        <span id="room-id-label"></span>
+        <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
+      </div>
+      <div class="toolbar-right">
+        <div id="users-bar"></div>
+        <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <div class="editor-pane">
+        <textarea id="code-editor"></textarea>
+      </div>
+      <div class="chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button id="send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CDN scripts: sync so globals exist before deferred module executes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+</body>
+</html>
