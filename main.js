@@ -3,12 +3,6 @@
 // ============================================================
 const PROJECTS = [
   {
-    title: "My First Project",
-    description: "A short description of what this project does.",
-    url: "https://duckie-jr.github.io/Projects/",
-    tag: "Example",
-  },
-  {
     title: "Devlink",
     description: "Devlink lets users create or join a shared room where they can edit code together in real-time and chat, all peer-to-peer with no server or account needed.",
     url: "https://duckie-jr.github.io/Projects/Devlink/",
