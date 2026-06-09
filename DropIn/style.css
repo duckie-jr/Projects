@@ -1387,3 +1387,150 @@ select {
   font-size: 0.82rem;
   padding: 5px 10px;
 }
+
+/* ── Creator badge (shown next to verified creator's name) ── */
+
+.participant-creator-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Creator verification modal ── */
+
+.creator-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.creator-modal.hidden {
+  display: none;
+}
+
+.creator-modal-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.creator-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: -0.2px;
+}
+
+.creator-modal-desc {
+  font-size: 0.82rem;
+  color: #8b949e;
+  line-height: 1.6;
+  margin-top: -4px;
+}
+
+.creator-password-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #c9d1d9;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.creator-password-input:focus {
+  border-color: #a78bfa;
+}
+
+.creator-password-error {
+  font-size: 0.78rem;
+  color: #f85149;
+  min-height: 18px;
+  margin-top: -6px;
+}
+
+.creator-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* ── Creator: active servers list ── */
+
+.server-list-card {
+  max-width: 440px;
+}
+
+.server-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.server-list-empty {
+  font-size: 0.82rem;
+  color: #8b949e;
+  text-align: center;
+  padding: 18px 0;
+}
+
+.server-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.server-list-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.server-list-host {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e6edf3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-list-meta {
+  font-size: 0.72rem;
+  color: #8b949e;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
