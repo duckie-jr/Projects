@@ -1,42 +1,491 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Duckie</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="apple-touch-icon" href="./favicon.svg" />
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DropIn</title>
+  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <link rel="stylesheet" href="./style.css" />
+  <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
+  <script src="./main.js" defer></script>
+  <script src="./dev.js" defer></script>
+</head>
+<body>
 
-    <nav>
-      <span class="logo">Duckie</span>
+  <!-- ========== USERNAME SCREEN (shown first) ========== -->
+  <div id="username-screen">
+    <div class="username-card">
 
-    </nav>
-
-    <header class="hero">
-      <p class="eyebrow">Welcome</p>
-      <h1>Hey, I'm <span>Duckie</span></h1>
-      <p class="hero-sub">Developer and builder. Here's everything I've been working on.</p>
-      <div class="hero-links">
-        <a href="https://github.com/duckie-jr" target="_blank" rel="noopener noreferrer" class="btn btn-primary">GitHub</a>
-        <a href="#projects" class="btn btn-ghost">See projects</a>
+      <div class="username-logo">
+        <img src="logo.svg" class="username-logo-icon" alt="DropIn logo" />
+        <span>DropIn</span>
       </div>
-    </header>
 
-    <main id="projects">
-      <p class="section-label">Projects</p>
-      <div id="project-grid" class="grid"></div>
-    </main>
+      <div class="username-heading">Pick your screen name</div>
+      <p class="username-desc">
+        This is how everyone will know you — in rooms and random chats.
+      </p>
 
-    <footer>
-      <p>2026 — Duckie</p>
-    </footer>
+      <div class="username-input-wrapper">
+        <input
+          type="text"
+          id="screen-name-input"
+          placeholder="e.g. CoolPanda42"
+          maxlength="20"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <span id="screen-name-counter" class="name-counter">0 / 20</span>
+      </div>
 
-    <script src="./main.js"></script>
-  </body>
+      <button id="continue-btn" class="btn btn-primary username-continue-btn">
+        Continue →
+      </button>
+
+      <p id="username-error" class="username-error"></p>
+
+      <p class="username-note">
+        Letters, numbers, spaces, _ and - only. Keep it clean.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ========== HOME SCREEN ========== -->
+  <div id="home-screen" class="hidden">
+    <div class="home-hero">
+
+      <div class="home-logo">DropIn</div>
+      <p class="home-tagline">
+        Video call your friends — or meet a complete stranger.<br/>No account needed.
+      </p>
+
+      <div class="home-mode-grid">
+
+        <button id="select-rooms-btn" class="home-mode-card">
+          <div class="home-mode-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+          </div>
+          <div class="home-mode-name">Rooms</div>
+          <p class="home-mode-desc">
+            Create a private room and invite friends with a shareable code.
+            Chat, collaborate on code, or video call together.
+          </p>
+          <span class="home-mode-cta">Create a Room →</span>
+        </button>
+
+        <button id="select-random-btn" class="home-mode-card home-mode-card--random">
+          <div class="home-mode-icon home-mode-icon--random">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 3 21 3 21 8"/>
+              <line x1="4" y1="20" x2="21" y2="3"/>
+              <polyline points="21 16 21 21 16 21"/>
+              <line x1="15" y1="15" x2="21" y2="21"/>
+            </svg>
+          </div>
+          <div class="home-mode-name home-mode-name--random">Random</div>
+          <p class="home-mode-desc">
+            Get matched instantly with a random stranger for a live video chat.
+            Hit Next to meet someone new.
+          </p>
+          <span class="home-mode-cta home-mode-cta--random">Drop In →</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ROOMS LOBBY SCREEN ========== -->
+  <div id="lobby-screen" class="hidden">
+    <div class="lobby-card">
+
+      <div class="lobby-logo">
+        DropIn
+        <span class="mode-badge mode-badge--rooms">Rooms</span>
+      </div>
+      <p class="lobby-subtitle">Create a video room and share the code, or paste one to join.</p>
+
+      <!-- Shown only while the creator badge is active -->
+      <div id="creator-status" class="creator-status hidden">
+        <span class="creator-status-label">★ Creator mode active</span>
+        <button id="creator-remove-btn" class="btn btn-xs btn-danger">Remove</button>
+      </div>
+
+      <div class="lobby-actions">
+        <button id="create-room-btn" class="btn btn-primary">Create Room</button>
+        <div class="lobby-divider">or join existing room</div>
+        <div class="join-row">
+          <input type="text" id="room-id-input" placeholder="Paste Room ID" autocomplete="off" />
+          <button id="join-room-btn" class="btn btn-secondary">Join</button>
+        </div>
+      </div>
+
+      <!-- ─── Recent rooms ─────────────────────────────────────── -->
+      <div id="recent-rooms-section" class="recent-rooms-section hidden">
+        <div class="recent-rooms-header">
+          <span class="recent-rooms-label">Recent Rooms</span>
+          <div class="recent-rooms-actions">
+            <button id="export-recents-btn" class="btn btn-xs btn-secondary">Export</button>
+            <button id="clear-recents-btn"  class="btn btn-xs btn-danger">Clear All</button>
+          </div>
+        </div>
+        <div id="recent-rooms-list"></div>
+      </div>
+
+      <!-- ─── Import rooms from file or URL ────────────────────── -->
+      <div class="import-rooms-section">
+        <div class="import-rooms-divider">import rooms</div>
+        <div class="import-rooms-controls">
+          <label class="btn btn-xs btn-secondary import-file-label">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload .json
+            <input type="file" id="import-file-input" accept=".json" />
+          </label>
+          <div class="import-url-row">
+            <input type="text" id="import-url-input" placeholder="Paste JSON URL…" autocomplete="off" />
+            <button id="import-url-btn" class="btn btn-xs btn-secondary">Fetch</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="lobby-status"></p>
+      <button id="lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
+
+    </div>
+  </div>
+
+  <!-- ========== ROOMS APP SCREEN ========== -->
+  <div id="app-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo">
+          DropIn
+          <span class="toolbar-mode-tag">Rooms</span>
+        </span>
+      </div>
+
+      <div class="toolbar-center">
+        <span id="room-id-label" role="button" title="Click to show full code"></span>
+        <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
+      </div>
+
+      <div class="toolbar-right">
+        <div id="media-controls">
+          <button id="mute-btn"         class="btn btn-sm btn-secondary">Mute</button>
+          <button id="cam-btn"          class="btn btn-sm btn-secondary">Cam Off</button>
+          <button id="screen-share-btn" class="btn btn-sm btn-secondary">Share Screen</button>
+          <button id="raise-hand-btn"   class="btn btn-sm btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+            </svg>
+            Hand
+          </button>
+        </div>
+        <button id="users-count-btn" class="btn btn-sm btn-secondary">
+          <span id="users-count">0</span> participants
+        </button>
+        <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <!-- Video grid on the left, chat on the right -->
+    <div class="workspace">
+      <div class="video-grid-panel">
+        <div id="video-grid"></div>
+        <div id="participants-panel" class="participants-panel hidden">
+          <div class="participants-header">
+            <span class="participants-title">Participants</span>
+            <button id="close-panel-btn" class="btn btn-sm btn-secondary">X</button>
+          </div>
+          <div class="participants-list"></div>
+        </div>
+      </div>
+      <div class="chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button id="send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== RANDOM LOBBY SCREEN ========== -->
+  <div id="random-lobby-screen" class="hidden">
+    <div class="lobby-card">
+
+      <div class="lobby-logo">
+        DropIn
+        <span class="mode-badge mode-badge--random">Random</span>
+      </div>
+      <p class="lobby-subtitle">
+        You'll be matched live with a random stranger. Hit Next any time to meet someone new.
+      </p>
+
+      <button id="start-random-btn" class="btn btn-random">Drop In →</button>
+      <p id="random-lobby-status"></p>
+      <p class="random-your-id">Your number: <strong id="random-your-id-num">#…</strong></p>
+      <button id="random-lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
+
+    </div>
+  </div>
+
+  <!-- ========== RANDOM CALL SCREEN ========== -->
+  <div id="random-call-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo">
+          DropIn
+          <span class="toolbar-mode-tag toolbar-mode-tag--random">Random</span>
+        </span>
+      </div>
+      <div class="toolbar-right">
+        <button id="random-mute-btn" class="btn btn-sm btn-secondary">Mute</button>
+        <button id="random-cam-btn"  class="btn btn-sm btn-secondary">Cam Off</button>
+        <button id="random-mod-btn"  class="btn btn-sm btn-secondary hidden">★ Moderate</button>
+        <button id="random-next-btn" class="btn btn-sm btn-random">Next →</button>
+        <button id="random-leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <div class="random-body">
+
+      <div class="random-videos-area">
+
+        <!-- Stranger video (fills the space) -->
+        <div class="random-remote-wrapper">
+          <video id="random-remote-video" autoplay playsinline></video>
+          <div class="random-video-label">Stranger</div>
+
+          <!-- Shown while searching for / waiting on a match -->
+          <div id="random-waiting-overlay" class="random-waiting-overlay">
+            <div class="random-spinner"></div>
+            <p id="random-waiting-text">Finding someone...</p>
+          </div>
+        </div>
+
+        <!-- Local camera preview (picture-in-picture corner) -->
+        <div class="random-local-wrapper">
+          <video id="random-local-video" autoplay playsinline muted></video>
+          <div class="random-video-label random-video-label--local">You</div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar chat -->
+      <div class="chat-pane random-chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="random-chat-log" class="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="random-chat-input" placeholder="Say something..." autocomplete="off" />
+          <button id="random-send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== ROOM CODE FULLSCREEN OVERLAY ========== -->
+  <div id="room-code-overlay" class="hidden">
+    <p class="room-code-overlay-label">Room Code</p>
+    <div id="room-code-overlay-text"></div>
+    <p class="room-code-overlay-dismiss">tap anywhere to close</p>
+  </div>
+
+  <!-- ========== HOST ACTION CONTEXT MENU ========== -->
+  <!-- Small popup the room owner gets when clicking a participant name -->
+  <div id="host-action-menu" class="host-action-menu hidden">
+    <div class="host-action-menu-header">
+      <span class="host-action-menu-name"></span>
+    </div>
+    <button class="host-action-btn host-action-mute-btn">Mute</button>
+    <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
+    <button class="host-action-btn host-action-move-btn">Move to Room…</button>
+    <div class="host-action-divider"></div>
+    <button class="host-action-btn host-action-kick-btn">Kick</button>
+    <button class="host-action-btn host-action-ban-btn">Ban</button>
+  </div>
+
+  <!-- ========== CREATOR VERIFICATION MODAL ========== -->
+  <div id="creator-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Creator Verification</div>
+      <p class="creator-modal-desc">
+        Enter the creator password to activate your badge.<br/>
+        It will be shown to everyone in any room you join.
+      </p>
+      <input
+        type="password"
+        id="creator-password-input"
+        class="creator-password-input"
+        placeholder="Password"
+        autocomplete="off"
+      />
+      <p id="creator-password-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="creator-password-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="creator-password-submit" class="btn btn-primary btn-sm">Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CREATOR: ACTIVE SERVERS MODAL ========== -->
+  <!-- Opened when a verified creator types "creator" into the Join field -->
+  <div id="server-list-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Active Servers</div>
+      <p class="creator-modal-desc">
+        Every live room right now. Click Join to drop into any call.
+      </p>
+      <div id="server-list-container" class="server-list-container"></div>
+      <div class="creator-modal-actions">
+        <button id="server-list-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+        <button id="server-list-close"   class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MOVE PARTICIPANT MODAL (host + creator) ========== -->
+  <div id="move-user-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Move <span id="move-user-name"></span></div>
+      <p class="creator-modal-desc">
+        Pick a live room to send them to, or paste a Room ID below.
+      </p>
+      <div id="move-server-list" class="server-list-container"></div>
+      <div class="join-row">
+        <input type="text" id="move-room-input" placeholder="Room ID" autocomplete="off" />
+      </div>
+      <div class="creator-modal-actions">
+        <button id="move-cancel-btn"  class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="move-confirm-btn" class="btn btn-primary btn-sm">Move</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CREATOR: RANDOM MODERATION MODAL ========== -->
+  <!-- Opened from the "★ Moderate" button on the Random call screen -->
+  <div id="random-mod-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Random Moderation</div>
+      <p class="creator-modal-desc">
+        Everyone currently in Random, shown with their number. Kick removes them
+        now; Ban blocks their number for the chosen length of time.
+      </p>
+      <div class="random-mod-duration-row">
+        <label for="random-ban-duration">Ban length</label>
+        <select id="random-ban-duration">
+          <option value="10">10 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="1440">1 day</option>
+          <option value="10080">1 week</option>
+          <option value="permanent">Permanent</option>
+        </select>
+      </div>
+      <div class="random-mod-section-label">In Random now</div>
+      <div id="random-mod-list" class="server-list-container"></div>
+      <div class="random-mod-section-label">Banned numbers</div>
+      <div id="random-mod-bans" class="server-list-container"></div>
+      <div class="creator-modal-actions">
+        <button id="random-mod-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+        <button id="random-mod-close"   class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DEV DASHBOARD (creator only — ` to open, ` or Esc to close) ========== -->
+  <div id="dev-dashboard" class="dev-dashboard hidden">
+    <div class="dev-dashboard-inner">
+
+      <div class="dev-dashboard-header">
+        <div class="dev-dashboard-title-group">
+          <span class="dev-dashboard-title">⚡ Dev Dashboard</span>
+          <span class="dev-dashboard-badge">CREATOR ONLY</span>
+        </div>
+        <div class="dev-dashboard-stats">
+          <span class="dev-stat-chip">Random Online <strong id="dev-stat-random-count">—</strong></span>
+          <span class="dev-stat-chip">Active Rooms <strong id="dev-stat-rooms-count">—</strong></span>
+          <span class="dev-stat-chip">Bans <strong id="dev-stat-bans-count">—</strong></span>
+          <span id="dev-last-refresh" class="dev-last-refresh">—</span>
+        </div>
+        <div class="dev-dashboard-header-actions">
+          <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
+          <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
+        </div>
+      </div>
+
+      <div class="dev-dashboard-body">
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Random Users</span>
+            <div class="dev-panel-controls">
+              <label class="dev-control-label">Ban:</label>
+              <select id="dev-ban-duration">
+                <option value="10">10 min</option>
+                <option value="60">1 hour</option>
+                <option value="1440">1 day</option>
+                <option value="10080">1 week</option>
+                <option value="permanent">Permanent</option>
+              </select>
+            </div>
+          </div>
+          <div id="dev-random-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load.</p>
+          </div>
+        </div>
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Active Rooms</span>
+          </div>
+          <div id="dev-rooms-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load.</p>
+          </div>
+        </div>
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Banned Numbers</span>
+            <button id="dev-clear-all-bans" class="btn btn-xs btn-danger">Clear All</button>
+          </div>
+          <div id="dev-bans-list" class="dev-panel-list">
+            <p class="dev-empty">No active bans.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+</body>
 </html>
