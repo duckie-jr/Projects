@@ -1,0 +1,986 @@
+/* ─── Reset ──────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0d1117;
+  color: #c9d1d9;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ─── USERNAME SCREEN ────────────────────────────────────────────────────────── */
+
+#username-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 25%, #111827 0%, #0d1117 65%);
+}
+
+.username-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Logo row: icon + wordmark */
+
+.username-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #58a6ff;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.username-logo-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.username-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e6edf3;
+  letter-spacing: -0.3px;
+  margin-top: 4px;
+}
+
+.username-desc {
+  font-size: 0.88rem;
+  color: #8b949e;
+  line-height: 1.65;
+  margin-top: -6px;
+}
+
+/* Input + live counter */
+
+.username-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.username-input-wrapper input {
+  font-size: 1.05rem;
+  padding: 13px 54px 13px 16px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.username-input-wrapper input:focus {
+  border-color: #58a6ff;
+}
+
+.name-counter {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #484f58;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.name-counter.near-limit {
+  color: #f97316;
+}
+
+/* Continue button */
+
+.username-continue-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Error message */
+
+.username-error {
+  min-height: 20px;
+  font-size: 0.82rem;
+  color: #f85149;
+  font-weight: 500;
+}
+
+/* Fine-print note */
+
+.username-note {
+  font-size: 0.75rem;
+  color: #484f58;
+  line-height: 1.55;
+}
+
+/* ─── Shared inputs ──────────────────────────────────────────────────────────── */
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #c9d1d9;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: #58a6ff;
+}
+
+select {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #c9d1d9;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ─── Shared buttons ─────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s, transform 0.1s;
+}
+
+.btn:hover    { filter: brightness(1.15); }
+.btn:active   { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary   { background: #238636; color: #fff; }
+.btn-secondary { background: #30363d; color: #c9d1d9; }
+.btn-danger    { background: #b62324; color: #fff; }
+.btn-warn      { background: #9e6a03; color: #fff; }
+.btn-random    { background: #c2500a; color: #fff; }
+.btn-sm        { padding: 5px 12px; font-size: 0.78rem; }
+.btn-xs        { padding: 2px 8px;  font-size: 0.7rem; }
+
+.btn-muted {
+  background: #b62324 !important;
+  color: #fff !important;
+}
+
+/* Back link shared by lobby screens */
+.back-btn {
+  align-self: center;
+  color: #484f58 !important;
+}
+
+/* ─── HOME SCREEN ────────────────────────────────────────────────────────────── */
+
+#home-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 30%, #161b22 0%, #0d1117 65%);
+  overflow-y: auto;
+}
+
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.home-logo {
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: #58a6ff;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.home-tagline {
+  color: #8b949e;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+/* Two-column card grid */
+
+.home-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.home-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 28px 32px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+}
+
+.home-mode-card:hover {
+  border-color: #58a6ff;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 36px rgba(88, 166, 255, 0.13);
+}
+
+.home-mode-card--random:hover {
+  border-color: #f97316;
+  box-shadow: 0 10px 36px rgba(249, 115, 22, 0.13);
+}
+
+/* Icon circle */
+
+.home-mode-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(31, 111, 235, 0.14);
+  border: 1px solid rgba(31, 111, 235, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #58a6ff;
+  flex-shrink: 0;
+}
+
+.home-mode-icon--random {
+  background: rgba(249, 115, 22, 0.14);
+  border-color: rgba(249, 115, 22, 0.28);
+  color: #f97316;
+}
+
+.home-mode-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Card text */
+
+.home-mode-name {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #e6edf3;
+  letter-spacing: -0.4px;
+}
+
+.home-mode-name--random {
+  color: #e6edf3;
+}
+
+.home-mode-desc {
+  font-size: 0.875rem;
+  color: #8b949e;
+  line-height: 1.65;
+  max-width: 260px;
+}
+
+.home-mode-cta {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #58a6ff;
+  margin-top: 6px;
+}
+
+.home-mode-cta--random {
+  color: #f97316;
+}
+
+/* ─── LOBBY SCREENS (Rooms + Random share these) ─────────────────────────────── */
+
+#lobby-screen,
+#random-lobby-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 40%, #161b22 0%, #0d1117 70%);
+  overflow-y: auto;
+}
+
+.lobby-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 14px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Logo row inside the card */
+
+.lobby-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: -0.5px;
+}
+
+.lobby-subtitle {
+  text-align: center;
+  color: #8b949e;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+/* Mode badges (Rooms / Random pill next to logo) */
+
+.mode-badge {
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-badge--rooms {
+  background: rgba(31, 111, 235, 0.15);
+  color: #79c0ff;
+  border: 1px solid rgba(31, 111, 235, 0.35);
+}
+
+.mode-badge--random {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+/* ─── Room type selector (inside Rooms lobby) ────────────────────────────────── */
+
+#room-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-type-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.room-type-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.room-type-option {
+  cursor: pointer;
+}
+
+.room-type-option input[type="radio"] {
+  display: none;
+}
+
+.room-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #8b949e;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.room-type-card svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.room-type-option input[type="radio"]:checked + .room-type-card {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background: rgba(31, 111, 235, 0.09);
+}
+
+.room-type-option:hover .room-type-card {
+  border-color: #484f58;
+  color: #c9d1d9;
+}
+
+.room-type-note {
+  font-size: 0.75rem;
+  color: #484f58;
+  text-align: center;
+}
+
+/* Lobby action buttons + join row */
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lobby-actions .btn-primary {
+  width: 100%;
+  padding: 11px;
+}
+
+.lobby-actions .btn-random {
+  width: 100%;
+  padding: 11px;
+  font-size: 0.95rem;
+}
+
+.lobby-divider {
+  text-align: center;
+  color: #484f58;
+  font-size: 0.8rem;
+  position: relative;
+}
+
+.lobby-divider::before,
+.lobby-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: #30363d;
+}
+
+.lobby-divider::before { left: 0; }
+.lobby-divider::after  { right: 0; }
+
+.join-row {
+  display: flex;
+  gap: 8px;
+}
+
+.join-row input {
+  flex: 1;
+}
+
+/* Status lines */
+
+#lobby-status,
+#random-lobby-status {
+  min-height: 18px;
+  font-size: 0.82rem;
+  color: #8b949e;
+  text-align: center;
+}
+
+#lobby-status.error,
+#random-lobby-status.error {
+  color: #f85149;
+}
+
+/* ─── SHARED TOOLBAR ─────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  height: 48px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.toolbar-left,
+.toolbar-center,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-left   { flex: 1; }
+.toolbar-center { flex: 0 0 auto; }
+.toolbar-right  { flex: 1; justify-content: flex-end; }
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #58a6ff;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* Rooms / Random pill inside the toolbar */
+
+.toolbar-mode-tag {
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(31, 111, 235, 0.15);
+  color: #79c0ff;
+  border: 1px solid rgba(31, 111, 235, 0.35);
+}
+
+.toolbar-mode-tag--random {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.35);
+}
+
+#room-id-label {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #8b949e;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── ROOMS APP SCREEN ───────────────────────────────────────────────────────── */
+
+#app-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Media controls (mute / cam) — always visible in Rooms */
+
+#media-controls {
+  display: flex;
+  gap: 6px;
+}
+
+/* Users bar */
+
+#users-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(31, 111, 235, 0.13);
+  border: 1px solid rgba(31, 111, 235, 0.33);
+  color: #79c0ff;
+  border-radius: 20px;
+  padding: 2px 8px 2px 10px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Host kick / ban controls inside user chip */
+
+.kick-btn,
+.ban-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: filter 0.15s;
+}
+
+.kick-btn { background: #9e6a03; color: #fff; }
+.ban-btn  { background: #b62324; color: #fff; }
+
+.kick-btn:hover,
+.ban-btn:hover {
+  filter: brightness(1.2);
+}
+
+/* Workspace — video grid left, chat right */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left panel: fills remaining width, dark background */
+
+.video-grid-panel {
+  flex: 1;
+  background: #010409;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.video-grid-panel::-webkit-scrollbar       { width: 4px; }
+.video-grid-panel::-webkit-scrollbar-track { background: transparent; }
+.video-grid-panel::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+/* Responsive CSS grid — tiles reflow as participants join */
+
+#video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  align-content: start;
+}
+
+/* Video tile — 16/9 aspect ratio */
+
+.video-tile {
+  position: relative;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+.video-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #0d1117;
+}
+
+.video-tile-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.78));
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e6edf3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Audio-only tile — fills the same grid cell with an avatar */
+
+.audio-tile {
+  position: relative;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.audio-tile .audio-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(31, 111, 235, 0.27);
+  border: 2px solid #58a6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #79c0ff;
+}
+
+.audio-tile .audio-name {
+  font-size: 0.85rem;
+  color: #8b949e;
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-tile.speaking {
+  border-color: #238636;
+}
+
+.audio-tile.speaking .audio-avatar {
+  border-color: #3fb950;
+  background: rgba(35, 134, 54, 0.13);
+}
+
+/* ─── SHARED CHAT PANE ───────────────────────────────────────────────────────── */
+
+.chat-pane {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0d1117;
+}
+
+.chat-header {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #21262d;
+  flex-shrink: 0;
+}
+
+/* Both #chat-log (Rooms) and .chat-log (Random) share these */
+
+#chat-log,
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#chat-log::-webkit-scrollbar,
+.chat-log::-webkit-scrollbar       { width: 4px; }
+#chat-log::-webkit-scrollbar-track,
+.chat-log::-webkit-scrollbar-track { background: transparent; }
+#chat-log::-webkit-scrollbar-thumb,
+.chat-log::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chat-sender {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #79c0ff;
+}
+
+.chat-time {
+  font-size: 0.7rem;
+  color: #484f58;
+}
+
+.chat-text {
+  font-size: 0.85rem;
+  color: #c9d1d9;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.system-message {
+  font-size: 0.78rem;
+  color: #484f58;
+  text-align: center;
+  font-style: italic;
+}
+
+.chat-footer {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #21262d;
+  flex-shrink: 0;
+}
+
+.chat-footer input {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+}
+
+/* ─── RANDOM CALL SCREEN ─────────────────────────────────────────────────────── */
+
+#random-call-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Body: videos left, chat right */
+
+.random-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left: video area fills remaining height */
+
+.random-videos-area {
+  flex: 1;
+  position: relative;
+  background: #010409;
+  overflow: hidden;
+}
+
+/* Stranger's video fills the whole area */
+
+.random-remote-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.random-remote-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Your camera — picture-in-picture corner */
+
+.random-local-wrapper {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #30363d;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.random-local-wrapper video {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+  background: #0d1117;
+}
+
+/* Name labels overlaid on each video */
+
+.random-video-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.72));
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #e6edf3;
+}
+
+.random-video-label--local {
+  font-size: 0.7rem;
+}
+
+/* Waiting overlay (searching / connecting) */
+
+.random-waiting-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #0d1117;
+  z-index: 5;
+}
+
+.random-waiting-overlay p {
+  color: #8b949e;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+/* Spinner */
+
+.random-spinner {
+  width: 46px;
+  height: 46px;
+  border: 4px solid #21262d;
+  border-top-color: #f97316;
+  border-radius: 50%;
+  animation: dropin-spin 0.75s linear infinite;
+}
+
+@keyframes dropin-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Random chat sidebar — same as .chat-pane but border on left */
+
+.random-chat-pane {
+  border-left: 1px solid #30363d;
+}
