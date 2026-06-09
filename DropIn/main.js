@@ -493,6 +493,11 @@ function showAppScreen() {
   lobbyScreenEl.classList.add("hidden");
   appScreenEl.classList.remove("hidden");
   roomIdLabelEl.textContent = currentRoomId;
+  // Reflect the active room in the URL so it can be shared, bookmarked,
+  // or pasted straight into the join field by anyone.
+  const roomUrl = new URL(window.location.href);
+  roomUrl.searchParams.set("room", currentRoomId);
+  window.history.replaceState({ roomId: currentRoomId }, "", roomUrl);
 }
 
 // ═══════════════════════════════════════════════════
@@ -973,8 +978,8 @@ function handleDataFromHost(data) {
     case "chat":        { renderChatMessage(data); break; }
     case "user_joined": { appendSystemMessage(data.username + " joined the room."); break; }
     case "user_list":   { connectedUsers = data.users; renderUsersList(); break; }
-    case "kicked":      { appendSystemMessage("You were kicked."); setTimeout(() => location.reload(), 2500); break; }
-    case "banned":      { appendSystemMessage("You have been banned."); setTimeout(() => location.reload(), 3000); break; }
+    case "kicked":      { appendSystemMessage("You were kicked."); clearRoomFromUrl(); setTimeout(() => location.reload(), 2500); break; }
+    case "banned":      { appendSystemMessage("You have been banned."); clearRoomFromUrl(); setTimeout(() => location.reload(), 3000); break; }
     case "force_mute": {
       // Creators are immune — the host cannot lock their microphone
       if (isCreator) break;
@@ -1035,6 +1040,7 @@ function handleDataFromHost(data) {
       appendSystemMessage(`You're being moved to room ${data.roomId}…`);
       sessionStorage.setItem(STORAGE_KEY_PENDING_MOVE, data.roomId);
       stopRoomAnnouncement();
+      clearRoomFromUrl();
       setTimeout(() => location.reload(), 1500);
       break;
     }
@@ -1524,6 +1530,13 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// Removes ?room= from the URL before a reload so auto-join doesn't re-fire.
+function clearRoomFromUrl() {
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("room");
+  window.history.replaceState({}, "", cleanUrl);
+}
+
 leaveBtnEl.addEventListener("click", () => {
   // Stop screen share cleanly before leaving
   if (isScreenSharing) {
@@ -1533,6 +1546,7 @@ leaveBtnEl.addEventListener("click", () => {
   }
   stopRoomAnnouncement();
   peer?.destroy();
+  clearRoomFromUrl();
   location.reload();
 });
 
@@ -1751,6 +1765,17 @@ function attemptContinue() {
   screenName = screenNameInputEl.value.trim();
   persistUsername(screenName);
   usernameScreenEl.classList.add("hidden");
+
+  // If the user arrived via a ?room= link, drop them straight into that room.
+  const pendingUrlRoom = sessionStorage.getItem("dropin_url_room");
+  if (pendingUrlRoom) {
+    sessionStorage.removeItem("dropin_url_room");
+    lobbyScreenEl.classList.remove("hidden");
+    setLobbyStatus("Joining room from link…");
+    startJoinRoom(pendingUrlRoom);
+    return;
+  }
+
   homeScreenEl.classList.remove("hidden");
 }
 
@@ -1780,9 +1805,11 @@ continueBtnEl.addEventListener("click", () => attemptContinue());
 
 // If we were relocated by a creator/host, skip the menus and auto-join the
 // target room as soon as we reload (the screen name is already saved).
+let _resumedByPendingMove = false;
 (function resumePendingMove() {
   const pendingRoomId = sessionStorage.getItem(STORAGE_KEY_PENDING_MOVE);
   if (!pendingRoomId) return;
+  _resumedByPendingMove = true;
   sessionStorage.removeItem(STORAGE_KEY_PENDING_MOVE);
 
   const savedName = loadSavedUsername();
@@ -1793,6 +1820,28 @@ continueBtnEl.addEventListener("click", () => attemptContinue());
   lobbyScreenEl.classList.remove("hidden");
   setLobbyStatus("Moving you to the new room…");
   startJoinRoom(pendingRoomId);
+})();
+
+// If the URL contains ?room=abc, auto-join that room on load.
+// If the user has no saved name yet, store the ID for use after name entry.
+(function resumeRoomFromUrl() {
+  if (_resumedByPendingMove) return; // force-move already handled startup
+  const urlRoomId = new URLSearchParams(window.location.search).get("room");
+  if (!urlRoomId) return;
+
+  const savedName = loadSavedUsername();
+  if (!savedName) {
+    // Stash it — attemptContinue() will pick it up after the name is entered.
+    sessionStorage.setItem("dropin_url_room", urlRoomId);
+    return;
+  }
+
+  // Has a saved name — skip straight to joining the room.
+  screenName = savedName;
+  usernameScreenEl.classList.add("hidden");
+  lobbyScreenEl.classList.remove("hidden");
+  setLobbyStatus("Joining room from link…");
+  startJoinRoom(urlRoomId);
 })();
 
 // ═══════════════════════════════════════════════════
