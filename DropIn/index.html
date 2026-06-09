@@ -120,6 +120,38 @@
         </div>
       </div>
 
+      <!-- ─── Recent rooms ─────────────────────────────────────── -->
+      <div id="recent-rooms-section" class="recent-rooms-section hidden">
+        <div class="recent-rooms-header">
+          <span class="recent-rooms-label">Recent Rooms</span>
+          <div class="recent-rooms-actions">
+            <button id="export-recents-btn" class="btn btn-xs btn-secondary">Export</button>
+            <button id="clear-recents-btn"  class="btn btn-xs btn-danger">Clear All</button>
+          </div>
+        </div>
+        <div id="recent-rooms-list"></div>
+      </div>
+
+      <!-- ─── Import rooms from file or URL ────────────────────── -->
+      <div class="import-rooms-section">
+        <div class="import-rooms-divider">import rooms</div>
+        <div class="import-rooms-controls">
+          <label class="btn btn-xs btn-secondary import-file-label">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload .json
+            <input type="file" id="import-file-input" accept=".json" />
+          </label>
+          <div class="import-url-row">
+            <input type="text" id="import-url-input" placeholder="Paste JSON URL…" autocomplete="off" />
+            <button id="import-url-btn" class="btn btn-xs btn-secondary">Fetch</button>
+          </div>
+        </div>
+      </div>
+
       <p id="lobby-status"></p>
       <button id="lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
 
@@ -138,16 +170,28 @@
       </div>
 
       <div class="toolbar-center">
-        <span id="room-id-label"></span>
+        <span id="room-id-label" role="button" title="Click to show full code"></span>
         <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
       </div>
 
       <div class="toolbar-right">
         <div id="media-controls">
-          <button id="mute-btn" class="btn btn-sm btn-secondary">Mute</button>
-          <button id="cam-btn" class="btn btn-sm btn-secondary">Cam Off</button>
+          <button id="mute-btn"         class="btn btn-sm btn-secondary">Mute</button>
+          <button id="cam-btn"          class="btn btn-sm btn-secondary">Cam Off</button>
+          <button id="screen-share-btn" class="btn btn-sm btn-secondary">Share Screen</button>
+          <button id="raise-hand-btn"   class="btn btn-sm btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+            </svg>
+            Hand
+          </button>
         </div>
-        <div id="users-bar"></div>
+        <button id="users-count-btn" class="btn btn-sm btn-secondary">
+          <span id="users-count">0</span> participants
+        </button>
         <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
       </div>
     </div>
@@ -156,6 +200,13 @@
     <div class="workspace">
       <div class="video-grid-panel">
         <div id="video-grid"></div>
+        <div id="participants-panel" class="participants-panel hidden">
+          <div class="participants-header">
+            <span class="participants-title">Participants</span>
+            <button id="close-panel-btn" class="btn btn-sm btn-secondary">X</button>
+          </div>
+          <div class="participants-list"></div>
+        </div>
       </div>
       <div class="chat-pane">
         <div class="chat-header">Chat</div>
@@ -241,6 +292,26 @@
       </div>
 
     </div>
+  </div>
+
+  <!-- ========== ROOM CODE FULLSCREEN OVERLAY ========== -->
+  <div id="room-code-overlay" class="hidden">
+    <p class="room-code-overlay-label">Room Code</p>
+    <div id="room-code-overlay-text"></div>
+    <p class="room-code-overlay-dismiss">tap anywhere to close</p>
+  </div>
+
+  <!-- ========== HOST ACTION CONTEXT MENU ========== -->
+  <!-- Small popup the room owner gets when clicking a participant name -->
+  <div id="host-action-menu" class="host-action-menu hidden">
+    <div class="host-action-menu-header">
+      <span class="host-action-menu-name"></span>
+    </div>
+    <button class="host-action-btn host-action-mute-btn">Mute</button>
+    <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
+    <div class="host-action-divider"></div>
+    <button class="host-action-btn host-action-kick-btn">Kick</button>
+    <button class="host-action-btn host-action-ban-btn">Ban</button>
   </div>
 
   <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
