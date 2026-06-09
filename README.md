@@ -11,9 +11,8 @@ A collection of my personal projects and experiments.
 |---------------------------------|
 
 ### Import project into home screen
-
-  {
   
+    {
     title: "My First Project",
     
     description: "A short description of what this project does.",
@@ -21,8 +20,7 @@ A collection of my personal projects and experiments.
     url: "https://duckie-jr.github.io/Projects/",
     
     tag: "Example",
-    
-  },
+    },
 
 ## About
 
