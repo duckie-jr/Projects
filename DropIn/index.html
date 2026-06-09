@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DropIn</title>
+  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./main.js" defer></script>
+</head>
+<body>
+
+  <!-- ========== USERNAME SCREEN (shown first) ========== -->
+  <div id="username-screen">
+    <div class="username-card">
+
+      <div class="username-logo">
+        <img src="logo.svg" class="username-logo-icon" alt="DropIn logo" />
+        <span>DropIn</span>
+      </div>
+
+      <div class="username-heading">Pick your screen name</div>
+      <p class="username-desc">
+        This is how everyone will know you — in rooms and random chats.
+      </p>
+
+      <div class="username-input-wrapper">
+        <input
+          type="text"
+          id="screen-name-input"
+          placeholder="e.g. CoolPanda42"
+          maxlength="20"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <span id="screen-name-counter" class="name-counter">0 / 20</span>
+      </div>
+
+      <button id="continue-btn" class="btn btn-primary username-continue-btn">
+        Continue →
+      </button>
+
+      <p id="username-error" class="username-error"></p>
+
+      <p class="username-note">
+        Letters, numbers, spaces, _ and - only. Keep it clean.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ========== HOME SCREEN ========== -->
+  <div id="home-screen" class="hidden">
+    <div class="home-hero">
+
+      <div class="home-logo">DropIn</div>
+      <p class="home-tagline">
+        Video call your friends — or meet a complete stranger.<br/>No account needed.
+      </p>
+
+      <div class="home-mode-grid">
+
+        <button id="select-rooms-btn" class="home-mode-card">
+          <div class="home-mode-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+          </div>
+          <div class="home-mode-name">Rooms</div>
+          <p class="home-mode-desc">
+            Create a private room and invite friends with a shareable code.
+            Chat, collaborate on code, or video call together.
+          </p>
+          <span class="home-mode-cta">Create a Room →</span>
+        </button>
+
+        <button id="select-random-btn" class="home-mode-card home-mode-card--random">
+          <div class="home-mode-icon home-mode-icon--random">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 3 21 3 21 8"/>
+              <line x1="4" y1="20" x2="21" y2="3"/>
+              <polyline points="21 16 21 21 16 21"/>
+              <line x1="15" y1="15" x2="21" y2="21"/>
+            </svg>
+          </div>
+          <div class="home-mode-name home-mode-name--random">Random</div>
+          <p class="home-mode-desc">
+            Get matched instantly with a random stranger for a live video chat.
+            Hit Next to meet someone new.
+          </p>
+          <span class="home-mode-cta home-mode-cta--random">Drop In →</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ROOMS LOBBY SCREEN ========== -->
+  <div id="lobby-screen" class="hidden">
+    <div class="lobby-card">
+
+      <div class="lobby-logo">
+        DropIn
+        <span class="mode-badge mode-badge--rooms">Rooms</span>
+      </div>
+      <p class="lobby-subtitle">Create a video room and share the code, or paste one to join.</p>
+
+      <div class="lobby-actions">
+        <button id="create-room-btn" class="btn btn-primary">Create Room</button>
+        <div class="lobby-divider">or join existing room</div>
+        <div class="join-row">
+          <input type="text" id="room-id-input" placeholder="Paste Room ID" autocomplete="off" />
+          <button id="join-room-btn" class="btn btn-secondary">Join</button>
+        </div>
+      </div>
+
+      <p id="lobby-status"></p>
+      <button id="lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
+
+    </div>
+  </div>
+
+  <!-- ========== ROOMS APP SCREEN ========== -->
+  <div id="app-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo">
+          DropIn
+          <span class="toolbar-mode-tag">Rooms</span>
+        </span>
+      </div>
+
+      <div class="toolbar-center">
+        <span id="room-id-label"></span>
+        <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
+      </div>
+
+      <div class="toolbar-right">
+        <div id="media-controls">
+          <button id="mute-btn" class="btn btn-sm btn-secondary">Mute</button>
+          <button id="cam-btn" class="btn btn-sm btn-secondary">Cam Off</button>
+        </div>
+        <div id="users-bar"></div>
+        <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <!-- Video grid on the left, chat on the right -->
+    <div class="workspace">
+      <div class="video-grid-panel">
+        <div id="video-grid"></div>
+      </div>
+      <div class="chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button id="send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== RANDOM LOBBY SCREEN ========== -->
+  <div id="random-lobby-screen" class="hidden">
+    <div class="lobby-card">
+
+      <div class="lobby-logo">
+        DropIn
+        <span class="mode-badge mode-badge--random">Random</span>
+      </div>
+      <p class="lobby-subtitle">
+        You'll be matched live with a random stranger. Hit Next any time to meet someone new.
+      </p>
+
+      <button id="start-random-btn" class="btn btn-random">Drop In →</button>
+      <p id="random-lobby-status"></p>
+      <button id="random-lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
+
+    </div>
+  </div>
+
+  <!-- ========== RANDOM CALL SCREEN ========== -->
+  <div id="random-call-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo">
+          DropIn
+          <span class="toolbar-mode-tag toolbar-mode-tag--random">Random</span>
+        </span>
+      </div>
+      <div class="toolbar-right">
+        <button id="random-mute-btn" class="btn btn-sm btn-secondary">Mute</button>
+        <button id="random-cam-btn"  class="btn btn-sm btn-secondary">Cam Off</button>
+        <button id="random-next-btn" class="btn btn-sm btn-random">Next →</button>
+        <button id="random-leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <div class="random-body">
+
+      <div class="random-videos-area">
+
+        <!-- Stranger video (fills the space) -->
+        <div class="random-remote-wrapper">
+          <video id="random-remote-video" autoplay playsinline></video>
+          <div class="random-video-label">Stranger</div>
+
+          <!-- Shown while searching for / waiting on a match -->
+          <div id="random-waiting-overlay" class="random-waiting-overlay">
+            <div class="random-spinner"></div>
+            <p id="random-waiting-text">Finding someone...</p>
+          </div>
+        </div>
+
+        <!-- Local camera preview (picture-in-picture corner) -->
+        <div class="random-local-wrapper">
+          <video id="random-local-video" autoplay playsinline muted></video>
+          <div class="random-video-label random-video-label--local">You</div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar chat -->
+      <div class="chat-pane random-chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="random-chat-log" class="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="random-chat-input" placeholder="Say something..." autocomplete="off" />
+          <button id="random-send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+</body>
+</html>
