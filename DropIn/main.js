@@ -73,8 +73,32 @@ const MAX_RECENT_ROOMS         = 20;
 const STORAGE_KEY_CREATOR = "dropin_creator_verified";
 const CREATOR_PASSWORD    = "229300";
 
-// Persists across sessions: true once the user correctly enters the password.
+// Set just before a forced reload so we auto-join the new room on next load.
+const STORAGE_KEY_PENDING_MOVE = "dropin_pending_move";
+
+// Persists across sessions: true once the user correctly enters the password
+// or imports a creator marker file.
 let isCreator = localStorage.getItem(STORAGE_KEY_CREATOR) === "1";
+
+// Grants the creator badge and remembers it across sessions.
+function activateCreator() {
+  isCreator = true;
+  localStorage.setItem(STORAGE_KEY_CREATOR, "1");
+  renderCreatorStatus();
+}
+
+// Revokes the creator badge and forgets it across sessions.
+function deactivateCreator() {
+  isCreator = false;
+  localStorage.removeItem(STORAGE_KEY_CREATOR);
+  renderCreatorStatus();
+}
+
+// Shows/hides the "Creator mode active" row in the lobby based on current state.
+function renderCreatorStatus() {
+  const statusEl = document.getElementById("creator-status");
+  if (statusEl) statusEl.classList.toggle("hidden", !isCreator);
+}
 
 // ─── Username helpers ─────────────────────────────
 
@@ -130,7 +154,8 @@ function importRoomsFromArray(items) {
     if (isCreator) {
       setLobbyStatus("Creator badge already active.");
     } else {
-      showCreatorModal();
+      activateCreator();
+      setLobbyStatus("Creator badge activated! 🎉");
     }
   }
 
@@ -454,7 +479,7 @@ function handleDataFromGuest(fromPeerId, data) {
       break;
     }
     case "creator_moderation": {
-      applyCreatorModeration(fromPeerId, data.action, data.targetPeerId);
+      applyCreatorModeration(fromPeerId, data.action, data.targetPeerId, data.roomId);
       break;
     }
   }
@@ -500,23 +525,32 @@ function banUser(peerId) {
 //  creator.
 // ═══════════════════════════════════════════════════
 
-function requestCreatorModeration(action, targetPeerId) {
+function requestCreatorModeration(action, targetPeerId, roomId = null) {
   if (!hostConnection) return;
-  hostConnection.send({ type: "creator_moderation", action, targetPeerId });
+  hostConnection.send({ type: "creator_moderation", action, targetPeerId, roomId });
   appendSystemMessage(`Sent ${action} request to the host.`);
 }
 
-function applyCreatorModeration(requesterPeerId, action, targetPeerId) {
+function applyCreatorModeration(requesterPeerId, action, targetPeerId, roomId = null) {
   const requester = guestConnectionMap.get(requesterPeerId);
   if (!requester || !requester.isCreator) return; // only verified creators may moderate
   if (targetPeerId === hostPeerId) return;          // the host can't be moderated
 
   switch (action) {
-    case "kick": kickUser(targetPeerId);        break;
-    case "ban":  banUser(targetPeerId);         break;
-    case "mute": forceMuteGuest(targetPeerId);  break;
-    case "cam":  forceCamOffGuest(targetPeerId); break;
+    case "kick": kickUser(targetPeerId);              break;
+    case "ban":  banUser(targetPeerId);               break;
+    case "mute": forceMuteGuest(targetPeerId);        break;
+    case "cam":  forceCamOffGuest(targetPeerId);      break;
+    case "move": moveGuestToRoom(targetPeerId, roomId); break;
   }
+}
+
+// Host side: ask a guest to relocate to a different room.
+function moveGuestToRoom(peerId, roomId) {
+  const guest = guestConnectionMap.get(peerId);
+  if (!guest || !roomId) return;
+  guest.conn.send({ type: "force_move", roomId });
+  appendSystemMessage(`${guest.username} is being moved to room ${roomId}.`);
 }
 
 // ═══════════════════════════════════════════════════
@@ -768,6 +802,16 @@ function handleDataFromHost(data) {
         raisedHandPeerIds.delete(data.peerId);
       }
       renderUsersList();
+      break;
+    }
+    case "force_move": {
+      // Creator/host is relocating us to another room. Remember the target,
+      // then reload and auto-join it on the next page load.
+      if (!data.roomId) break;
+      appendSystemMessage(`You're being moved to room ${data.roomId}…`);
+      sessionStorage.setItem(STORAGE_KEY_PENDING_MOVE, data.roomId);
+      stopRoomAnnouncement();
+      setTimeout(() => location.reload(), 1500);
       break;
     }
   }
@@ -1219,6 +1263,14 @@ joinRoomBtnEl.addEventListener("click", () => {
     return;
   }
 
+  // Secret command: typing "uncreator" removes the creator badge.
+  if (targetRoomId.toLowerCase() === "uncreator") {
+    roomIdInputEl.value = "";
+    if (isCreator) { deactivateCreator(); setLobbyStatus("Creator badge removed."); }
+    else           setLobbyStatus("You don't have a creator badge.");
+    return;
+  }
+
   if (!targetRoomId) { setLobbyStatus("Please enter a Room ID.", true); return; }
   startJoinRoom(targetRoomId);
 });
@@ -1528,6 +1580,101 @@ serverListModalEl.addEventListener("click", (e) => {
 });
 
 // ═══════════════════════════════════════════════════
+//  HOST / CREATOR — MOVE PARTICIPANT TO ANOTHER ROOM
+// ═══════════════════════════════════════════════════
+
+const moveUserModalEl    = document.getElementById("move-user-modal");
+const moveUserNameEl     = document.getElementById("move-user-name");
+const moveServerListEl   = document.getElementById("move-server-list");
+const moveRoomInputEl    = document.getElementById("move-room-input");
+const moveConfirmBtnEl   = document.getElementById("move-confirm-btn");
+const moveCancelBtnEl    = document.getElementById("move-cancel-btn");
+
+// The participant being relocated (kept separately from the menu target,
+// which is cleared as soon as the menu closes).
+let moveTargetPeerId = null;
+
+function hideMoveUserModal() {
+  moveUserModalEl.classList.add("hidden");
+  moveTargetPeerId = null;
+}
+
+// Sends the relocation request — directly if host, relayed if creator-guest.
+function performMove(roomId) {
+  const targetRoomId = (roomId ?? "").trim();
+  if (!targetRoomId || !moveTargetPeerId) return;
+
+  if (isHost) {
+    moveGuestToRoom(moveTargetPeerId, targetRoomId);
+  } else if (isCreator) {
+    requestCreatorModeration("move", moveTargetPeerId, targetRoomId);
+  }
+  hideMoveUserModal();
+}
+
+async function openMoveUserModal(targetPeerId, targetUsername) {
+  moveTargetPeerId          = targetPeerId;
+  moveUserNameEl.textContent = targetUsername;
+  moveRoomInputEl.value      = "";
+  moveUserModalEl.classList.remove("hidden");
+  setTimeout(() => moveRoomInputEl.focus(), 50);
+
+  // Offer live rooms (other than the current one) as one-click destinations.
+  moveServerListEl.innerHTML =
+    `<p class="server-list-empty">Loading destinations…</p>`;
+  const servers = (await fetchActiveServers()).filter((s) => s.roomId !== currentRoomId);
+
+  moveServerListEl.innerHTML = "";
+  if (servers.length === 0) {
+    moveServerListEl.innerHTML =
+      `<p class="server-list-empty">No other live rooms — type a Room ID below.</p>`;
+    return;
+  }
+
+  for (const server of servers) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "server-list-row";
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "server-list-info";
+    const hostNameEl      = document.createElement("div");
+    hostNameEl.className   = "server-list-host";
+    hostNameEl.textContent = server.hostName || "Unknown host";
+    const metaEl      = document.createElement("div");
+    metaEl.className   = "server-list-meta";
+    const count       = server.participantCount ?? 1;
+    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
+    infoEl.append(hostNameEl, metaEl);
+
+    const pickBtnEl      = document.createElement("button");
+    pickBtnEl.className   = "btn btn-primary btn-sm";
+    pickBtnEl.textContent = "Move here";
+    pickBtnEl.addEventListener("click", () => performMove(server.roomId));
+
+    rowEl.append(infoEl, pickBtnEl);
+    moveServerListEl.appendChild(rowEl);
+  }
+}
+
+moveConfirmBtnEl.addEventListener("click", () => performMove(moveRoomInputEl.value));
+moveCancelBtnEl.addEventListener("click", hideMoveUserModal);
+moveRoomInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter")  performMove(moveRoomInputEl.value);
+  if (e.key === "Escape") hideMoveUserModal();
+});
+moveUserModalEl.addEventListener("click", (e) => {
+  if (e.target === moveUserModalEl) hideMoveUserModal();
+});
+
+// "Move to Room…" entry in the participant action menu (host + creator).
+hostActionMenuEl.querySelector(".host-action-move-btn").addEventListener("click", () => {
+  const targetPeerId  = hostActionMenuTargetPeerId;
+  const targetName    = hostActionMenuEl.querySelector(".host-action-menu-name").textContent;
+  closeHostActionMenu();
+  if (targetPeerId) openMoveUserModal(targetPeerId, targetName);
+});
+
+// ═══════════════════════════════════════════════════
 //  HOME SCREEN NAVIGATION
 // ═══════════════════════════════════════════════════
 
@@ -1535,7 +1682,17 @@ document.getElementById("select-rooms-btn").addEventListener("click", () => {
   homeScreenEl.classList.add("hidden");
   lobbyScreenEl.classList.remove("hidden");
   renderRecentRoomsList();
+  renderCreatorStatus();
 });
+
+// "Remove" button inside the lobby's creator-status row.
+document.getElementById("creator-remove-btn")?.addEventListener("click", () => {
+  deactivateCreator();
+  setLobbyStatus("Creator badge removed.");
+});
+
+// Reflect the saved creator state as soon as the page loads.
+renderCreatorStatus();
 
 document.getElementById("select-random-btn").addEventListener("click", () => {
   homeScreenEl.classList.add("hidden");
@@ -1596,6 +1753,23 @@ screenNameInputEl.addEventListener("keydown", (e) => {
 });
 
 continueBtnEl.addEventListener("click", () => attemptContinue());
+
+// If we were relocated by a creator/host, skip the menus and auto-join the
+// target room as soon as we reload (the screen name is already saved).
+(function resumePendingMove() {
+  const pendingRoomId = sessionStorage.getItem(STORAGE_KEY_PENDING_MOVE);
+  if (!pendingRoomId) return;
+  sessionStorage.removeItem(STORAGE_KEY_PENDING_MOVE);
+
+  const savedName = loadSavedUsername();
+  if (!savedName) return; // can't auto-join without a screen name
+
+  screenName = savedName;
+  usernameScreenEl.classList.add("hidden");
+  lobbyScreenEl.classList.remove("hidden");
+  setLobbyStatus("Moving you to the new room…");
+  startJoinRoom(pendingRoomId);
+})();
 
 // ═══════════════════════════════════════════════════
 //  RANDOM MODE — HELPERS
