@@ -31,7 +31,40 @@ const TURN_SERVERS = [
 ];
 
 // Passed to every `new Peer(...)` so all connections share one ICE/TURN config.
-const PEER_OPTIONS = { config: { iceServers: [...STUN_SERVERS, ...TURN_SERVERS] } };
+//
+// We auto-detect which signaling server to use so the same codebase works in
+// both CoderPad (sandboxed, blocks external WebSocket) and GitHub Pages
+// (open network, uses the public PeerJS cloud):
+//
+//   • CoderPad / Vite dev  →  local PeerJS server at /peerjs (see vite.config.ts)
+//   • GitHub Pages / other →  public PeerJS cloud (default, no extra options)
+//
+// The probe runs eagerly on page load, well before the user can interact.
+let PEER_OPTIONS = { config: { iceServers: [...STUN_SERVERS, ...TURN_SERVERS] } };
+
+(async () => {
+  try {
+    const controller = new AbortController();
+    const probeTimeout = setTimeout(() => controller.abort(), 1500);
+    const response = await fetch('/peerjs/peerjs/id', { signal: controller.signal });
+    clearTimeout(probeTimeout);
+    if (response.ok) {
+      const text = await response.text();
+      // PeerJS returns a UUID — detect it to confirm the server is really there.
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(text.trim())) {
+        PEER_OPTIONS = {
+          host:   window.location.hostname,
+          port:   Number(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80),
+          path:   '/peerjs',
+          secure: window.location.protocol === 'https:',
+          config: { iceServers: [...STUN_SERVERS, ...TURN_SERVERS] },
+        };
+      }
+    }
+  } catch (_) {
+    // No local server — keep the public cloud default already set above.
+  }
+})();
 
 // Creates a PeerJS peer with our shared ICE/TURN config. Pass a fixed id when
 // one is needed (registry holder, Random slots); omit it for an auto id.
@@ -469,6 +502,13 @@ function showAppScreen() {
 function createRoom() {
   peer = createPeer();
 
+  // Reconnect to the PeerJS signaling server automatically if the WebSocket
+  // drops (common in sandboxed / NAT-heavy environments). The peer keeps its
+  // ID and all in-progress calls survive across the brief reconnect window.
+  peer.on("disconnected", () => {
+    if (!peer.destroyed) peer.reconnect();
+  });
+
   peer.on("open", (assignedId) => {
     currentRoomId  = assignedId;
     hostPeerId     = assignedId;
@@ -683,6 +723,7 @@ function handleRegistryMessage(conn, message) {
       randomPresence.set(id, {
         username:   message.username,
         userNumber: num,
+        isMonitor:  message.isMonitor ?? false,
         conn:       conn ?? null,
         updatedAt:  Date.now(),
       });
@@ -751,6 +792,7 @@ function serializeRandomPresence() {
     id,
     username:   entry.username,
     userNumber: entry.userNumber || "",
+    isMonitor:  entry.isMonitor ?? false,
   }));
 }
 
@@ -904,6 +946,7 @@ async function fetchActiveServers() {
 function joinRoom(targetRoomId) {
   currentRoomId = targetRoomId;
   peer = createPeer();
+  peer.on("disconnected", () => { if (!peer.destroyed) peer.reconnect(); });
   peer.on("open",  ()     => { hostConnection = peer.connect(targetRoomId, { reliable: true }); setupConnectionToHost(hostConnection); });
   peer.on("call",  (call) => handleIncomingCall(call));
   peer.on("error", (err)  => { setLobbyStatus("Could not connect: " + err.message, true); resetLobbyButtons(); });
@@ -2109,6 +2152,26 @@ async function announceRandomPresence() {
   if (connected) {
     randomPresenceConn = conn;
     conn.on("data", (message) => handleRandomControlMessage(message));
+
+    // If the connection drops (e.g. the holder peer goes away after a call
+    // tears down), clear the stale reference and try to re-establish presence
+    // so the user stays visible on the dashboard while they wait for a new match.
+    conn.on("close", () => {
+      if (randomPresenceConn === conn) randomPresenceConn = null;
+      if (randomPresenceTimer) { clearInterval(randomPresenceTimer); randomPresenceTimer = null; }
+      if (!randomIsDestroyed && !registryHolderPeer) {
+        setTimeout(() => {
+          if (!randomIsDestroyed && !randomPresenceConn && !registryHolderPeer) {
+            announceRandomPresence();
+          }
+        }, 2500);
+      }
+    });
+
+    conn.on("error", () => {
+      if (randomPresenceConn === conn) randomPresenceConn = null;
+    });
+
     if (isCreator) syncBansToRegistry();
     sendRandomPresence("random_register");
     randomPresenceTimer = setInterval(() => sendRandomPresence("random_heartbeat"), REGISTRY_HEARTBEAT_MS);
