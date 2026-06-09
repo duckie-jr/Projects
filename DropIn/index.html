@@ -314,6 +314,45 @@
     <button class="host-action-btn host-action-ban-btn">Ban</button>
   </div>
 
+  <!-- ========== CREATOR VERIFICATION MODAL ========== -->
+  <div id="creator-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Creator Verification</div>
+      <p class="creator-modal-desc">
+        Enter the creator password to activate your badge.<br/>
+        It will be shown to everyone in any room you join.
+      </p>
+      <input
+        type="password"
+        id="creator-password-input"
+        class="creator-password-input"
+        placeholder="Password"
+        autocomplete="off"
+      />
+      <p id="creator-password-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="creator-password-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="creator-password-submit" class="btn btn-primary btn-sm">Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CREATOR: ACTIVE SERVERS MODAL ========== -->
+  <!-- Opened when a verified creator types "creator" into the Join field -->
+  <div id="server-list-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Active Servers</div>
+      <p class="creator-modal-desc">
+        Every live room right now. Click Join to drop into any call.
+      </p>
+      <div id="server-list-container" class="server-list-container"></div>
+      <div class="creator-modal-actions">
+        <button id="server-list-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+        <button id="server-list-close"   class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
