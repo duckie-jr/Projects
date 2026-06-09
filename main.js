@@ -6,12 +6,18 @@ const PROJECTS = [
     title: "My First Project",
     description: "A short description of what this project does.",
     url: "https://duckie-jr.github.io/Projects/",
-    tag: "Web",
+    tag: "Example",
   },
   {
     title: "Devlink",
     description: "Devlink lets users create or join a shared room where they can edit code together in real-time and chat, all peer-to-peer with no server or account needed.",
     url: "https://duckie-jr.github.io/Projects/Devlink/",
+    tag: "Media",
+  },
+    {
+    title: "DropIn",
+    description: "Instant calls with the people you actually want to talk to — no scheduling, no friction.",
+    url: "https://duckie-jr.github.io/Projects/DropIn",
     tag: "Media",
   },
   {
@@ -25,7 +31,7 @@ const PROJECTS = [
     description: "A Morse code trainer with a Type mode (tap dot/dash to compose text) and a Learn mode (quizzes you on characters one at a time, with a picker to choose which letters/numbers to practice).",
     url: "https://duckie-jr.github.io/Projects/Morse/",
     tag: "Web",
-  },
+  }
 ];
 // ============================================================
 
