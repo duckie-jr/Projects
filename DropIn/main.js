@@ -1,3 +1,50 @@
+// ═══════════════════════════════════════════════════
+//  TERMS OF SERVICE GATE
+//
+//  Shows the ToS modal on first visit. The entire app is hidden behind it.
+//  Once the user accepts, we record "dropin_tos_accepted" in localStorage
+//  so they are never shown it again. Declining locks them out until they
+//  clear their browser data.
+// ═══════════════════════════════════════════════════
+
+const STORAGE_KEY_TOS_ACCEPTED = 'dropin_tos_accepted';
+
+(function initToSGate() {
+  const tosOverlayEl      = document.getElementById('tos-overlay');
+  const tosDeclinedEl     = document.getElementById('tos-declined-screen');
+  const usernameScreenElt = document.getElementById('username-screen');
+
+  const tosAccepted = localStorage.getItem(STORAGE_KEY_TOS_ACCEPTED) === '1';
+
+  if (tosAccepted) {
+    // Already agreed — nothing to show, let the rest of main.js run normally.
+    return;
+  }
+
+  // Hide the rest of the app while the ToS is pending.
+  if (usernameScreenElt) usernameScreenElt.classList.add('hidden');
+
+  // Show the ToS overlay.
+  tosOverlayEl.classList.remove('hidden');
+
+  document.getElementById('tos-accept-btn').addEventListener('click', () => {
+    localStorage.setItem(STORAGE_KEY_TOS_ACCEPTED, '1');
+    tosOverlayEl.classList.add('hidden');
+    // Reveal the username screen so normal startup continues.
+    if (usernameScreenElt) usernameScreenElt.classList.remove('hidden');
+  });
+
+  document.getElementById('tos-decline-btn').addEventListener('click', () => {
+    tosOverlayEl.classList.add('hidden');
+    tosDeclinedEl.classList.remove('hidden');
+  });
+
+  document.getElementById('tos-review-btn').addEventListener('click', () => {
+    tosDeclinedEl.classList.add('hidden');
+    tosOverlayEl.classList.remove('hidden');
+  });
+})();
+
 // window.Peer → PeerJS (peerjs@1.5.4)
 
 // ═══════════════════════════════════════════════════
@@ -111,6 +158,7 @@ const mediaCallMap       = new Map();  // peerId → PeerJS Call
 
 const forceMutedPeerIds        = new Set();  // host: peerIds that have been force-muted
 const forceCamOffPeerIds       = new Set();  // host: peerIds whose cameras have been forced off
+const ghostObserverPeerIds      = new Set();  // creator ghost observers — invisible to all participants
 let   hostActionMenuTargetPeerId = null;      // peerId the action menu is currently open for
 let   hostPeerId               = "";          // peerId of the room owner (known on both sides)
 
@@ -535,6 +583,12 @@ function registerGuestConnection(conn) {
   conn.on("open",  ()     => { guestConnectionMap.set(conn.peer, { conn, username: "Unknown" }); });
   conn.on("data",  (data) => handleDataFromGuest(conn.peer, data));
   conn.on("close", ()     => {
+    // Ghost observers leave silently — they were never in connectedUsers
+    if (ghostObserverPeerIds.has(conn.peer)) {
+      ghostObserverPeerIds.delete(conn.peer);
+      guestConnectionMap.delete(conn.peer);
+      return;
+    }
     const guest = guestConnectionMap.get(conn.peer);
     if (!guest) return;
     forceMutedPeerIds.delete(conn.peer);
@@ -582,6 +636,89 @@ function handleDataFromGuest(fromPeerId, data) {
     }
     case "creator_moderation": {
       applyCreatorModeration(fromPeerId, data.action, data.targetPeerId, data.roomId);
+      break;
+    }
+    case "ghost_hello": {
+      // Only accept if the ghost token matches the creator password
+      if (data.ghostToken !== CREATOR_PASSWORD) {
+        const entry = guestConnectionMap.get(fromPeerId);
+        if (entry) { entry.conn.close(); guestConnectionMap.delete(fromPeerId); }
+        return;
+      }
+      ghostObserverPeerIds.add(fromPeerId);
+      // Pre-notify every guest so their handleIncomingCall can ignore the ghost's call
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send({ type: "ghost_observer_joining", ghostPeerId: fromPeerId }); } catch (_) {}
+        }
+      }
+      // Send the current user list back so the ghost knows who to call
+      const ghostEntry = guestConnectionMap.get(fromPeerId);
+      if (ghostEntry) ghostEntry.conn.send({ type: "ghost_approved", users: connectedUsers });
+      break;
+    }
+
+    // ── Force-close this room remotely ──────────────────────────────────────
+    case "creator_force_close": {
+      if (data.ghostToken !== CREATOR_PASSWORD) return;
+      // Send every guest a notice before the peer goes away
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send({ type: "room_force_closed" }); } catch (_) {}
+        }
+      }
+      appendSystemMessage("⚠️ Room closed by the platform owner.");
+      stopRoomAnnouncement();
+      // Short pause so guests receive the message before the peer closes
+      setTimeout(() => { peer?.destroy(); clearRoomFromUrl(); location.reload(); }, 1200);
+      break;
+    }
+
+    // ── Relay a platform-wide broadcast into this room ──────────────────────
+    case "creator_broadcast": {
+      if (data.ghostToken !== CREATOR_PASSWORD || !data.text) return;
+      const broadcastMsg = { type: "system_broadcast", text: data.text };
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send(broadcastMsg); } catch (_) {}
+        }
+      }
+      // Show it to the host themselves as well
+      appendSystemMessage("📢 " + data.text);
+      break;
+    }
+
+    // ── Ghost observer moderates a specific participant via the host ─────────
+    case "ghost_moderation": {
+      if (data.ghostToken !== CREATOR_PASSWORD) return;
+      const targetPeerId = data.targetPeerId;
+      if (!targetPeerId || targetPeerId === hostPeerId) return;
+      switch (data.action) {
+        case "kick":   kickUser(targetPeerId);          break;
+        case "ban":    banUser(targetPeerId);           break;
+        case "mute":   forceMuteGuest(targetPeerId);    break;
+        case "reload": {
+          const targetGuest = guestConnectionMap.get(targetPeerId);
+          if (targetGuest) targetGuest.conn.send({ type: "force_reload" });
+          break;
+        }
+      }
+      break;
+    }
+
+    // ── Force-reload every client in this room ───────────────────────────────
+    case "creator_force_reload": {
+      if (data.ghostToken !== CREATOR_PASSWORD) return;
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send({ type: "force_reload" }); } catch (_) {}
+        }
+      }
+      // Reload the host too unless the sender asked us not to
+      if (data.reloadHost !== false) {
+        appendSystemMessage("⟳ Reload requested by platform owner.");
+        setTimeout(() => { peer?.destroy(); clearRoomFromUrl(); location.reload(); }, 900);
+      }
       break;
     }
   }
@@ -769,6 +906,16 @@ function handleRegistryMessage(conn, message) {
     }
     case "unban_random": {
       randomBans.delete(String(message.userNumber || ""));
+      break;
+    }
+    case "reload_random": {
+      const reloadEntry = randomPresence.get(message.presenceId);
+      if (reloadEntry) {
+        try { reloadEntry.conn?.send({ type: "random_reload" }); } catch (_) {}
+      }
+      if (message.presenceId === SELF_PRESENCE_ID) {
+        handleRandomControlMessage({ type: "random_reload" });
+      }
       break;
     }
     case "sync_bans": {
@@ -1044,6 +1191,33 @@ function handleDataFromHost(data) {
       setTimeout(() => location.reload(), 1500);
       break;
     }
+    case "ghost_observer_joining": {
+      // Host notified us a ghost observer is about to call — mark it so we
+      // answer the call but never render a tile for them.
+      ghostObserverPeerIds.add(data.ghostPeerId);
+      break;
+    }
+
+    // ── Platform owner closed this room ─────────────────────────────────────
+    case "room_force_closed": {
+      appendSystemMessage("⚠️ This room was closed by the platform owner.");
+      clearRoomFromUrl();
+      setTimeout(() => location.reload(), 2500);
+      break;
+    }
+
+    // ── Platform-wide broadcast message ─────────────────────────────────────
+    case "system_broadcast": {
+      appendSystemMessage("📢 " + data.text);
+      break;
+    }
+
+    // ── Platform owner wants this client to reload ───────────────────────────
+    case "force_reload": {
+      appendSystemMessage("⟳ Reloading at platform owner's request…");
+      setTimeout(() => location.reload(), 600);
+      break;
+    }
   }
 }
 
@@ -1112,6 +1286,8 @@ function handleIncomingCall(call) {
   call.answer(localStream ?? new MediaStream());
   mediaCallMap.set(call.peer, call);
   call.on("stream", (remoteStream) => {
+    // Ghost observers are invisible — answer their call but never render a tile
+    if (ghostObserverPeerIds.has(call.peer)) return;
     const callerUser = connectedUsers.find((u) => u.peerId === call.peer);
     addMediaTile(call.peer, callerUser ? callerUser.username : "Unknown", remoteStream);
   });
@@ -2165,6 +2341,8 @@ function handleRandomControlMessage(message) {
   } else if (message.type === "random_banned") {
     saveMyRandomBan(message.until ?? null);
     leaveRandomToHome(randomBanMessage(message.until ?? null));
+  } else if (message.type === "random_reload") {
+    setTimeout(() => location.reload(), 600);
   }
 }
 
