@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DropIn</title>
-  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
-  <link rel="stylesheet" href="./style.css" />
-  <script src="./main.js" defer></script>
+  <link rel="stylesheet" href="style.css" />
+  <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
+  <script src="main.js" defer></script>
+  <script src="dev.js" defer></script>
 </head>
 <body>
 
@@ -240,6 +242,7 @@
 
       <button id="start-random-btn" class="btn btn-random">Drop In →</button>
       <p id="random-lobby-status"></p>
+      <p class="random-your-id">Your number: <strong id="random-your-id-num">#…</strong></p>
       <button id="random-lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
 
     </div>
@@ -258,6 +261,7 @@
       <div class="toolbar-right">
         <button id="random-mute-btn" class="btn btn-sm btn-secondary">Mute</button>
         <button id="random-cam-btn"  class="btn btn-sm btn-secondary">Cam Off</button>
+        <button id="random-mod-btn"  class="btn btn-sm btn-secondary hidden">★ Moderate</button>
         <button id="random-next-btn" class="btn btn-sm btn-random">Next →</button>
         <button id="random-leave-btn" class="btn btn-sm btn-danger">Leave</button>
       </div>
@@ -374,6 +378,36 @@
       <div class="creator-modal-actions">
         <button id="move-cancel-btn"  class="btn btn-secondary btn-sm">Cancel</button>
         <button id="move-confirm-btn" class="btn btn-primary btn-sm">Move</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CREATOR: RANDOM MODERATION MODAL ========== -->
+  <!-- Opened from the "★ Moderate" button on the Random call screen -->
+  <div id="random-mod-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Random Moderation</div>
+      <p class="creator-modal-desc">
+        Everyone currently in Random, shown with their number. Kick removes them
+        now; Ban blocks their number for the chosen length of time.
+      </p>
+      <div class="random-mod-duration-row">
+        <label for="random-ban-duration">Ban length</label>
+        <select id="random-ban-duration">
+          <option value="10">10 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="1440">1 day</option>
+          <option value="10080">1 week</option>
+          <option value="permanent">Permanent</option>
+        </select>
+      </div>
+      <div class="random-mod-section-label">In Random now</div>
+      <div id="random-mod-list" class="server-list-container"></div>
+      <div class="random-mod-section-label">Banned numbers</div>
+      <div id="random-mod-bans" class="server-list-container"></div>
+      <div class="creator-modal-actions">
+        <button id="random-mod-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+        <button id="random-mod-close"   class="btn btn-primary btn-sm">Close</button>
       </div>
     </div>
   </div>
