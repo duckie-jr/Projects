@@ -9,6 +9,12 @@ const PROJECTS = [
     tag: "Web",
   },
   {
+    title: "Devlink",
+    description: "Devlink lets users create or join a shared room where they can edit code together in real-time and chat, all peer-to-peer with no server or account needed.",
+    url: "https://duckie-jr.github.io/Projects/Devlink/",
+    tag: "Media",
+  },
+  {
     title: "Jr's Movies",
     description: "A personal movie and TV streaming front-end that lets users browse/search titles, watch via embedded players, and manage watch history and playlists under a student ID login.",
     url: "https://duckie-jr.github.io/Projects/Movie/",
