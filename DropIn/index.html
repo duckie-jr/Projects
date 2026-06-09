@@ -111,6 +111,12 @@
       </div>
       <p class="lobby-subtitle">Create a video room and share the code, or paste one to join.</p>
 
+      <!-- Shown only while the creator badge is active -->
+      <div id="creator-status" class="creator-status hidden">
+        <span class="creator-status-label">★ Creator mode active</span>
+        <button id="creator-remove-btn" class="btn btn-xs btn-danger">Remove</button>
+      </div>
+
       <div class="lobby-actions">
         <button id="create-room-btn" class="btn btn-primary">Create Room</button>
         <div class="lobby-divider">or join existing room</div>
@@ -309,6 +315,7 @@
     </div>
     <button class="host-action-btn host-action-mute-btn">Mute</button>
     <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
+    <button class="host-action-btn host-action-move-btn">Move to Room…</button>
     <div class="host-action-divider"></div>
     <button class="host-action-btn host-action-kick-btn">Kick</button>
     <button class="host-action-btn host-action-ban-btn">Ban</button>
@@ -349,6 +356,24 @@
       <div class="creator-modal-actions">
         <button id="server-list-refresh" class="btn btn-secondary btn-sm">Refresh</button>
         <button id="server-list-close"   class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MOVE PARTICIPANT MODAL (host + creator) ========== -->
+  <div id="move-user-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Move <span id="move-user-name"></span></div>
+      <p class="creator-modal-desc">
+        Pick a live room to send them to, or paste a Room ID below.
+      </p>
+      <div id="move-server-list" class="server-list-container"></div>
+      <div class="join-row">
+        <input type="text" id="move-room-input" placeholder="Room ID" autocomplete="off" />
+      </div>
+      <div class="creator-modal-actions">
+        <button id="move-cancel-btn"  class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="move-confirm-btn" class="btn btn-primary btn-sm">Move</button>
       </div>
     </div>
   </div>
