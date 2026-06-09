@@ -10,7 +10,7 @@ A collection of my personal projects and experiments.
 
 |---------------------------------|
 
-###Import project into home screen
+### Import project into home screen
 
   {
     title: "My First Project",
