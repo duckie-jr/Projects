@@ -1479,6 +1479,29 @@ select {
   margin-top: 2px;
 }
 
+/* ── Creator status row (lobby) ── */
+
+.creator-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 8px;
+}
+
+.creator-status.hidden {
+  display: none;
+}
+
+.creator-status-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a78bfa;
+}
+
 /* ── Creator: active servers list ── */
 
 .server-list-card {
