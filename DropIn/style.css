@@ -1557,3 +1557,62 @@ select {
   text-overflow: ellipsis;
   margin-top: 2px;
 }
+
+/* ── Creator: Random moderation modal ── */
+
+.random-mod-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.random-mod-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* The "★ Moderate" toolbar button uses the creator purple accent */
+#random-mod-btn {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+}
+
+/* Ban-length picker row inside the moderation modal */
+.random-mod-duration-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.random-mod-duration-row label {
+  font-size: 0.8rem;
+  color: #8b949e;
+  font-weight: 600;
+}
+
+.random-mod-duration-row select {
+  flex: 0 0 auto;
+}
+
+/* "Your number" line on the Random lobby */
+.random-your-id {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #8b949e;
+}
+
+.random-your-id strong {
+  font-family: monospace;
+  color: #c4b5fd;
+  letter-spacing: 0.04em;
+}
