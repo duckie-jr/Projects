@@ -43,6 +43,25 @@ let   hostActionMenuTargetPeerId = null;      // peerId the action menu is curre
 let   hostPeerId               = "";          // peerId of the room owner (known on both sides)
 
 // ═══════════════════════════════════════════════════
+//  ACTIVE-SERVER REGISTRY
+//
+//  Hosts announce their room to a single well-known PeerJS peer (the
+//  "registry holder"). The first host to claim the fixed ID becomes the
+//  holder; everyone else connects to it to register / query. This mirrors
+//  the claim-or-connect pattern already used by Random mode's slots.
+// ═══════════════════════════════════════════════════
+
+const REGISTRY_PEER_ID        = "dropin-active-server-registry-v1";
+const REGISTRY_HEARTBEAT_MS   = 5000;   // hosts re-announce on this cadence
+const REGISTRY_STALE_MS       = 18000;  // entries older than this are pruned
+const REGISTRY_QUERY_TIMEOUT  = 4000;   // give up listing servers after this
+
+let   registryHolderPeer = null;        // non-null only if THIS client holds the registry
+const registeredServers  = new Map();   // (holder only) roomId → { hostName, participantCount, updatedAt }
+let   registryAnnounceConn = null;       // host's data connection to the registry
+let   registryAnnounceTimer = null;      // host's heartbeat interval
+
+// ═══════════════════════════════════════════════════
 //  PERSISTENCE — USERNAME & RECENT ROOMS
 // ═══════════════════════════════════════════════════
 
@@ -377,6 +396,7 @@ function createRoom() {
     renderUsersList();
     appendSystemMessage("Room created! Share the Room ID to invite others.");
     initMedia([]);
+    announceRoomToRegistry();
   });
 
   peer.on("connection", (conn) => registerGuestConnection(conn));
@@ -433,6 +453,10 @@ function handleDataFromGuest(fromPeerId, data) {
       relayToOthers(fromPeerId, data);
       break;
     }
+    case "creator_moderation": {
+      applyCreatorModeration(fromPeerId, data.action, data.targetPeerId);
+      break;
+    }
   }
 }
 
@@ -464,6 +488,198 @@ function banUser(peerId) {
   guest.conn.send({ type: "banned" });
   kickUser(peerId);
   appendSystemMessage(guest.username + " was banned.");
+}
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — CREATOR MODERATION RELAY
+//
+//  A verified creator who is *not* the host can still moderate. Because all
+//  guests connect to the host (a star topology), a creator can't disconnect
+//  another guest directly — instead it asks the host to do it. The host only
+//  honours these requests when they come from a guest it has flagged as a
+//  creator.
+// ═══════════════════════════════════════════════════
+
+function requestCreatorModeration(action, targetPeerId) {
+  if (!hostConnection) return;
+  hostConnection.send({ type: "creator_moderation", action, targetPeerId });
+  appendSystemMessage(`Sent ${action} request to the host.`);
+}
+
+function applyCreatorModeration(requesterPeerId, action, targetPeerId) {
+  const requester = guestConnectionMap.get(requesterPeerId);
+  if (!requester || !requester.isCreator) return; // only verified creators may moderate
+  if (targetPeerId === hostPeerId) return;          // the host can't be moderated
+
+  switch (action) {
+    case "kick": kickUser(targetPeerId);        break;
+    case "ban":  banUser(targetPeerId);         break;
+    case "mute": forceMuteGuest(targetPeerId);  break;
+    case "cam":  forceCamOffGuest(targetPeerId); break;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  ROOMS — ACTIVE-SERVER REGISTRY
+// ═══════════════════════════════════════════════════
+
+// Spins up a throwaway PeerJS peer with a random id, used only to talk to the
+// registry holder. Resolves null if the peer fails to open.
+function createHelperPeer() {
+  return new Promise((resolve) => {
+    const helperPeer = new window.Peer();
+    let   settled    = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    helperPeer.once("open",  () => finish(helperPeer));
+    helperPeer.once("error", () => { try { helperPeer.destroy(); } catch (_) {} finish(null); });
+  });
+}
+
+function pruneStaleServers() {
+  const now = Date.now();
+  for (const [roomId, entry] of registeredServers.entries()) {
+    if (now - entry.updatedAt > REGISTRY_STALE_MS) registeredServers.delete(roomId);
+  }
+}
+
+function serializeActiveServers() {
+  pruneStaleServers();
+  return [...registeredServers.entries()].map(([roomId, entry]) => ({
+    roomId,
+    hostName:         entry.hostName,
+    participantCount: entry.participantCount,
+  }));
+}
+
+// Called on the registry holder when another peer sends it a message.
+function handleRegistryMessage(conn, message) {
+  switch (message.type) {
+    case "register_room":
+    case "heartbeat": {
+      registeredServers.set(message.roomId, {
+        hostName:         message.hostName,
+        participantCount: message.participantCount ?? 1,
+        updatedAt:        Date.now(),
+      });
+      break;
+    }
+    case "unregister_room": {
+      registeredServers.delete(message.roomId);
+      break;
+    }
+    case "list_rooms": {
+      conn.send({ type: "room_list", servers: serializeActiveServers() });
+      break;
+    }
+  }
+}
+
+function becomeRegistryHolder(holderPeer) {
+  registryHolderPeer = holderPeer;
+  holderPeer.on("connection", (conn) => {
+    conn.on("data", (message) => handleRegistryMessage(conn, message));
+  });
+  holderPeer.on("error", () => {}); // a lost registry simply gets re-claimed later
+}
+
+// Tries to claim the well-known registry id. Resolves the holder peer, or null
+// if someone else already holds it.
+function tryClaimRegistry() {
+  return new Promise((resolve) => {
+    const holderPeer = new window.Peer(REGISTRY_PEER_ID);
+    let   settled    = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    holderPeer.once("open",  () => finish(holderPeer));
+    holderPeer.once("error", () => { try { holderPeer.destroy(); } catch (_) {} finish(null); });
+  });
+}
+
+// Host side: announce this room to the registry and keep it fresh with
+// heartbeats. If no registry exists yet, this client becomes the holder.
+async function announceRoomToRegistry() {
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return;
+
+  const announceConn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  const connected = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    announceConn.on("open",  () => finish(true));
+    announceConn.on("error", () => finish(false));
+    setTimeout(() => finish(false), REGISTRY_QUERY_TIMEOUT);
+  });
+
+  if (connected) {
+    registryAnnounceConn = announceConn;
+    sendRegistryPresence("register_room");
+    registryAnnounceTimer = setInterval(() => sendRegistryPresence("heartbeat"), REGISTRY_HEARTBEAT_MS);
+    return;
+  }
+
+  // No registry reachable — try to become the holder ourselves.
+  helperPeer.destroy();
+  const holderPeer = await tryClaimRegistry();
+  if (holderPeer) {
+    becomeRegistryHolder(holderPeer);
+    // Seed our own room, then keep its timestamp fresh locally.
+    registeredServers.set(currentRoomId, {
+      hostName:         currentUsername,
+      participantCount: connectedUsers.length,
+      updatedAt:        Date.now(),
+    });
+    registryAnnounceTimer = setInterval(() => {
+      const entry = registeredServers.get(currentRoomId);
+      if (entry) { entry.participantCount = connectedUsers.length; entry.updatedAt = Date.now(); }
+    }, REGISTRY_HEARTBEAT_MS);
+  }
+}
+
+function sendRegistryPresence(type) {
+  if (!registryAnnounceConn) return;
+  try {
+    registryAnnounceConn.send({
+      type,
+      roomId:           currentRoomId,
+      hostName:         currentUsername,
+      participantCount: connectedUsers.length,
+    });
+  } catch (_) {
+    // connection dropped — heartbeat will keep failing harmlessly
+  }
+}
+
+function stopRoomAnnouncement() {
+  if (registryAnnounceTimer) { clearInterval(registryAnnounceTimer); registryAnnounceTimer = null; }
+  if (registryAnnounceConn) {
+    try { registryAnnounceConn.send({ type: "unregister_room", roomId: currentRoomId }); } catch (_) {}
+    try { registryAnnounceConn.close(); } catch (_) {}
+    registryAnnounceConn = null;
+  }
+  registeredServers.delete(currentRoomId);
+}
+
+// Creator side: ask the registry for the list of live rooms.
+async function fetchActiveServers() {
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return [];
+
+  const queryConn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+
+  const servers = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    queryConn.on("open",  () => queryConn.send({ type: "list_rooms" }));
+    queryConn.on("data",  (message) => { if (message.type === "room_list") finish(message.servers ?? []); });
+    queryConn.on("error", () => finish([]));
+    setTimeout(() => finish([]), REGISTRY_QUERY_TIMEOUT);
+  });
+
+  setTimeout(() => { try { helperPeer.destroy(); } catch (_) {} }, 500);
+  return servers;
 }
 
 // ═══════════════════════════════════════════════════
@@ -706,13 +922,22 @@ function renderUsersList() {
       rowEl.appendChild(handIconEl);
     }
 
-    if (isHost && user.peerId !== peer.id) {
+    // The host can moderate everyone; a verified creator can moderate everyone
+    // except the host (and never themselves).
+    const canModerate =
+      user.peerId !== peer?.id &&
+      (isHost || (isCreator && user.peerId !== hostPeerId));
+
+    if (canModerate) {
       nameEl.classList.add("participant-name--clickable");
       nameEl.addEventListener("click", (e) => {
         e.stopPropagation();
         openHostActionMenu(user.peerId, user.username, e);
       });
+    }
 
+    // Force-mute / force-cam status icons reflect host-only bookkeeping.
+    if (isHost && user.peerId !== peer.id) {
       if (forceMutedPeerIds.has(user.peerId)) {
         const mutedIconEl       = document.createElement("span");
         mutedIconEl.className   = "participant-status-icon";
@@ -973,15 +1198,29 @@ createRoomBtnEl.addEventListener("click", () => {
   createRoom();
 });
 
-joinRoomBtnEl.addEventListener("click", () => {
-  const targetRoomId = roomIdInputEl.value.trim();
-  if (!targetRoomId) { setLobbyStatus("Please enter a Room ID.", true); return; }
+// Shared by the Join button and the active-servers menu.
+function startJoinRoom(targetRoomId) {
   currentUsername          = screenName;
   isHost                   = false;
   createRoomBtnEl.disabled = true;
   joinRoomBtnEl.disabled   = true;
   setLobbyStatus("Connecting...");
   joinRoom(targetRoomId);
+}
+
+joinRoomBtnEl.addEventListener("click", () => {
+  const targetRoomId = roomIdInputEl.value.trim();
+
+  // Secret creator command: typing "creator" opens the active-servers list.
+  if (targetRoomId.toLowerCase() === "creator") {
+    roomIdInputEl.value = "";
+    if (isCreator) openServerListModal();
+    else           showCreatorModal();
+    return;
+  }
+
+  if (!targetRoomId) { setLobbyStatus("Please enter a Room ID.", true); return; }
+  startJoinRoom(targetRoomId);
 });
 
 copyIdBtnEl.addEventListener("click", () => {
@@ -1016,6 +1255,7 @@ leaveBtnEl.addEventListener("click", () => {
     screenShareStream = null;
     isScreenSharing   = false;
   }
+  stopRoomAnnouncement();
   peer?.destroy();
   location.reload();
 });
@@ -1095,24 +1335,32 @@ document.addEventListener("click", (e) => {
 //  ROOMS — HOST ACTION MENU BUTTONS
 // ═══════════════════════════════════════════════════
 
+// The host acts directly; a verified creator relays the action to the host.
+function runMenuAction(hostAction, creatorAction) {
+  const targetPeerId = hostActionMenuTargetPeerId;
+  if (!targetPeerId) return;
+  if (isHost) {
+    hostAction(targetPeerId);
+  } else if (isCreator) {
+    requestCreatorModeration(creatorAction, targetPeerId);
+  }
+  closeHostActionMenu();
+}
+
 hostActionMenuEl.querySelector(".host-action-mute-btn").addEventListener("click", () => {
-  if (hostActionMenuTargetPeerId) forceMuteGuest(hostActionMenuTargetPeerId);
+  runMenuAction(forceMuteGuest, "mute");
 });
 
 hostActionMenuEl.querySelector(".host-action-cam-off-btn").addEventListener("click", () => {
-  if (hostActionMenuTargetPeerId) forceCamOffGuest(hostActionMenuTargetPeerId);
+  runMenuAction(forceCamOffGuest, "cam");
 });
 
 hostActionMenuEl.querySelector(".host-action-kick-btn").addEventListener("click", () => {
-  if (!hostActionMenuTargetPeerId) return;
-  kickUser(hostActionMenuTargetPeerId);
-  closeHostActionMenu();
+  runMenuAction(kickUser, "kick");
 });
 
 hostActionMenuEl.querySelector(".host-action-ban-btn").addEventListener("click", () => {
-  if (!hostActionMenuTargetPeerId) return;
-  banUser(hostActionMenuTargetPeerId);
-  closeHostActionMenu();
+  runMenuAction(banUser, "ban");
 });
 
 // Recompute grid on panel resize (e.g. window resize or sidebar toggle)
@@ -1205,6 +1453,78 @@ creatorPasswordCancelEl.addEventListener("click", hideCreatorModal);
 creatorPasswordInputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter")  creatorPasswordSubmitEl.click();
   if (e.key === "Escape") hideCreatorModal();
+});
+
+// ═══════════════════════════════════════════════════
+//  CREATOR — ACTIVE SERVERS MENU
+//
+//  Opened when a verified creator types "creator" in the Join field. Lists
+//  every live room reported by the registry and lets the creator hop into any.
+// ═══════════════════════════════════════════════════
+
+const serverListModalEl     = document.getElementById("server-list-modal");
+const serverListContainerEl = document.getElementById("server-list-container");
+const serverListRefreshEl   = document.getElementById("server-list-refresh");
+const serverListCloseEl     = document.getElementById("server-list-close");
+
+function hideServerListModal() {
+  serverListModalEl.classList.add("hidden");
+}
+
+function renderServerList(servers) {
+  serverListContainerEl.innerHTML = "";
+
+  if (!servers || servers.length === 0) {
+    const emptyEl = document.createElement("p");
+    emptyEl.className   = "server-list-empty";
+    emptyEl.textContent = "No active servers found right now.";
+    serverListContainerEl.appendChild(emptyEl);
+    return;
+  }
+
+  for (const server of servers) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "server-list-row";
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "server-list-info";
+
+    const hostNameEl       = document.createElement("div");
+    hostNameEl.className    = "server-list-host";
+    hostNameEl.textContent  = server.hostName || "Unknown host";
+
+    const metaEl       = document.createElement("div");
+    metaEl.className    = "server-list-meta";
+    const count        = server.participantCount ?? 1;
+    metaEl.textContent  = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
+
+    infoEl.append(hostNameEl, metaEl);
+
+    const joinBtnEl       = document.createElement("button");
+    joinBtnEl.className    = "btn btn-primary btn-sm";
+    joinBtnEl.textContent  = "Join";
+    joinBtnEl.addEventListener("click", () => {
+      hideServerListModal();
+      startJoinRoom(server.roomId);
+    });
+
+    rowEl.append(infoEl, joinBtnEl);
+    serverListContainerEl.appendChild(rowEl);
+  }
+}
+
+async function openServerListModal() {
+  serverListModalEl.classList.remove("hidden");
+  serverListContainerEl.innerHTML =
+    `<p class="server-list-empty">Scanning for active servers…</p>`;
+  const servers = await fetchActiveServers();
+  renderServerList(servers);
+}
+
+serverListRefreshEl.addEventListener("click", () => openServerListModal());
+serverListCloseEl.addEventListener("click", hideServerListModal);
+serverListModalEl.addEventListener("click", (e) => {
+  if (e.target === serverListModalEl) hideServerListModal();
 });
 
 // ═══════════════════════════════════════════════════
