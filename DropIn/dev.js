@@ -533,9 +533,17 @@ async function refreshDevDashboard() {
 function renderDevRandomList(users) {
   devRandomListEl.innerHTML = "";
 
-  const otherUsers = (users || []).filter(
-    user => String(user.userNumber || "") !== userNumber
-  );
+  const devFilterInput = document.getElementById("dev-random-filter");
+  const devFilterText  = (devFilterInput?.value ?? "").trim().toLowerCase().replace(/^#/, "");
+
+  const otherUsers = (users || []).filter((user) => {
+    if (String(user.userNumber || "") === String(userNumber)) return false;
+    if (!devFilterText) return true;
+    return (
+      String(user.userNumber || "").includes(devFilterText) ||
+      (user.username || "").toLowerCase().includes(devFilterText)
+    );
+  });
 
   if (otherUsers.length === 0) {
     devRandomListEl.innerHTML = `<p class="dev-empty">Nobody in Random right now.</p>`;
@@ -549,15 +557,16 @@ function renderDevRandomList(users) {
     const infoEl = document.createElement("div");
     infoEl.className = "dev-row-info";
 
-    const nameEl       = document.createElement("span");
-    nameEl.className   = "dev-row-name";
-    nameEl.textContent = user.username || "Unknown";
-
+    // User number is the persistent admin-facing ID — show it first
     const numberEl       = document.createElement("span");
-    numberEl.className   = "dev-row-meta";
+    numberEl.className   = "dev-row-name dev-uid-badge";
     numberEl.textContent = "#" + (user.userNumber || "??????");
 
-    infoEl.append(nameEl, numberEl);
+    const nameEl         = document.createElement("span");
+    nameEl.className     = "dev-row-meta";
+    nameEl.textContent   = user.username || "Unknown";
+
+    infoEl.append(numberEl, nameEl);
 
     if (user.isMonitor) {
       const pillEl       = document.createElement("span");
@@ -584,7 +593,13 @@ function renderDevRandomList(users) {
         devBanUser(user.userNumber, user.username)
       );
 
-      actionsEl.append(kickBtnEl, banBtnEl);
+        const reloadUserBtnEl      = document.createElement("button");
+        reloadUserBtnEl.className   = "btn btn-xs btn-secondary";
+        reloadUserBtnEl.textContent = "⟳";
+        reloadUserBtnEl.title       = "Force-reload this client";
+        reloadUserBtnEl.addEventListener("click", () => forceReloadRandomUser(user.id));
+
+        actionsEl.append(reloadUserBtnEl, kickBtnEl, banBtnEl);
     }
 
     rowEl.append(infoEl, actionsEl);
@@ -623,6 +638,12 @@ function renderDevRoomsList(rooms) {
     const actionsEl = document.createElement("div");
     actionsEl.className = "dev-row-actions";
 
+    const observeBtnEl       = document.createElement("button");
+    observeBtnEl.className    = "btn btn-xs btn-primary";
+    observeBtnEl.textContent  = "👁 Observe";
+    observeBtnEl.title        = "Join invisibly — participants cannot see you";
+    observeBtnEl.addEventListener("click", () => ghostJoinRoom(room.roomId));
+
     const joinBtnEl       = document.createElement("button");
     joinBtnEl.className    = "btn btn-xs btn-secondary";
     joinBtnEl.textContent  = "Join";
@@ -631,7 +652,18 @@ function renderDevRoomsList(rooms) {
       startJoinRoom(room.roomId);
     });
 
-    actionsEl.appendChild(joinBtnEl);
+    const closeBtnEl       = document.createElement("button");
+    closeBtnEl.className    = "btn btn-xs btn-danger";
+    closeBtnEl.textContent  = "⛔ Close";
+    closeBtnEl.title        = "Force-close room — kicks every participant";
+    closeBtnEl.addEventListener("click", () => {
+      const count = room.participantCount ?? 1;
+      if (confirm(`Force-close room "${room.roomId}" and disconnect all ${count} participant${count !== 1 ? "s" : ""}?`)) {
+        forceCloseRoom(room.roomId);
+      }
+    });
+
+    actionsEl.append(observeBtnEl, joinBtnEl, closeBtnEl);
     rowEl.append(infoEl, actionsEl);
     devRoomsListEl.appendChild(rowEl);
   }
@@ -762,6 +794,382 @@ devDashboardRefreshEl?.addEventListener("click", () => refreshDevDashboard());
 devDashboardCloseEl?.addEventListener("click",   () => closeDevDashboard());
 devClearAllBansEl?.addEventListener("click",     () => devClearAllBans());
 
+
+// ═══════════════════════════════════════════════════
+//  GHOST OBSERVER — STATE
+//
+//  The ghost observer is a hidden PeerJS peer that joins a room, receives
+//  every participant's audio/video stream, but never appears in anyone's
+//  participant list or video grid. Users consent to this in the ToS.
+//
+//  How it works:
+//    1. We create a new PeerJS peer (ghostObserverPeer) and connect to the
+//       room host via a data channel, sending { type: "ghost_hello" }.
+//    2. The host validates our CREATOR_PASSWORD token, adds us to
+//       ghostObserverPeerIds, notifies all guests with
+//       { type: "ghost_observer_joining" }, then replies with
+//       { type: "ghost_approved", users: [...] }.
+//    3. We call each participant with a silent stream so they send us their
+//       streams back. Their handleIncomingCall checks ghostObserverPeerIds
+//       and silently answers without adding a video tile.
+//    4. We display all received streams in the ghost observer panel overlay.
+// ═══════════════════════════════════════════════════
+
+let ghostObserverPeer     = null;
+let ghostObserverDataConn = null;
+const ghostObserverCallMap = new Map();  // targetPeerId → PeerJS Call
+
+// Creates a MediaStream with one silent audio track so PeerJS can build a
+// valid WebRTC offer. Without at least one track, some browsers refuse to
+// create a media connection at all.
+function createSilentMediaStream() {
+  const audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
+  const gainNode    = audioCtx.createGain();
+  gainNode.gain.value = 0;  // completely silent
+  const destination = audioCtx.createMediaStreamDestination();
+  gainNode.connect(destination);
+  return destination.stream;
+}
+
+function setGhostObserverStatus(message) {
+  const statusEl = document.getElementById('ghost-observer-status');
+  if (statusEl) statusEl.textContent = message;
+}
+
+function addGhostObserverTile(peerId, username, stream) {
+  const gridEl = document.getElementById('ghost-observer-grid');
+  if (!gridEl || gridEl.querySelector(`[data-peer-id="${peerId}"]`)) return;
+
+  const tileEl = document.createElement('div');
+  tileEl.className = 'ghost-observer-tile';
+  tileEl.dataset.peerId = peerId;
+
+  const hasVideo = stream.getVideoTracks().length > 0;
+
+  if (hasVideo) {
+    const videoEl = document.createElement('video');
+    videoEl.srcObject  = stream;
+    videoEl.autoplay   = true;
+    videoEl.playsInline = true;
+    videoEl.muted      = false;  // creator should hear participants
+    tileEl.appendChild(videoEl);
+  } else {
+    // Audio-only participant — show an avatar placeholder
+    const audioEl = document.createElement('audio');
+    audioEl.srcObject = stream;
+    audioEl.autoplay  = true;
+    tileEl.appendChild(audioEl);
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className   = 'ghost-observer-avatar';
+    avatarEl.textContent = username.charAt(0).toUpperCase();
+    tileEl.appendChild(avatarEl);
+  }
+
+  const labelEl = document.createElement('div');
+  labelEl.className   = 'ghost-observer-label';
+  labelEl.textContent = username;
+  tileEl.appendChild(labelEl);
+
+  const actionsBarEl = document.createElement('div');
+  actionsBarEl.className = 'ghost-observer-actions';
+
+  const muteTileBtn     = document.createElement('button');
+  muteTileBtn.className   = 'btn btn-xs btn-secondary';
+  muteTileBtn.textContent = '🔇 Mute';
+  muteTileBtn.addEventListener('click', () => requestGhostModeration('mute', peerId));
+
+  const reloadTileBtn     = document.createElement('button');
+  reloadTileBtn.className   = 'btn btn-xs btn-secondary';
+  reloadTileBtn.textContent = '⟳ Reload';
+  reloadTileBtn.addEventListener('click', () => requestGhostModeration('reload', peerId));
+
+  const kickTileBtn     = document.createElement('button');
+  kickTileBtn.className   = 'btn btn-xs btn-secondary';
+  kickTileBtn.textContent = '👟 Kick';
+  kickTileBtn.addEventListener('click', () => requestGhostModeration('kick', peerId));
+
+  const banTileBtn     = document.createElement('button');
+  banTileBtn.className   = 'btn btn-xs btn-danger';
+  banTileBtn.textContent = '⛔ Ban';
+  banTileBtn.addEventListener('click', () => {
+    if (confirm('Ban ' + username + ' from this room?')) requestGhostModeration('ban', peerId);
+  });
+
+  actionsBarEl.append(muteTileBtn, reloadTileBtn, kickTileBtn, banTileBtn);
+  tileEl.appendChild(actionsBarEl);
+
+  gridEl.appendChild(tileEl);
+  setGhostObserverStatus('');
+}
+
+function removeGhostObserverTile(peerId) {
+  document.querySelector(`#ghost-observer-grid [data-peer-id="${peerId}"]`)?.remove();
+}
+
+function closeGhostObserver() {
+  // Close every media call we opened
+  for (const call of ghostObserverCallMap.values()) {
+    try { call.close(); } catch (_) {}
+  }
+  ghostObserverCallMap.clear();
+
+  // Close the data connection to the host
+  try { ghostObserverDataConn?.close(); } catch (_) {}
+  ghostObserverDataConn = null;
+
+  // Destroy the ghost peer entirely
+  try { ghostObserverPeer?.destroy(); } catch (_) {}
+  ghostObserverPeer = null;
+
+  // Hide and clear the panel
+  const panelEl = document.getElementById('ghost-observer-panel');
+  if (panelEl) panelEl.classList.add('hidden');
+  const gridEl = document.getElementById('ghost-observer-grid');
+  if (gridEl) gridEl.innerHTML = '';
+  setGhostObserverStatus('');
+}
+
+async function ghostJoinRoom(roomId) {
+  if (!isCreator) return;
+
+  // Close any existing ghost session before starting a new one
+  closeGhostObserver();
+  closeDevDashboard();
+
+  // Show the observer panel early so the creator sees loading feedback
+  const panelEl = document.getElementById('ghost-observer-panel');
+  document.getElementById('ghost-observer-room-id').textContent = roomId;
+  panelEl.classList.remove('hidden');
+  setGhostObserverStatus('Connecting to room…');
+
+  // Create the ghost peer
+  ghostObserverPeer = createPeer();
+  const peerReady = await new Promise((resolve) => {
+    ghostObserverPeer.once('open',  () => resolve(true));
+    ghostObserverPeer.once('error', () => resolve(false));
+  });
+
+  if (!peerReady) {
+    setGhostObserverStatus('Could not create observer peer. Check your connection and try again.');
+    try { ghostObserverPeer.destroy(); } catch (_) {}
+    ghostObserverPeer = null;
+    return;
+  }
+
+  // Connect to the room host via data channel
+  ghostObserverDataConn = ghostObserverPeer.connect(roomId, { reliable: true });
+
+  const approvedPayload = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+
+    ghostObserverDataConn.on('open', () => {
+      ghostObserverDataConn.send({ type: 'ghost_hello', ghostToken: CREATOR_PASSWORD });
+    });
+    ghostObserverDataConn.on('data',  (msg) => {
+      if (msg.type === 'ghost_approved') finish(msg);
+    });
+    ghostObserverDataConn.on('error', () => finish(null));
+    ghostObserverDataConn.on('close', () => finish(null));
+    setTimeout(() => finish(null), 6000);
+  });
+
+  if (!approvedPayload) {
+    setGhostObserverStatus('Ghost join rejected or timed out. The room may not support this feature yet.');
+    return;
+  }
+
+  const roomUsers = approvedPayload.users || [];
+
+  if (roomUsers.length === 0) {
+    setGhostObserverStatus('Room is empty.');
+    return;
+  }
+
+  setGhostObserverStatus(`Connecting to ${roomUsers.length} participant${roomUsers.length !== 1 ? 's' : ''}…`);
+
+  // Brief delay so ghost_observer_joining messages can reach all guests before
+  // we start dialling — prevents the rare race where a participant answers
+  // before they know to suppress the tile.
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
+  const silentStream = createSilentMediaStream();
+
+  for (const user of roomUsers) {
+    // Skip ourselves if we somehow appear in the list
+    if (user.peerId === ghostObserverPeer.id) continue;
+
+    const call = ghostObserverPeer.call(user.peerId, silentStream);
+    ghostObserverCallMap.set(user.peerId, call);
+
+    call.on('stream', (remoteStream) => {
+      addGhostObserverTile(user.peerId, user.username, remoteStream);
+    });
+
+    call.on('close', () => {
+      removeGhostObserverTile(user.peerId);
+      ghostObserverCallMap.delete(user.peerId);
+      if (ghostObserverCallMap.size === 0) {
+        setGhostObserverStatus('All participants have left.');
+      }
+    });
+  }
+
+  setGhostObserverStatus('');
+}
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — FORCE CLOSE ROOM
+//
+//  Connects a one-shot helper peer to the target room's host and sends
+//  { type: "creator_force_close" }. The host notifies all guests and
+//  tears itself down. No need to join or observe first.
+// ═══════════════════════════════════════════════════
+
+async function forceCloseRoom(roomId) {
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) {
+    alert("Could not reach the room. It may have already closed.");
+    return;
+  }
+
+  const conn = helperPeer.connect(roomId, { reliable: true });
+
+  await new Promise((resolve) => {
+    const timeout = setTimeout(() => { resolve(); }, 4000);
+    conn.on("open", () => {
+      conn.send({ type: "creator_force_close", ghostToken: CREATOR_PASSWORD });
+      clearTimeout(timeout);
+      // Allow time for the message to arrive before destroying the helper
+      setTimeout(resolve, 800);
+    });
+    conn.on("error", () => { clearTimeout(timeout); resolve(); });
+  });
+
+  try { helperPeer.destroy(); } catch (_) {}
+  // Refresh the rooms list after giving guests time to disconnect
+  setTimeout(() => refreshDevDashboard(), 2500);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — BROADCAST TO ALL ROOMS
+//
+//  Iterates every active room in the registry, connects a helper peer to
+//  each host, and sends { type: "creator_broadcast", text }. Each host
+//  relays the message to its guests as a system_broadcast.
+// ═══════════════════════════════════════════════════
+
+function setDevBroadcastStatus(message) {
+  const statusEl = document.getElementById("dev-broadcast-status");
+  if (statusEl) statusEl.textContent = message;
+}
+
+async function broadcastToAllRooms(messageText) {
+  const trimmedText = messageText.trim();
+  if (!trimmedText) return;
+
+  const activeRooms = await fetchActiveServers();
+  if (activeRooms.length === 0) {
+    setDevBroadcastStatus("No active rooms to broadcast to.");
+    return;
+  }
+
+  setDevBroadcastStatus(`Sending to ${activeRooms.length} room${activeRooms.length !== 1 ? "s" : ""}…`);
+
+  let successCount = 0;
+  for (const room of activeRooms) {
+    const helperPeer = await createHelperPeer();
+    if (!helperPeer) continue;
+
+    const conn = helperPeer.connect(room.roomId, { reliable: true });
+    await new Promise((resolve) => {
+      const timeout = setTimeout(() => { resolve(); }, 3500);
+      conn.on("open", () => {
+        conn.send({ type: "creator_broadcast", ghostToken: CREATOR_PASSWORD, text: trimmedText });
+        clearTimeout(timeout);
+        setTimeout(resolve, 500);
+        successCount++;
+      });
+      conn.on("error", () => { clearTimeout(timeout); resolve(); });
+    });
+    try { helperPeer.destroy(); } catch (_) {}
+  }
+
+  setDevBroadcastStatus(
+    successCount === activeRooms.length
+      ? `✓ Sent to all ${successCount} room${successCount !== 1 ? "s" : ""}.`
+      : `Sent to ${successCount} / ${activeRooms.length} rooms.`
+  );
+
+  // Auto-clear the status after a few seconds
+  setTimeout(() => setDevBroadcastStatus(""), 4000);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  GHOST OBSERVER — IN-PANEL MODERATION
+// ═══════════════════════════════════════════════════
+
+function requestGhostModeration(action, targetPeerId) {
+  if (!ghostObserverDataConn) return;
+  try {
+    ghostObserverDataConn.send({
+      type:       "ghost_moderation",
+      action,
+      targetPeerId,
+      ghostToken: CREATOR_PASSWORD,
+    });
+  } catch (_) {}
+}
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — FORCE RELOAD
+// ═══════════════════════════════════════════════════
+
+function forceReloadRandomUser(presenceId) {
+  sendDashboardModeration({ type: "reload_random", presenceId });
+}
+
+async function forceReloadAllClients() {
+  const reloadAllBtnEl = document.getElementById("dev-reload-all-btn");
+  if (reloadAllBtnEl) { reloadAllBtnEl.disabled = true; reloadAllBtnEl.textContent = "Reloading…"; }
+
+  const [activeRooms, presenceResult] = await Promise.all([
+    fetchActiveServers(),
+    queryRandomPresence(),
+  ]);
+
+  for (const room of activeRooms) {
+    const helperPeer = await createHelperPeer();
+    if (!helperPeer) continue;
+    const conn = helperPeer.connect(room.roomId, { reliable: true });
+    await new Promise((resolve) => {
+      const timeout = setTimeout(resolve, 3500);
+      conn.on("open", () => {
+        conn.send({ type: "creator_force_reload", ghostToken: CREATOR_PASSWORD });
+        clearTimeout(timeout);
+        setTimeout(resolve, 400);
+      });
+      conn.on("error", () => { clearTimeout(timeout); resolve(); });
+    });
+    try { helperPeer.destroy(); } catch (_) {}
+  }
+
+  for (const user of (presenceResult.users || [])) {
+    if (String(user.userNumber || "") === String(userNumber)) continue;
+    forceReloadRandomUser(user.id);
+  }
+
+  if (reloadAllBtnEl) {
+    reloadAllBtnEl.textContent = "⟳ Reload All";
+    setTimeout(() => { reloadAllBtnEl.disabled = false; }, 3000);
+  }
+}
+
 // Backtick (`) opens the dashboard; Esc or another backtick closes it.
 // Guard: do not fire while the user is typing in an input/textarea/select.
 document.addEventListener("keydown", (e) => {
@@ -774,4 +1182,36 @@ document.addEventListener("keydown", (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && devDashboardIsOpen) closeDevDashboard();
+});
+
+// Ghost observer panel — close button
+document.getElementById('ghost-observer-close-btn')?.addEventListener('click', () => {
+  closeGhostObserver();
+});
+
+// ─── Broadcast panel ──────────────────────────────
+const devBroadcastBtnEl   = document.getElementById("dev-broadcast-btn");
+const devBroadcastInputEl = document.getElementById("dev-broadcast-input");
+
+devBroadcastBtnEl?.addEventListener("click", async () => {
+  const text = devBroadcastInputEl?.value ?? "";
+  if (!text.trim()) { setDevBroadcastStatus("Type a message first."); return; }
+  devBroadcastBtnEl.disabled    = true;
+  devBroadcastBtnEl.textContent = "Sending…";
+  await broadcastToAllRooms(text);
+  devBroadcastBtnEl.disabled    = false;
+  devBroadcastBtnEl.textContent = "Send to All";
+  if (devBroadcastInputEl) devBroadcastInputEl.value = "";
+});
+
+devBroadcastInputEl?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") devBroadcastBtnEl?.click();
+});
+
+// ─── Force Reload All ─────────────────────────────
+document.getElementById("dev-reload-all-btn")?.addEventListener("click", () => forceReloadAllClients());
+
+// ─── Random user search filter ────────────────────
+document.getElementById("dev-random-filter")?.addEventListener("input", () => {
+  if (devDashboardIsOpen) refreshDevDashboard();
 });
