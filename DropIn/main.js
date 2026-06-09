@@ -1,6 +1,45 @@
 // window.Peer → PeerJS (peerjs@1.5.4)
 
 // ═══════════════════════════════════════════════════
+//  WEBRTC ICE / TURN CONFIGURATION
+//
+//  Why two devices failed: PeerJS was created with no ICE config, so calls
+//  only had STUN (NAT discovery). On one machine / LAN, peers exchange direct
+//  "host" candidates and connect fine — but two devices on DIFFERENT networks
+//  sit behind NATs/firewalls that block direct traffic, so the media never
+//  flows and the call looks connected yet shows nothing. A TURN server relays
+//  the audio/video in that case.
+//
+//  STUN_SERVERS handle NAT discovery; TURN_SERVERS relay when a direct path is
+//  impossible. The TURN entries below are a free, best-effort public relay on
+//  ports 80/443 + TCP (to punch through strict firewalls). Free public TURN is
+//  rate-limited and not guaranteed — for anything beyond testing, replace
+//  TURN_SERVERS with your own credentials (coturn, Metered, Cloudflare, Twilio).
+// ═══════════════════════════════════════════════════
+
+const STUN_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun.cloudflare.com:3478" },
+];
+
+// ⚠️ Best-effort free relay — swap in your own TURN credentials for production.
+const TURN_SERVERS = [
+  { urls: "turn:openrelay.metered.ca:80",                username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443",               username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+];
+
+// Passed to every `new Peer(...)` so all connections share one ICE/TURN config.
+const PEER_OPTIONS = { config: { iceServers: [...STUN_SERVERS, ...TURN_SERVERS] } };
+
+// Creates a PeerJS peer with our shared ICE/TURN config. Pass a fixed id when
+// one is needed (registry holder, Random slots); omit it for an auto id.
+function createPeer(peerId) {
+  return peerId ? new window.Peer(peerId, PEER_OPTIONS) : new window.Peer(PEER_OPTIONS);
+}
+
+// ═══════════════════════════════════════════════════
 //  ROOMS STATE
 // ═══════════════════════════════════════════════════
 
@@ -61,6 +100,29 @@ const registeredServers  = new Map();   // (holder only) roomId → { hostName, 
 let   registryAnnounceConn = null;       // host's data connection to the registry
 let   registryAnnounceTimer = null;      // host's heartbeat interval
 
+// ─── Random-mode presence + bans (lives on the registry holder) ───────────────
+//  Every Random user opens a persistent connection to the holder to announce
+//  who they are; a creator can then list them and push kick/ban commands back
+//  down those connections. Bans are keyed by lowercased screen name.
+const RANDOM_PRESENCE_STALE_MS = 15000;
+const SELF_PRESENCE_ID         = "__self__";  // the holder's own presence entry
+const randomPresence = new Map();  // (holder only) presenceId → { username, userNumber, conn, updatedAt }
+// (holder only) userNumber → expiresAt (epoch ms, or null for a permanent ban)
+const randomBans     = new Map();
+
+// ─── Random-mode moderation — client side ─────────────────────────────────────
+const STORAGE_KEY_RANDOM_BANS  = "dropin_random_bans_v2";  // creator's persisted bans: [{ number, until }]
+const STORAGE_KEY_USER_NUMBER  = "dropin_user_number";     // this device's stable id
+const STORAGE_KEY_MY_RANDOM_BAN = "dropin_random_my_ban";  // this device's own cached ban: { until }
+let   randomPresenceConn  = null;   // our persistent connection to the holder
+let   randomPresenceTimer = null;   // heartbeat interval
+let   randomPresenceId    = "";     // our presence id as seen by the holder
+
+// Stable per-device number, generated once and remembered across sessions. It
+// lets a creator ban a specific person by number instead of by screen name, so
+// an innocent name is never the thing that gets blocked.
+const userNumber = loadOrCreateUserNumber();
+
 // ═══════════════════════════════════════════════════
 //  PERSISTENCE — USERNAME & RECENT ROOMS
 // ═══════════════════════════════════════════════════
@@ -71,7 +133,7 @@ const MAX_RECENT_ROOMS         = 20;
 
 // ─── Creator badge ───────────────────────────────
 const STORAGE_KEY_CREATOR = "dropin_creator_verified";
-const CREATOR_PASSWORD    = "229300";
+// CREATOR_PASSWORD + the activate/deactivate/render badge helpers live in dev.js.
 
 // Set just before a forced reload so we auto-join the new room on next load.
 const STORAGE_KEY_PENDING_MOVE = "dropin_pending_move";
@@ -80,25 +142,7 @@ const STORAGE_KEY_PENDING_MOVE = "dropin_pending_move";
 // or imports a creator marker file.
 let isCreator = localStorage.getItem(STORAGE_KEY_CREATOR) === "1";
 
-// Grants the creator badge and remembers it across sessions.
-function activateCreator() {
-  isCreator = true;
-  localStorage.setItem(STORAGE_KEY_CREATOR, "1");
-  renderCreatorStatus();
-}
-
-// Revokes the creator badge and forgets it across sessions.
-function deactivateCreator() {
-  isCreator = false;
-  localStorage.removeItem(STORAGE_KEY_CREATOR);
-  renderCreatorStatus();
-}
-
-// Shows/hides the "Creator mode active" row in the lobby based on current state.
-function renderCreatorStatus() {
-  const statusEl = document.getElementById("creator-status");
-  if (statusEl) statusEl.classList.toggle("hidden", !isCreator);
-}
+// Creator-badge helpers (activate/deactivate/render) → moved to dev.js.
 
 // ─── Username helpers ─────────────────────────────
 
@@ -308,6 +352,11 @@ let randomIsMuted          = false;
 let randomIsCamOff         = false;
 let currentSlotResolver    = null;
 
+// Creator monitoring dashboard: true while the creator is watching (not in a
+// call, no camera/mic) so they can be excluded from matchmaking + the list.
+let randomMonitorMode      = false;
+let randomDashboardTimer   = null;
+
 // ═══════════════════════════════════════════════════
 //  DOM REFS — ROOMS
 // ═══════════════════════════════════════════════════
@@ -366,6 +415,14 @@ const randomNextBtnEl        = document.getElementById("random-next-btn");
 const randomLeaveBtnEl       = document.getElementById("random-leave-btn");
 const randomSendBtnEl        = document.getElementById("random-send-btn");
 
+// ─── Random-mode creator moderation modal ─────────
+const randomModBtnEl         = document.getElementById("random-mod-btn");
+const randomModModalEl       = document.getElementById("random-mod-modal");
+const randomModListEl        = document.getElementById("random-mod-list");
+const randomModBansEl        = document.getElementById("random-mod-bans");
+const randomModRefreshBtnEl  = document.getElementById("random-mod-refresh");
+const randomModCloseBtnEl    = document.getElementById("random-mod-close");
+
 // ═══════════════════════════════════════════════════
 //  ROOMS — BROADCAST
 // ═══════════════════════════════════════════════════
@@ -410,7 +467,7 @@ function showAppScreen() {
 // ═══════════════════════════════════════════════════
 
 function createRoom() {
-  peer = new window.Peer();
+  peer = createPeer();
 
   peer.on("open", (assignedId) => {
     currentRoomId  = assignedId;
@@ -561,7 +618,7 @@ function moveGuestToRoom(peerId, roomId) {
 // registry holder. Resolves null if the peer fails to open.
 function createHelperPeer() {
   return new Promise((resolve) => {
-    const helperPeer = new window.Peer();
+    const helperPeer = createPeer();
     let   settled    = false;
     const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
     helperPeer.once("open",  () => finish(helperPeer));
@@ -585,7 +642,8 @@ function serializeActiveServers() {
   }));
 }
 
-// Called on the registry holder when another peer sends it a message.
+// Called on the registry holder when another peer sends it a message. `conn`
+// is null when the holder is processing its own (local) request.
 function handleRegistryMessage(conn, message) {
   switch (message.type) {
     case "register_room":
@@ -602,16 +660,139 @@ function handleRegistryMessage(conn, message) {
       break;
     }
     case "list_rooms": {
-      conn.send({ type: "room_list", servers: serializeActiveServers() });
+      conn?.send({ type: "room_list", servers: serializeActiveServers() });
       break;
     }
+
+    // ─── Random-mode presence + moderation (holder side) ───────────────────
+    case "random_register":
+    case "random_heartbeat": {
+      const id  = conn ? conn.peer : SELF_PRESENCE_ID;
+      const num = String(message.userNumber || "");
+      // Re-check the ban list at join/heartbeat time. An expired ban is freed
+      // here so the person is silently let back in.
+      if (num && randomBans.has(num)) {
+        const until = randomBans.get(num);
+        if (isBanActive(until)) {
+          conn?.send({ type: "random_banned", until });
+          if (!conn) handleRandomControlMessage({ type: "random_banned", until });
+          break;
+        }
+        randomBans.delete(num); // ban window passed — they're freed
+      }
+      randomPresence.set(id, {
+        username:   message.username,
+        userNumber: num,
+        conn:       conn ?? null,
+        updatedAt:  Date.now(),
+      });
+      break;
+    }
+    case "random_unregister": {
+      randomPresence.delete(conn ? conn.peer : SELF_PRESENCE_ID);
+      break;
+    }
+    case "list_random": {
+      conn?.send({
+        type:  "random_presence_list",
+        users: serializeRandomPresence(),
+        bans:  serializeRandomBans(),
+      });
+      break;
+    }
+    // Lets a user that's trying to (re)join confirm whether they're still banned.
+    case "check_ban": {
+      const num  = String(message.userNumber || "");
+      let banned = false;
+      let until  = null;
+      if (num && randomBans.has(num)) {
+        until = randomBans.get(num);
+        if (isBanActive(until)) { banned = true; }
+        else { randomBans.delete(num); until = null; }
+      }
+      conn?.send({ type: "ban_status", banned, until: banned ? until : null });
+      break;
+    }
+    case "kick_random": {
+      kickRandomPresence(message.presenceId);
+      break;
+    }
+    case "ban_random": {
+      banRandomPresence(message.userNumber, message.until ?? null);
+      break;
+    }
+    case "unban_random": {
+      randomBans.delete(String(message.userNumber || ""));
+      break;
+    }
+    case "sync_bans": {
+      for (const entry of (message.bans || [])) {
+        if (!entry || !entry.number) continue;
+        const until = entry.until ?? null;
+        if (!isBanActive(until)) continue;
+        randomBans.set(String(entry.number), until);
+      }
+      break;
+    }
+  }
+}
+
+// Drops Random presence entries that stopped sending heartbeats.
+function pruneRandomPresence() {
+  const now = Date.now();
+  for (const [id, entry] of randomPresence.entries()) {
+    if (now - entry.updatedAt > RANDOM_PRESENCE_STALE_MS) randomPresence.delete(id);
+  }
+}
+
+function serializeRandomPresence() {
+  pruneRandomPresence();
+  return [...randomPresence.entries()].map(([id, entry]) => ({
+    id,
+    username:   entry.username,
+    userNumber: entry.userNumber || "",
+  }));
+}
+
+// Holder side: drop expired bans, then hand back [{ number, until }].
+function serializeRandomBans() {
+  const now = Date.now();
+  const out = [];
+  for (const [number, until] of randomBans.entries()) {
+    if (until != null && now >= until) { randomBans.delete(number); continue; }
+    out.push({ number, until: until ?? null });
+  }
+  return out;
+}
+
+// Holder side: boot one presence entry from Random mode.
+function kickRandomPresence(presenceId) {
+  const entry = randomPresence.get(presenceId);
+  if (!entry) return;
+  try { entry.conn?.send({ type: "random_kicked" }); } catch (_) {}
+  randomPresence.delete(presenceId);
+  if (presenceId === SELF_PRESENCE_ID) handleRandomControlMessage({ type: "random_kicked" });
+}
+
+// Holder side: ban a device number (optionally until a timestamp) and boot
+// anyone currently using that number.
+function banRandomPresence(userNumber, until = null) {
+  const num = String(userNumber || "");
+  if (!num) return;
+  randomBans.set(num, until ?? null);
+  for (const [id, entry] of randomPresence.entries()) {
+    if (String(entry.userNumber || "") !== num) continue;
+    try { entry.conn?.send({ type: "random_banned", until: until ?? null }); } catch (_) {}
+    randomPresence.delete(id);
+    if (id === SELF_PRESENCE_ID) handleRandomControlMessage({ type: "random_banned", until: until ?? null });
   }
 }
 
 function becomeRegistryHolder(holderPeer) {
   registryHolderPeer = holderPeer;
   holderPeer.on("connection", (conn) => {
-    conn.on("data", (message) => handleRegistryMessage(conn, message));
+    conn.on("data",  (message) => handleRegistryMessage(conn, message));
+    conn.on("close", ()        => randomPresence.delete(conn.peer));
   });
   holderPeer.on("error", () => {}); // a lost registry simply gets re-claimed later
 }
@@ -620,7 +801,7 @@ function becomeRegistryHolder(holderPeer) {
 // if someone else already holds it.
 function tryClaimRegistry() {
   return new Promise((resolve) => {
-    const holderPeer = new window.Peer(REGISTRY_PEER_ID);
+    const holderPeer = createPeer(REGISTRY_PEER_ID);
     let   settled    = false;
     const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
     holderPeer.once("open",  () => finish(holderPeer));
@@ -722,7 +903,7 @@ async function fetchActiveServers() {
 
 function joinRoom(targetRoomId) {
   currentRoomId = targetRoomId;
-  peer = new window.Peer();
+  peer = createPeer();
   peer.on("open",  ()     => { hostConnection = peer.connect(targetRoomId, { reliable: true }); setupConnectionToHost(hostConnection); });
   peer.on("call",  (call) => handleIncomingCall(call));
   peer.on("error", (err)  => { setLobbyStatus("Could not connect: " + err.message, true); resetLobbyButtons(); });
@@ -1468,211 +1649,11 @@ importUrlBtnEl.addEventListener("click", async () => {
 
 
 // ═══════════════════════════════════════════════════
-//  CREATOR BADGE — MODAL
+//  CREATOR / DEVELOPER-ONLY UI  →  moved to dev.js
+//  (creator badge modal, active-servers menu, move-participant modal,
+//   and the Random-mode moderation modal). dev.js shares this file's
+//   global scope and is loaded right after it in index.html.
 // ═══════════════════════════════════════════════════
-
-const creatorModalEl          = document.getElementById("creator-modal");
-const creatorPasswordInputEl  = document.getElementById("creator-password-input");
-const creatorPasswordErrorEl  = document.getElementById("creator-password-error");
-const creatorPasswordSubmitEl = document.getElementById("creator-password-submit");
-const creatorPasswordCancelEl = document.getElementById("creator-password-cancel");
-
-function showCreatorModal() {
-  creatorPasswordInputEl.value        = "";
-  creatorPasswordErrorEl.textContent  = "";
-  creatorModalEl.classList.remove("hidden");
-  setTimeout(() => creatorPasswordInputEl.focus(), 50);
-}
-
-function hideCreatorModal() {
-  creatorModalEl.classList.add("hidden");
-}
-
-creatorPasswordSubmitEl.addEventListener("click", () => {
-  if (creatorPasswordInputEl.value === CREATOR_PASSWORD) {
-    isCreator = true;
-    localStorage.setItem(STORAGE_KEY_CREATOR, "1");
-    hideCreatorModal();
-    setLobbyStatus("Creator badge activated!");
-  } else {
-    creatorPasswordErrorEl.textContent = "Incorrect password.";
-    creatorPasswordInputEl.select();
-  }
-});
-
-creatorPasswordCancelEl.addEventListener("click", hideCreatorModal);
-
-creatorPasswordInputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter")  creatorPasswordSubmitEl.click();
-  if (e.key === "Escape") hideCreatorModal();
-});
-
-// ═══════════════════════════════════════════════════
-//  CREATOR — ACTIVE SERVERS MENU
-//
-//  Opened when a verified creator types "creator" in the Join field. Lists
-//  every live room reported by the registry and lets the creator hop into any.
-// ═══════════════════════════════════════════════════
-
-const serverListModalEl     = document.getElementById("server-list-modal");
-const serverListContainerEl = document.getElementById("server-list-container");
-const serverListRefreshEl   = document.getElementById("server-list-refresh");
-const serverListCloseEl     = document.getElementById("server-list-close");
-
-function hideServerListModal() {
-  serverListModalEl.classList.add("hidden");
-}
-
-function renderServerList(servers) {
-  serverListContainerEl.innerHTML = "";
-
-  if (!servers || servers.length === 0) {
-    const emptyEl = document.createElement("p");
-    emptyEl.className   = "server-list-empty";
-    emptyEl.textContent = "No active servers found right now.";
-    serverListContainerEl.appendChild(emptyEl);
-    return;
-  }
-
-  for (const server of servers) {
-    const rowEl = document.createElement("div");
-    rowEl.className = "server-list-row";
-
-    const infoEl = document.createElement("div");
-    infoEl.className = "server-list-info";
-
-    const hostNameEl       = document.createElement("div");
-    hostNameEl.className    = "server-list-host";
-    hostNameEl.textContent  = server.hostName || "Unknown host";
-
-    const metaEl       = document.createElement("div");
-    metaEl.className    = "server-list-meta";
-    const count        = server.participantCount ?? 1;
-    metaEl.textContent  = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
-
-    infoEl.append(hostNameEl, metaEl);
-
-    const joinBtnEl       = document.createElement("button");
-    joinBtnEl.className    = "btn btn-primary btn-sm";
-    joinBtnEl.textContent  = "Join";
-    joinBtnEl.addEventListener("click", () => {
-      hideServerListModal();
-      startJoinRoom(server.roomId);
-    });
-
-    rowEl.append(infoEl, joinBtnEl);
-    serverListContainerEl.appendChild(rowEl);
-  }
-}
-
-async function openServerListModal() {
-  serverListModalEl.classList.remove("hidden");
-  serverListContainerEl.innerHTML =
-    `<p class="server-list-empty">Scanning for active servers…</p>`;
-  const servers = await fetchActiveServers();
-  renderServerList(servers);
-}
-
-serverListRefreshEl.addEventListener("click", () => openServerListModal());
-serverListCloseEl.addEventListener("click", hideServerListModal);
-serverListModalEl.addEventListener("click", (e) => {
-  if (e.target === serverListModalEl) hideServerListModal();
-});
-
-// ═══════════════════════════════════════════════════
-//  HOST / CREATOR — MOVE PARTICIPANT TO ANOTHER ROOM
-// ═══════════════════════════════════════════════════
-
-const moveUserModalEl    = document.getElementById("move-user-modal");
-const moveUserNameEl     = document.getElementById("move-user-name");
-const moveServerListEl   = document.getElementById("move-server-list");
-const moveRoomInputEl    = document.getElementById("move-room-input");
-const moveConfirmBtnEl   = document.getElementById("move-confirm-btn");
-const moveCancelBtnEl    = document.getElementById("move-cancel-btn");
-
-// The participant being relocated (kept separately from the menu target,
-// which is cleared as soon as the menu closes).
-let moveTargetPeerId = null;
-
-function hideMoveUserModal() {
-  moveUserModalEl.classList.add("hidden");
-  moveTargetPeerId = null;
-}
-
-// Sends the relocation request — directly if host, relayed if creator-guest.
-function performMove(roomId) {
-  const targetRoomId = (roomId ?? "").trim();
-  if (!targetRoomId || !moveTargetPeerId) return;
-
-  if (isHost) {
-    moveGuestToRoom(moveTargetPeerId, targetRoomId);
-  } else if (isCreator) {
-    requestCreatorModeration("move", moveTargetPeerId, targetRoomId);
-  }
-  hideMoveUserModal();
-}
-
-async function openMoveUserModal(targetPeerId, targetUsername) {
-  moveTargetPeerId          = targetPeerId;
-  moveUserNameEl.textContent = targetUsername;
-  moveRoomInputEl.value      = "";
-  moveUserModalEl.classList.remove("hidden");
-  setTimeout(() => moveRoomInputEl.focus(), 50);
-
-  // Offer live rooms (other than the current one) as one-click destinations.
-  moveServerListEl.innerHTML =
-    `<p class="server-list-empty">Loading destinations…</p>`;
-  const servers = (await fetchActiveServers()).filter((s) => s.roomId !== currentRoomId);
-
-  moveServerListEl.innerHTML = "";
-  if (servers.length === 0) {
-    moveServerListEl.innerHTML =
-      `<p class="server-list-empty">No other live rooms — type a Room ID below.</p>`;
-    return;
-  }
-
-  for (const server of servers) {
-    const rowEl = document.createElement("div");
-    rowEl.className = "server-list-row";
-
-    const infoEl = document.createElement("div");
-    infoEl.className = "server-list-info";
-    const hostNameEl      = document.createElement("div");
-    hostNameEl.className   = "server-list-host";
-    hostNameEl.textContent = server.hostName || "Unknown host";
-    const metaEl      = document.createElement("div");
-    metaEl.className   = "server-list-meta";
-    const count       = server.participantCount ?? 1;
-    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
-    infoEl.append(hostNameEl, metaEl);
-
-    const pickBtnEl      = document.createElement("button");
-    pickBtnEl.className   = "btn btn-primary btn-sm";
-    pickBtnEl.textContent = "Move here";
-    pickBtnEl.addEventListener("click", () => performMove(server.roomId));
-
-    rowEl.append(infoEl, pickBtnEl);
-    moveServerListEl.appendChild(rowEl);
-  }
-}
-
-moveConfirmBtnEl.addEventListener("click", () => performMove(moveRoomInputEl.value));
-moveCancelBtnEl.addEventListener("click", hideMoveUserModal);
-moveRoomInputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter")  performMove(moveRoomInputEl.value);
-  if (e.key === "Escape") hideMoveUserModal();
-});
-moveUserModalEl.addEventListener("click", (e) => {
-  if (e.target === moveUserModalEl) hideMoveUserModal();
-});
-
-// "Move to Room…" entry in the participant action menu (host + creator).
-hostActionMenuEl.querySelector(".host-action-move-btn").addEventListener("click", () => {
-  const targetPeerId  = hostActionMenuTargetPeerId;
-  const targetName    = hostActionMenuEl.querySelector(".host-action-menu-name").textContent;
-  closeHostActionMenu();
-  if (targetPeerId) openMoveUserModal(targetPeerId, targetName);
-});
 
 // ═══════════════════════════════════════════════════
 //  HOME SCREEN NAVIGATION
@@ -1691,12 +1672,12 @@ document.getElementById("creator-remove-btn")?.addEventListener("click", () => {
   setLobbyStatus("Creator badge removed.");
 });
 
-// Reflect the saved creator state as soon as the page loads.
-renderCreatorStatus();
 
 document.getElementById("select-random-btn").addEventListener("click", () => {
   homeScreenEl.classList.add("hidden");
   randomLobbyScreenEl.classList.remove("hidden");
+  const yourIdEl = document.getElementById("random-your-id-num");
+  if (yourIdEl) yourIdEl.textContent = "#" + userNumber;
 });
 
 document.getElementById("lobby-back-btn").addEventListener("click", () => {
@@ -1841,7 +1822,7 @@ function tryGuestConnectToSlot(slotId) {
 
 function tryClaimWaiterSlot(slotId) {
   return new Promise((resolve) => {
-    const waiterPeer = new window.Peer(slotId);
+    const waiterPeer = createPeer(slotId);
     const timer = setTimeout(() => { waiterPeer.destroy(); resolve(null); }, SLOT_REGISTER_TIMEOUT_MS);
     waiterPeer.on("open",  () => { clearTimeout(timer); resolve(waiterPeer); });
     waiterPeer.on("error", () => { clearTimeout(timer); waiterPeer.destroy(); resolve(null); });
@@ -1851,7 +1832,7 @@ function tryClaimWaiterSlot(slotId) {
 async function searchForRandomMatch(startSlotIndex) {
   if (randomIsDestroyed) return;
 
-  randomPeer = new window.Peer();
+  randomPeer = createPeer();
 
   const peerReady = await new Promise((resolve) => {
     randomPeer.once("open",  () => resolve(true));
@@ -1897,7 +1878,7 @@ async function searchForRandomMatch(startSlotIndex) {
 
     // Slot snatched by a third party — recreate guest peer and try the next slot
     randomPeer.destroy();
-    randomPeer = new window.Peer();
+    randomPeer = createPeer();
     const nextReady = await new Promise((resolve) => {
       randomPeer.once("open",  () => resolve(true));
       randomPeer.once("error", () => resolve(false));
@@ -1971,6 +1952,7 @@ function cleanupRandomMatch() {
 function cleanupRandomMode() {
   randomIsDestroyed   = true;
   currentSlotResolver = null;
+  stopRandomPresence();
   cleanupRandomMatch();
   if (randomPeer)        { randomPeer.destroy(); randomPeer = null; }
   if (randomLocalStream) { for (const track of randomLocalStream.getTracks()) track.stop(); randomLocalStream = null; }
@@ -1986,11 +1968,254 @@ function cleanupRandomMode() {
 }
 
 // ═══════════════════════════════════════════════════
+//  RANDOM MODE — CREATOR MODERATION (client side)
+//
+//  Every Random user opens a persistent connection to the registry holder to
+//  announce their presence. A creator can list everyone, kick them out, or
+//  ban them by screen name. Bans are persisted in the creator's localStorage
+//  and re-synced to the holder so they survive sessions and holder changes.
+// ═══════════════════════════════════════════════════
+
+// Returns this device's stable number, creating + persisting one on first use.
+function loadOrCreateUserNumber() {
+  let stored = localStorage.getItem(STORAGE_KEY_USER_NUMBER);
+  if (!stored) {
+    // 8-digit number: easy to read aloud and very unlikely to collide.
+    stored = String(Math.floor(10000000 + Math.random() * 90000000));
+    localStorage.setItem(STORAGE_KEY_USER_NUMBER, stored);
+  }
+  return stored;
+}
+
+// True while a ban is still in effect. `until` is null for a permanent ban.
+function isBanActive(until) {
+  return until == null || Date.now() < until;
+}
+
+// Human-friendly "2h 15m" / "3d" style duration from a millisecond span.
+function formatDuration(milliseconds) {
+  if (milliseconds <= 0) return "0m";
+  const totalMinutes = Math.ceil(milliseconds / 60000);
+  if (totalMinutes < 60) return totalMinutes + "m";
+  const hours   = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours < 24) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+  const days           = Math.floor(hours / 24);
+  const remainderHours = hours % 24;
+  return remainderHours ? `${days}d ${remainderHours}h` : `${days}d`;
+}
+
+// Message shown to a banned user, reflecting whether the ban is timed.
+function randomBanMessage(until) {
+  if (until == null) return "You are permanently banned from Random.";
+  return "You're banned from Random for " + formatDuration(until - Date.now()) + ".";
+}
+
+// ─── Creator's persisted ban list: [{ number, until }] ───────────────────────
+
+function loadRandomBans() {
+  let parsed;
+  try { parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_RANDOM_BANS) ?? "[]"); }
+  catch (_) { return []; }
+  if (!Array.isArray(parsed)) return [];
+  // Keep only well-formed, still-active entries.
+  return parsed
+    .filter((entry) => entry && typeof entry === "object" && entry.number)
+    .map((entry) => ({ number: String(entry.number), until: entry.until ?? null }))
+    .filter((entry) => isBanActive(entry.until));
+}
+
+function saveRandomBans(list) {
+  // Dedupe by number (keep latest expiry) and drop anything already expired.
+  const numberToUntil = new Map();
+  for (const entry of list) {
+    if (!entry || !entry.number) continue;
+    const until = entry.until ?? null;
+    if (!isBanActive(until)) continue;
+    numberToUntil.set(String(entry.number), until);
+  }
+  const cleaned = [...numberToUntil].map(([number, until]) => ({ number, until }));
+  localStorage.setItem(STORAGE_KEY_RANDOM_BANS, JSON.stringify(cleaned));
+  return cleaned;
+}
+
+// Sends every persisted ban to the holder so enforcement is active right away.
+function syncBansToRegistry() {
+  const bans = loadRandomBans();
+  if (bans.length === 0) return;
+  sendRandomModeration({ type: "sync_bans", bans });
+}
+
+// ─── This device's own cached ban (so it knows before reaching the holder) ───
+
+function loadMyRandomBan() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_MY_RANDOM_BAN) ?? "null"); }
+  catch (_) { return null; }
+}
+
+function saveMyRandomBan(until) {
+  localStorage.setItem(
+    STORAGE_KEY_MY_RANDOM_BAN,
+    JSON.stringify({ until: until ?? null, savedAt: Date.now() })
+  );
+}
+
+function clearMyRandomBan() {
+  localStorage.removeItem(STORAGE_KEY_MY_RANDOM_BAN);
+}
+
+// Boot-out handler: runs on the kicked/banned user's own client. A ban also
+// records the freed-time locally so a returning user sees the countdown.
+function handleRandomControlMessage(message) {
+  if (!message) return;
+  if (message.type === "random_kicked") {
+    leaveRandomToHome("A creator removed you from Random.");
+  } else if (message.type === "random_banned") {
+    saveMyRandomBan(message.until ?? null);
+    leaveRandomToHome(randomBanMessage(message.until ?? null));
+  }
+}
+
+function leaveRandomToHome(reason) {
+  if (randomCallScreenEl.classList.contains("hidden") &&
+      randomLobbyScreenEl.classList.contains("hidden")) return; // not in Random
+  cleanupRandomMode();
+  hideRandomModModal();
+  randomCallScreenEl.classList.add("hidden");
+  randomLobbyScreenEl.classList.add("hidden");
+  homeScreenEl.classList.remove("hidden");
+  if (reason) setTimeout(() => alert(reason), 50);
+}
+
+// Opens (or re-uses) a persistent connection to the registry holder used for
+// presence + receiving kick/ban commands. Mirrors announceRoomToRegistry's
+// claim-or-connect pattern so Random works even with no rooms around.
+async function announceRandomPresence() {
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer || randomIsDestroyed) { helperPeer?.destroy(); return; }
+  randomPresenceId = helperPeer.id;
+
+  const conn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  const connected = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (!settled) { settled = true; resolve(v); } };
+    conn.on("open",  () => finish(true));
+    conn.on("error", () => finish(false));
+    setTimeout(() => finish(false), REGISTRY_QUERY_TIMEOUT);
+  });
+
+  if (randomIsDestroyed) { helperPeer.destroy(); return; }
+
+  if (connected) {
+    randomPresenceConn = conn;
+    conn.on("data", (message) => handleRandomControlMessage(message));
+    if (isCreator) syncBansToRegistry();
+    sendRandomPresence("random_register");
+    randomPresenceTimer = setInterval(() => sendRandomPresence("random_heartbeat"), REGISTRY_HEARTBEAT_MS);
+    return;
+  }
+
+  // Nobody holds the registry — become the holder ourselves.
+  helperPeer.destroy();
+  const holderPeer = await tryClaimRegistry();
+  if (!holderPeer || randomIsDestroyed) { holderPeer?.destroy(); return; }
+  becomeRegistryHolder(holderPeer);
+  randomPresenceId = SELF_PRESENCE_ID;
+  if (isCreator) for (const ban of loadRandomBans()) randomBans.set(ban.number, ban.until);
+  randomPresence.set(SELF_PRESENCE_ID, { username: randomUsername, userNumber, conn: null, updatedAt: Date.now() });
+  randomPresenceTimer = setInterval(() => {
+    const entry = randomPresence.get(SELF_PRESENCE_ID);
+    if (entry) entry.updatedAt = Date.now();
+  }, REGISTRY_HEARTBEAT_MS);
+}
+
+function sendRandomPresence(type) {
+  if (!randomPresenceConn) return;
+  try { randomPresenceConn.send({ type, username: randomUsername, userNumber, isMonitor: randomMonitorMode }); } catch (_) {}
+}
+
+function stopRandomPresence() {
+  if (randomPresenceTimer) { clearInterval(randomPresenceTimer); randomPresenceTimer = null; }
+  if (randomPresenceConn) {
+    try { randomPresenceConn.send({ type: "random_unregister" }); } catch (_) {}
+    try { randomPresenceConn.close(); } catch (_) {}
+    randomPresenceConn = null;
+  }
+  randomPresence.delete(SELF_PRESENCE_ID);
+  randomPresenceId = "";
+}
+
+// Creator side: read the live presence list + ban list from the holder.
+async function queryRandomPresence() {
+  if (registryHolderPeer) {
+    return { users: serializeRandomPresence(), bans: serializeRandomBans() };
+  }
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return { users: [], bans: [] };
+  const conn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  const result = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (settled) return; settled = true; resolve(v); };
+    conn.on("open",  () => conn.send({ type: "list_random" }));
+    conn.on("data",  (m) => { if (m.type === "random_presence_list") finish({ users: m.users ?? [], bans: m.bans ?? [] }); });
+    conn.on("error", () => finish({ users: [], bans: [] }));
+    setTimeout(() => finish({ users: [], bans: [] }), REGISTRY_QUERY_TIMEOUT);
+  });
+  setTimeout(() => { try { helperPeer.destroy(); } catch (_) {} }, 500);
+  return result;
+}
+
+// Join-time recheck: ask the holder whether THIS device's number is banned.
+// Resolves { banned, until }. Expired bans are reported as not-banned.
+async function checkRandomBanStatus() {
+  if (registryHolderPeer) {
+    if (randomBans.has(userNumber)) {
+      const until = randomBans.get(userNumber);
+      if (isBanActive(until)) return { banned: true, until };
+      randomBans.delete(userNumber);
+    }
+    return { banned: false, until: null };
+  }
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return { banned: false, until: null };
+  const conn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  const result = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (settled) return; settled = true; resolve(v); };
+    conn.on("open",  () => conn.send({ type: "check_ban", userNumber }));
+    conn.on("data",  (m) => { if (m.type === "ban_status") finish({ banned: !!m.banned, until: m.until ?? null }); });
+    conn.on("error", () => finish({ banned: false, until: null }));
+    setTimeout(() => finish({ banned: false, until: null }), REGISTRY_QUERY_TIMEOUT);
+  });
+  setTimeout(() => { try { helperPeer.destroy(); } catch (_) {} }, 500);
+  return result;
+}
+
+// Creator side: apply a moderation command — locally if we hold the registry,
+// otherwise relayed down our presence connection to whoever does.
+function sendRandomModeration(message) {
+  if (registryHolderPeer) { handleRegistryMessage(null, message); return; }
+  if (randomPresenceConn) { try { randomPresenceConn.send(message); } catch (_) {} }
+}
+
+// ═══════════════════════════════════════════════════
 //  RANDOM MODE — START
 // ═══════════════════════════════════════════════════
 
 async function startRandomMode() {
   randomUsername = screenName;
+
+  // Join-time ban recheck: confirm with the holder whether this device's
+  // number is still banned (an expired window frees them automatically).
+  randomLobbyStatusEl.textContent = "Checking access…";
+  const banStatus = await checkRandomBanStatus();
+  if (banStatus.banned) {
+    saveMyRandomBan(banStatus.until);
+    randomLobbyStatusEl.textContent = randomBanMessage(banStatus.until);
+    return;
+  }
+  clearMyRandomBan();
+
   randomLobbyStatusEl.textContent = "Getting camera...";
   try { randomLocalStream = await acquireRandomLocalStream(); }
   catch (err) { randomLobbyStatusEl.textContent = err.message; return; }
@@ -2000,10 +2225,14 @@ async function startRandomMode() {
   randomChatLogEl.innerHTML = "";
   randomLocalVideoEl.srcObject = randomLocalStream;
 
+  // The Creator moderation button only appears for verified creators.
+  if (randomModBtnEl) randomModBtnEl.classList.toggle("hidden", !isCreator);
+
   randomLobbyScreenEl.classList.add("hidden");
   randomCallScreenEl.classList.remove("hidden");
   showRandomWaitingOverlay();
   setRandomWaitingText("Finding someone...");
+  announceRandomPresence();
   searchForRandomMatch(0);
 }
 
@@ -2026,6 +2255,7 @@ randomNextBtnEl.addEventListener("click", () => {
 randomLeaveBtnEl.addEventListener("click", () => {
   if (randomStrangerDataConn) { try { randomStrangerDataConn.send({ type: "random_bye" }); } catch (_) {} }
   cleanupRandomMode();
+  hideRandomModModal();
   randomCallScreenEl.classList.add("hidden");
   homeScreenEl.classList.remove("hidden");
 });
