@@ -4,10 +4,10 @@
   padding: 0;
 }
 
-/* ─── Base ─────────────────────────────────────────────────────────────── */
+/* Base */
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #0d1117;
   color: #c9d1d9;
   height: 100vh;
@@ -18,7 +18,7 @@ body {
   display: none !important;
 }
 
-/* ─── Shared inputs & buttons ───────────────────────────────────────────── */
+/* Shared inputs & buttons */
 
 input[type="text"] {
   width: 100%;
@@ -69,35 +69,42 @@ select {
 .btn-primary   { background: #238636; color: #fff; }
 .btn-secondary { background: #30363d; color: #c9d1d9; }
 .btn-danger    { background: #b62324; color: #fff; }
+.btn-warn      { background: #9e6a03; color: #fff; }
 .btn-sm        { padding: 5px 12px; font-size: 0.78rem; }
+.btn-xs        { padding: 2px 8px; font-size: 0.7rem; }
 
-/* ─── Lobby ─────────────────────────────────────────────────────────────── */
+/* Lobby */
 
 #lobby-screen {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 20px;
   background: radial-gradient(ellipse at 50% 40%, #161b22 0%, #0d1117 70%);
+  overflow-y: auto;
 }
 
 .lobby-card {
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 14px;
-  padding: 40px 36px;
+  padding: 36px 32px;
   width: 100%;
-  max-width: 430px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
 .lobby-logo {
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.8rem;
   font-weight: 700;
   color: #58a6ff;
-  text-align: center;
   letter-spacing: -0.5px;
 }
 
@@ -107,6 +114,76 @@ select {
   font-size: 0.88rem;
   line-height: 1.5;
 }
+
+/* Room type selector */
+
+#room-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-type-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.room-type-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.room-type-option {
+  cursor: pointer;
+}
+
+.room-type-option input[type="radio"] {
+  display: none;
+}
+
+.room-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #8b949e;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.room-type-card svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.room-type-option input[type="radio"]:checked + .room-type-card {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  background: #1f6feb18;
+}
+
+.room-type-option:hover .room-type-card {
+  border-color: #484f58;
+  color: #c9d1d9;
+}
+
+.room-type-note {
+  font-size: 0.75rem;
+  color: #484f58;
+  text-align: center;
+}
+
+/* Lobby actions */
 
 .lobby-actions {
   display: flex;
@@ -128,7 +205,7 @@ select {
 
 .lobby-divider::before,
 .lobby-divider::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   width: 28%;
@@ -159,7 +236,7 @@ select {
   color: #f85149;
 }
 
-/* ─── App screen layout ─────────────────────────────────────────────────── */
+/* App screen layout */
 
 #app-screen {
   display: flex;
@@ -167,7 +244,7 @@ select {
   height: 100vh;
 }
 
-/* ─── Toolbar ───────────────────────────────────────────────────────────── */
+/* Toolbar */
 
 .toolbar {
   display: flex;
@@ -186,14 +263,17 @@ select {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.toolbar-left  { flex: 1; }
+.toolbar-left   { flex: 1; }
 .toolbar-center { flex: 0 0 auto; }
-.toolbar-right { flex: 1; justify-content: flex-end; }
+.toolbar-right  { flex: 1; justify-content: flex-end; }
 
 .app-logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-weight: 700;
   color: #58a6ff;
   font-size: 0.95rem;
@@ -204,11 +284,25 @@ select {
   font-family: monospace;
   font-size: 0.78rem;
   color: #8b949e;
-  max-width: 200px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Media controls (mute / cam) */
+
+#media-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-muted {
+  background: #b62324 !important;
+  color: #fff !important;
+}
+
+/* Users bar */
 
 #users-bar {
   display: flex;
@@ -218,16 +312,151 @@ select {
 }
 
 .user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: #1f6feb22;
   border: 1px solid #1f6feb55;
   color: #79c0ff;
   border-radius: 20px;
-  padding: 2px 10px;
+  padding: 2px 8px 2px 10px;
   font-size: 0.75rem;
   white-space: nowrap;
 }
 
-/* ─── Workspace ─────────────────────────────────────────────────────────── */
+/* Host kick / ban buttons inside user chip */
+
+.kick-btn,
+.ban-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: filter 0.15s;
+}
+
+.kick-btn {
+  background: #9e6a03;
+  color: #fff;
+}
+
+.ban-btn {
+  background: #b62324;
+  color: #fff;
+}
+
+.kick-btn:hover,
+.ban-btn:hover {
+  filter: brightness(1.2);
+}
+
+/* Media panel (video grid) */
+
+#media-panel {
+  background: #010409;
+  border-bottom: 1px solid #30363d;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+#video-grid {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  align-items: flex-start;
+  min-height: 160px;
+}
+
+/* Individual video tile */
+
+.video-tile {
+  position: relative;
+  flex-shrink: 0;
+  width: 200px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-tile video {
+  width: 100%;
+  height: 144px;
+  object-fit: cover;
+  display: block;
+  background: #0d1117;
+}
+
+.video-tile-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  font-size: 0.75rem;
+  color: #e6edf3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Audio-only tile (no video element, just avatar + name) */
+
+.audio-tile {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.audio-tile .audio-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1f6feb44;
+  border: 2px solid #58a6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #79c0ff;
+}
+
+.audio-tile .audio-name {
+  font-size: 0.72rem;
+  color: #8b949e;
+  text-align: center;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-tile.speaking {
+  border-color: #238636;
+}
+
+.audio-tile.speaking .audio-avatar {
+  border-color: #3fb950;
+  background: #23863622;
+}
+
+/* Workspace */
 
 .workspace {
   display: flex;
@@ -235,7 +464,7 @@ select {
   overflow: hidden;
 }
 
-/* ─── Editor pane ───────────────────────────────────────────────────────── */
+/* Editor pane */
 
 .editor-pane {
   flex: 1;
@@ -245,12 +474,11 @@ select {
   border-right: 1px solid #30363d;
 }
 
-/* CodeMirror fills the pane */
 .editor-pane .CodeMirror {
   flex: 1;
   height: 100%;
   font-size: 0.9rem;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   line-height: 1.6;
 }
 
@@ -258,7 +486,7 @@ select {
   height: 100%;
 }
 
-/* ─── Chat pane ─────────────────────────────────────────────────────────── */
+/* Chat pane */
 
 .chat-pane {
   width: 300px;
@@ -288,9 +516,9 @@ select {
   gap: 10px;
 }
 
-#chat-log::-webkit-scrollbar        { width: 4px; }
-#chat-log::-webkit-scrollbar-track  { background: transparent; }
-#chat-log::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 4px; }
+#chat-log::-webkit-scrollbar       { width: 4px; }
+#chat-log::-webkit-scrollbar-track { background: transparent; }
+#chat-log::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
 
 .chat-message {
   display: flex;
@@ -344,20 +572,15 @@ select {
 }
 
 /* Logo icon */
+
 .logo-icon {
   width: 28px;
   height: 28px;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .lobby-logo .logo-icon {
-  width: 40px;
-  height: 40px;
-}
-
-.lobby-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  width: 38px;
+  height: 38px;
 }
