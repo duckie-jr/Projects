@@ -412,6 +412,71 @@
     </div>
   </div>
 
+  <!-- ========== DEV DASHBOARD (creator only — ` to open, ` or Esc to close) ========== -->
+  <div id="dev-dashboard" class="dev-dashboard hidden">
+    <div class="dev-dashboard-inner">
+
+      <div class="dev-dashboard-header">
+        <div class="dev-dashboard-title-group">
+          <span class="dev-dashboard-title">⚡ Dev Dashboard</span>
+          <span class="dev-dashboard-badge">CREATOR ONLY</span>
+        </div>
+        <div class="dev-dashboard-stats">
+          <span class="dev-stat-chip">Random Online <strong id="dev-stat-random-count">—</strong></span>
+          <span class="dev-stat-chip">Active Rooms <strong id="dev-stat-rooms-count">—</strong></span>
+          <span class="dev-stat-chip">Bans <strong id="dev-stat-bans-count">—</strong></span>
+          <span id="dev-last-refresh" class="dev-last-refresh">—</span>
+        </div>
+        <div class="dev-dashboard-header-actions">
+          <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
+          <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
+        </div>
+      </div>
+
+      <div class="dev-dashboard-body">
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Random Users</span>
+            <div class="dev-panel-controls">
+              <label class="dev-control-label">Ban:</label>
+              <select id="dev-ban-duration">
+                <option value="10">10 min</option>
+                <option value="60">1 hour</option>
+                <option value="1440">1 day</option>
+                <option value="10080">1 week</option>
+                <option value="permanent">Permanent</option>
+              </select>
+            </div>
+          </div>
+          <div id="dev-random-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load.</p>
+          </div>
+        </div>
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Active Rooms</span>
+          </div>
+          <div id="dev-rooms-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load.</p>
+          </div>
+        </div>
+
+        <div class="dev-panel">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Banned Numbers</span>
+            <button id="dev-clear-all-bans" class="btn btn-xs btn-danger">Clear All</button>
+          </div>
+          <div id="dev-bans-list" class="dev-panel-list">
+            <p class="dev-empty">No active bans.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
