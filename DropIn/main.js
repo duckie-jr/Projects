@@ -50,6 +50,13 @@ const STORAGE_KEY_USERNAME     = "dropin_username";
 const STORAGE_KEY_RECENT_ROOMS = "dropin_recent_rooms";
 const MAX_RECENT_ROOMS         = 20;
 
+// ─── Creator badge ───────────────────────────────
+const STORAGE_KEY_CREATOR = "dropin_creator_verified";
+const CREATOR_PASSWORD    = "229300";
+
+// Persists across sessions: true once the user correctly enters the password.
+let isCreator = localStorage.getItem(STORAGE_KEY_CREATOR) === "1";
+
 // ─── Username helpers ─────────────────────────────
 
 function loadSavedUsername() {
@@ -96,6 +103,18 @@ function exportRecentRooms() {
 
 // Accepts: array of room-id strings, or objects with at least { id }
 function importRoomsFromArray(items) {
+  // Check for the creator activation marker: { "person": "creator" }
+  const hasCreatorMarker = items.some(
+    (item) => typeof item === "object" && item !== null && item.person === "creator"
+  );
+  if (hasCreatorMarker) {
+    if (isCreator) {
+      setLobbyStatus("Creator badge already active.");
+    } else {
+      showCreatorModal();
+    }
+  }
+
   const existing    = loadRecentRooms();
   const existingIds = new Set(existing.map(r => r.id));
   let   added       = 0;
@@ -352,7 +371,7 @@ function createRoom() {
   peer.on("open", (assignedId) => {
     currentRoomId  = assignedId;
     hostPeerId     = assignedId;
-    connectedUsers = [{ peerId: assignedId, username: currentUsername }];
+    connectedUsers = [{ peerId: assignedId, username: currentUsername, isCreator }];
     saveRecentRoom(assignedId, true);
     showAppScreen();
     renderUsersList();
@@ -392,8 +411,9 @@ function handleDataFromGuest(fromPeerId, data) {
         return;
       }
       const guestEntry    = guestConnectionMap.get(fromPeerId);
-      guestEntry.username = data.username;
-      connectedUsers.push({ peerId: fromPeerId, username: data.username });
+      guestEntry.username  = data.username;
+      guestEntry.isCreator = data.isCreator ?? false;
+      connectedUsers.push({ peerId: fromPeerId, username: data.username, isCreator: data.isCreator ?? false });
       renderUsersList();
       guestEntry.conn.send({ type: "full_sync", users: connectedUsers });
       appendSystemMessage(data.username + " joined the room.");
@@ -459,7 +479,7 @@ function joinRoom(targetRoomId) {
 }
 
 function setupConnectionToHost(conn) {
-  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
+  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
   conn.on("data",  (data) => handleDataFromHost(data));
   conn.on("close", ()     => appendSystemMessage("Disconnected from host."));
   conn.on("error", (err)  => appendSystemMessage("Connection error: " + err.message));
@@ -482,6 +502,8 @@ function handleDataFromHost(data) {
     case "kicked":      { appendSystemMessage("You were kicked."); setTimeout(() => location.reload(), 2500); break; }
     case "banned":      { appendSystemMessage("You have been banned."); setTimeout(() => location.reload(), 3000); break; }
     case "force_mute": {
+      // Creators are immune — the host cannot lock their microphone
+      if (isCreator) break;
       isMuted            = true;
       isForceMutedByHost = true;
       if (localStream) for (const track of localStream.getAudioTracks()) track.enabled = false;
@@ -502,6 +524,8 @@ function handleDataFromHost(data) {
       break;
     }
     case "force_cam_off": {
+      // Creators are immune — the host cannot lock their camera
+      if (isCreator) break;
       isCamOff            = true;
       isForceCamOffByHost = true;
       if (localStream) for (const track of localStream.getVideoTracks()) track.enabled = false;
@@ -664,6 +688,14 @@ function renderUsersList() {
       hostBadgeEl.textContent = "Host";
       hostBadgeEl.title       = "Room owner";
       rowEl.appendChild(hostBadgeEl);
+    }
+
+    if (user.isCreator) {
+      const creatorBadgeEl       = document.createElement("span");
+      creatorBadgeEl.className   = "participant-creator-badge";
+      creatorBadgeEl.textContent = "Creator";
+      creatorBadgeEl.title       = "Site creator";
+      rowEl.appendChild(creatorBadgeEl);
     }
 
     if (raisedHandPeerIds.has(user.peerId)) {
@@ -1005,7 +1037,13 @@ chatInputEl.addEventListener("keydown", (e) => {
 });
 
 muteBtnEl.addEventListener("click", () => {
-  if (!localStream || isForceMutedByHost) return;
+  if (!localStream) return;
+  // Creators can always toggle their mic, even if the host tried to force-mute them
+  if (isForceMutedByHost && !isCreator) return;
+  if (isForceMutedByHost && isCreator) {
+    isForceMutedByHost    = false;
+    muteBtnEl.disabled    = false;
+  }
   isMuted = !isMuted;
   for (const track of localStream.getAudioTracks()) track.enabled = !isMuted;
   muteBtnEl.textContent = isMuted ? "Unmute" : "Mute";
@@ -1013,7 +1051,13 @@ muteBtnEl.addEventListener("click", () => {
 });
 
 camBtnEl.addEventListener("click", () => {
-  if (!localStream || isForceCamOffByHost) return;
+  if (!localStream) return;
+  // Creators can always toggle their camera, even if the host tried to force it off
+  if (isForceCamOffByHost && !isCreator) return;
+  if (isForceCamOffByHost && isCreator) {
+    isForceCamOffByHost = false;
+    camBtnEl.disabled   = false;
+  }
   isCamOff = !isCamOff;
   for (const track of localStream.getVideoTracks()) track.enabled = !isCamOff;
   camBtnEl.textContent = isCamOff ? "Cam On" : "Cam Off";
@@ -1122,6 +1166,47 @@ importUrlBtnEl.addEventListener("click", async () => {
   }
 });
 
+
+// ═══════════════════════════════════════════════════
+//  CREATOR BADGE — MODAL
+// ═══════════════════════════════════════════════════
+
+const creatorModalEl          = document.getElementById("creator-modal");
+const creatorPasswordInputEl  = document.getElementById("creator-password-input");
+const creatorPasswordErrorEl  = document.getElementById("creator-password-error");
+const creatorPasswordSubmitEl = document.getElementById("creator-password-submit");
+const creatorPasswordCancelEl = document.getElementById("creator-password-cancel");
+
+function showCreatorModal() {
+  creatorPasswordInputEl.value        = "";
+  creatorPasswordErrorEl.textContent  = "";
+  creatorModalEl.classList.remove("hidden");
+  setTimeout(() => creatorPasswordInputEl.focus(), 50);
+}
+
+function hideCreatorModal() {
+  creatorModalEl.classList.add("hidden");
+}
+
+creatorPasswordSubmitEl.addEventListener("click", () => {
+  if (creatorPasswordInputEl.value === CREATOR_PASSWORD) {
+    isCreator = true;
+    localStorage.setItem(STORAGE_KEY_CREATOR, "1");
+    hideCreatorModal();
+    setLobbyStatus("Creator badge activated!");
+  } else {
+    creatorPasswordErrorEl.textContent = "Incorrect password.";
+    creatorPasswordInputEl.select();
+  }
+});
+
+creatorPasswordCancelEl.addEventListener("click", hideCreatorModal);
+
+creatorPasswordInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter")  creatorPasswordSubmitEl.click();
+  if (e.key === "Escape") hideCreatorModal();
+});
+
 // ═══════════════════════════════════════════════════
 //  HOME SCREEN NAVIGATION
 // ═══════════════════════════════════════════════════
@@ -1173,6 +1258,7 @@ const savedUsername = loadSavedUsername();
 if (savedUsername) {
   screenNameInputEl.value         = savedUsername;
   screenNameCounterEl.textContent = savedUsername.length + " / 20";
+  continueBtnEl.textContent       = `Continue as ${savedUsername} →`;
 }
 
 // Update the live character counter as the user types
@@ -1180,7 +1266,9 @@ screenNameInputEl.addEventListener("input", () => {
   const currentLength = screenNameInputEl.value.length;
   screenNameCounterEl.textContent = `${currentLength} / 20`;
   screenNameCounterEl.classList.toggle("near-limit", currentLength >= 16);
-  usernameErrorEl.textContent = "";
+  usernameErrorEl.textContent   = "";
+  // Reset button label to default once the user starts editing
+  continueBtnEl.textContent = "Continue →";
 });
 
 screenNameInputEl.addEventListener("keydown", (e) => {
