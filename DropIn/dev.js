@@ -423,3 +423,355 @@ function renderCreatorStatus() {
 
 // Reflect the saved creator state as soon as the page loads.
 renderCreatorStatus();
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD
+//
+//  A fullscreen creator-only panel, opened by pressing ` (backtick) from
+//  anywhere in the app. Esc or ` again closes it. The dashboard announces
+//  itself to the registry as isMonitor:true so it appears in presence but is
+//  excluded from matchmaking. Three panels show live Random users (with kick/
+//  ban), active rooms (with join), and the ban list (with unban / clear all).
+//  Data auto-refreshes every 5 seconds while open.
+//
+//  Moderation commands work regardless of connection state:
+//    • We ARE the registry holder  → handled locally.
+//    • We have a presence conn     → sent down that connection.
+//    • Neither                     → a one-shot helper peer delivers the command.
+// ═══════════════════════════════════════════════════
+
+const devDashboardEl        = document.getElementById("dev-dashboard");
+const devRandomListEl       = document.getElementById("dev-random-list");
+const devRoomsListEl        = document.getElementById("dev-rooms-list");
+const devBansListEl         = document.getElementById("dev-bans-list");
+const devStatRandomCountEl  = document.getElementById("dev-stat-random-count");
+const devStatRoomsCountEl   = document.getElementById("dev-stat-rooms-count");
+const devStatBansCountEl    = document.getElementById("dev-stat-bans-count");
+const devLastRefreshEl      = document.getElementById("dev-last-refresh");
+const devDashboardRefreshEl = document.getElementById("dev-dashboard-refresh");
+const devDashboardCloseEl   = document.getElementById("dev-dashboard-close");
+const devClearAllBansEl     = document.getElementById("dev-clear-all-bans");
+const devBanDurationEl      = document.getElementById("dev-ban-duration");
+
+let devDashboardIsOpen = false;
+// randomDashboardTimer is declared in main.js; reused here for the auto-refresh interval.
+
+// ─── Open / close ─────────────────────────────────
+
+async function openDevDashboard() {
+  if (!isCreator) return;
+  devDashboardIsOpen = true;
+  devDashboardEl.classList.remove("hidden");
+
+  // Announce to the registry as a monitor so the holder knows we're watching,
+  // not a matchmaking participant. Only start a fresh presence connection if
+  // we aren't already connected (e.g. the creator is also in an active Random call).
+  if (!randomPresenceConn && !registryHolderPeer) {
+    randomMonitorMode = true;
+    randomIsDestroyed = false;
+    randomUsername    = randomUsername || screenName || "Creator";
+    await announceRandomPresence();
+  } else {
+    randomMonitorMode = true;
+  }
+
+  await refreshDevDashboard();
+
+  if (!randomDashboardTimer) {
+    randomDashboardTimer = setInterval(refreshDevDashboard, 5000);
+  }
+}
+
+function closeDevDashboard() {
+  devDashboardIsOpen = false;
+  devDashboardEl.classList.add("hidden");
+
+  clearInterval(randomDashboardTimer);
+  randomDashboardTimer = null;
+
+  // Only tear down the presence connection we started here; don't disconnect
+  // the creator if they are also actively in a Random call.
+  const isInRandomCall = !randomCallScreenEl.classList.contains("hidden");
+  if (!isInRandomCall) {
+    randomMonitorMode = false;
+    stopRandomPresence();
+    randomIsDestroyed = true;
+  } else {
+    randomMonitorMode = false;
+  }
+}
+
+// ─── Refresh ──────────────────────────────────────
+
+async function refreshDevDashboard() {
+  if (!devDashboardIsOpen) return;
+  devLastRefreshEl.textContent = "loading…";
+
+  const [presenceResult, activeRooms] = await Promise.all([
+    queryRandomPresence(),
+    fetchActiveServers(),
+  ]);
+
+  const { users, bans } = presenceResult;
+
+  renderDevRandomList(users);
+  renderDevRoomsList(activeRooms);
+  renderDevBansList(bans);
+
+  const liveUserCount = (users || []).filter(user => !user.isMonitor).length;
+  devStatRandomCountEl.textContent = liveUserCount;
+  devStatRoomsCountEl.textContent  = (activeRooms || []).length;
+
+  const now = new Date();
+  devLastRefreshEl.textContent =
+    "updated " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+// ─── Random users panel ───────────────────────────
+
+function renderDevRandomList(users) {
+  devRandomListEl.innerHTML = "";
+
+  const otherUsers = (users || []).filter(
+    user => String(user.userNumber || "") !== userNumber
+  );
+
+  if (otherUsers.length === 0) {
+    devRandomListEl.innerHTML = `<p class="dev-empty">Nobody in Random right now.</p>`;
+    return;
+  }
+
+  for (const user of otherUsers) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "dev-row";
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "dev-row-info";
+
+    const nameEl       = document.createElement("span");
+    nameEl.className   = "dev-row-name";
+    nameEl.textContent = user.username || "Unknown";
+
+    const numberEl       = document.createElement("span");
+    numberEl.className   = "dev-row-meta";
+    numberEl.textContent = "#" + (user.userNumber || "??????");
+
+    infoEl.append(nameEl, numberEl);
+
+    if (user.isMonitor) {
+      const pillEl       = document.createElement("span");
+      pillEl.className   = "dev-pill dev-pill--monitor";
+      pillEl.textContent = "monitor";
+      infoEl.appendChild(pillEl);
+    }
+
+    const actionsEl = document.createElement("div");
+    actionsEl.className = "dev-row-actions";
+
+    if (!user.isMonitor) {
+      const kickBtnEl       = document.createElement("button");
+      kickBtnEl.className    = "btn btn-xs btn-secondary";
+      kickBtnEl.textContent  = "Kick";
+      kickBtnEl.addEventListener("click", () =>
+        devKickUser(user.id, user.userNumber, user.username)
+      );
+
+      const banBtnEl       = document.createElement("button");
+      banBtnEl.className    = "btn btn-xs btn-danger";
+      banBtnEl.textContent  = "Ban";
+      banBtnEl.addEventListener("click", () =>
+        devBanUser(user.userNumber, user.username)
+      );
+
+      actionsEl.append(kickBtnEl, banBtnEl);
+    }
+
+    rowEl.append(infoEl, actionsEl);
+    devRandomListEl.appendChild(rowEl);
+  }
+}
+
+// ─── Active rooms panel ───────────────────────────
+
+function renderDevRoomsList(rooms) {
+  devRoomsListEl.innerHTML = "";
+
+  if (!rooms || rooms.length === 0) {
+    devRoomsListEl.innerHTML = `<p class="dev-empty">No active rooms right now.</p>`;
+    return;
+  }
+
+  for (const room of rooms) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "dev-row";
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "dev-row-info";
+
+    const hostEl       = document.createElement("span");
+    hostEl.className   = "dev-row-name";
+    hostEl.textContent = room.hostName || "Unknown host";
+
+    const count        = room.participantCount ?? 1;
+    const metaEl       = document.createElement("span");
+    metaEl.className   = "dev-row-meta";
+    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${room.roomId}`;
+
+    infoEl.append(hostEl, metaEl);
+
+    const actionsEl = document.createElement("div");
+    actionsEl.className = "dev-row-actions";
+
+    const joinBtnEl       = document.createElement("button");
+    joinBtnEl.className    = "btn btn-xs btn-secondary";
+    joinBtnEl.textContent  = "Join";
+    joinBtnEl.addEventListener("click", () => {
+      closeDevDashboard();
+      startJoinRoom(room.roomId);
+    });
+
+    actionsEl.appendChild(joinBtnEl);
+    rowEl.append(infoEl, actionsEl);
+    devRoomsListEl.appendChild(rowEl);
+  }
+}
+
+// ─── Bans panel ───────────────────────────────────
+
+function renderDevBansList(holderBans) {
+  devBansListEl.innerHTML = "";
+
+  // Merge the holder's view with the locally persisted list, deduped by number.
+  const numberToUntil = new Map();
+  for (const ban of [...(holderBans || []), ...loadRandomBans()]) {
+    if (!ban || !ban.number) continue;
+    const until = ban.until ?? null;
+    if (!isBanActive(until)) continue;
+    numberToUntil.set(String(ban.number), until);
+  }
+
+  devStatBansCountEl.textContent = numberToUntil.size;
+
+  if (numberToUntil.size === 0) {
+    devBansListEl.innerHTML = `<p class="dev-empty">No active bans.</p>`;
+    return;
+  }
+
+  for (const [number, until] of numberToUntil.entries()) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "dev-row";
+
+    const infoEl = document.createElement("div");
+    infoEl.className = "dev-row-info";
+
+    const numEl       = document.createElement("span");
+    numEl.className   = "dev-row-name";
+    numEl.textContent = "#" + number;
+
+    const expiryEl       = document.createElement("span");
+    expiryEl.className   = "dev-row-meta";
+    expiryEl.textContent = until == null
+      ? "permanent"
+      : "expires in " + formatDuration(until - Date.now());
+
+    infoEl.append(numEl, expiryEl);
+
+    const actionsEl = document.createElement("div");
+    actionsEl.className = "dev-row-actions";
+
+    const unbanBtnEl       = document.createElement("button");
+    unbanBtnEl.className    = "btn btn-xs btn-secondary";
+    unbanBtnEl.textContent  = "Unban";
+    unbanBtnEl.addEventListener("click", () => devUnbanUser(number));
+
+    actionsEl.appendChild(unbanBtnEl);
+    rowEl.append(infoEl, actionsEl);
+    devBansListEl.appendChild(rowEl);
+  }
+}
+
+// ─── Moderation helpers ───────────────────────────
+
+// Delivers a moderation command to the registry regardless of this client's
+// current connection state, using a one-shot helper peer when necessary.
+async function sendDashboardModeration(message) {
+  if (registryHolderPeer) {
+    handleRegistryMessage(null, message);
+    return;
+  }
+  if (randomPresenceConn) {
+    try { randomPresenceConn.send(message); } catch (_) {}
+    return;
+  }
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return;
+  const conn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  await new Promise((resolve) => {
+    const timeout = setTimeout(resolve, REGISTRY_QUERY_TIMEOUT);
+    conn.on("open", () => {
+      try { conn.send(message); } catch (_) {}
+      clearTimeout(timeout);
+      setTimeout(resolve, 300);
+    });
+    conn.on("error", () => { clearTimeout(timeout); resolve(); });
+  });
+  try { helperPeer.destroy(); } catch (_) {}
+}
+
+function devGetBanUntil() {
+  const value = devBanDurationEl ? devBanDurationEl.value : "permanent";
+  if (value === "permanent") return null;
+  const minutes = Number(value);
+  return Number.isFinite(minutes) && minutes > 0 ? Date.now() + minutes * 60000 : null;
+}
+
+function devKickUser(presenceId, kickedUserNumber, username) {
+  sendDashboardModeration({ type: "kick_random", presenceId });
+  setTimeout(refreshDevDashboard, 600);
+}
+
+function devBanUser(bannedUserNumber, username) {
+  const num = String(bannedUserNumber || "");
+  if (!num) return;
+  const until = devGetBanUntil();
+  saveRandomBans([...loadRandomBans(), { number: num, until }]);
+  sendDashboardModeration({ type: "ban_random", userNumber: num, until });
+  setTimeout(refreshDevDashboard, 600);
+}
+
+function devUnbanUser(unbannedUserNumber) {
+  const num = String(unbannedUserNumber || "");
+  if (!num) return;
+  saveRandomBans(loadRandomBans().filter(ban => ban.number !== num));
+  sendDashboardModeration({ type: "unban_random", userNumber: num });
+  setTimeout(refreshDevDashboard, 600);
+}
+
+function devClearAllBans() {
+  for (const ban of loadRandomBans()) {
+    sendDashboardModeration({ type: "unban_random", userNumber: ban.number });
+  }
+  saveRandomBans([]);
+  setTimeout(refreshDevDashboard, 600);
+}
+
+// ─── Event listeners ──────────────────────────────
+
+devDashboardRefreshEl?.addEventListener("click", () => refreshDevDashboard());
+devDashboardCloseEl?.addEventListener("click",   () => closeDevDashboard());
+devClearAllBansEl?.addEventListener("click",     () => devClearAllBans());
+
+// Backtick (`) opens the dashboard; Esc or another backtick closes it.
+// Guard: do not fire while the user is typing in an input/textarea/select.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "`") return;
+  const focusedTag = document.activeElement?.tagName?.toLowerCase();
+  if (focusedTag === "input" || focusedTag === "textarea" || focusedTag === "select") return;
+  e.preventDefault();
+  devDashboardIsOpen ? closeDevDashboard() : openDevDashboard();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && devDashboardIsOpen) closeDevDashboard();
+});
