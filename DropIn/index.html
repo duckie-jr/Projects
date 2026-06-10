@@ -263,7 +263,7 @@
 
       <div class="toolbar-center">
         <span id="room-id-label" role="button" title="Click to show full code"></span>
-        <button id="copy-id-btn" class="btn btn-sm">Copy ID</button>
+        <button id="copy-id-btn" class="btn btn-sm btn-secondary">Copy ID</button>
       </div>
 
       <div class="toolbar-right">
@@ -509,11 +509,16 @@
           <span class="dev-stat-chip">Random Online <strong id="dev-stat-random-count">—</strong></span>
           <span class="dev-stat-chip">Active Rooms <strong id="dev-stat-rooms-count">—</strong></span>
           <span class="dev-stat-chip">Bans <strong id="dev-stat-bans-count">—</strong></span>
+          <div class="dev-stat-divider"></div>
+          <span class="dev-stat-chip dev-stat-chip--accent">Rooms Today <strong id="dev-stat-rooms-today">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Peak Users <strong id="dev-stat-peak-concurrent">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Total Bans <strong id="dev-stat-total-bans">—</strong></span>
           <span id="dev-last-refresh" class="dev-last-refresh">—</span>
         </div>
         <div class="dev-dashboard-header-actions">
           <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
           <button id="dev-reload-all-btn"    class="btn btn-sm btn-secondary" title="Force every connected client to reload">⟳ Reload All</button>
+          <button id="dev-popout-btn"        class="btn btn-sm btn-secondary" title="Open dashboard in its own window">↗ Pop Out</button>
           <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
         </div>
       </div>
