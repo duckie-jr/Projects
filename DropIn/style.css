@@ -2193,3 +2193,308 @@ select {
   outline: none; width: 140px; transition: border-color .15s;
 }
 .dev-panel-filter-input:focus { border-color: #6c63ff; }
+
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ≤ 640px  → phone portrait
+   641–900px → tablet / landscape phone
+═══════════════════════════════════════════════════ */
+
+/* ── Global: kill 300ms tap delay on all buttons ─── */
+.btn { touch-action: manipulation; }
+
+/* ── Larger tap targets on any touch device ─────── */
+@media (hover: none) and (pointer: coarse) {
+  .btn    { min-height: 44px; padding: 10px 18px; }
+  .btn-sm { min-height: 40px; padding: 8px  14px; }
+  .btn-xs { min-height: 34px; padding: 6px  10px; font-size: 0.75rem; }
+}
+
+/* ══════════════════════════════════════════════════
+   PHONE PORTRAIT  ≤ 640px
+══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Prevent iOS Safari auto-zoom when focusing inputs */
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* ── Home screen ──────────────────────────────── */
+  .home-hero    { padding: 1.5rem 1rem; }
+  .home-tagline { font-size: 0.9rem; }
+
+  .home-mode-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ── Username / Lobby / Random lobby: full-screen cards */
+  #username-screen,
+  #lobby-screen,
+  #random-lobby-screen {
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .username-card,
+  .lobby-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    min-height: 100svh;
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 1.25rem;
+    justify-content: center;
+  }
+
+  .username-heading { font-size: 1.3rem; }
+
+  /* ── Room toolbar: wrap into two rows ─────────── */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .toolbar-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toolbar-right {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  /* Room ID moves to its own second row */
+  .toolbar-center {
+    order: 9;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    font-size: 0.78rem;
+    gap: 6px;
+  }
+
+  #room-id-label {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+  }
+
+  /* Hide lower-priority toolbar buttons on phones */
+  #screen-share-btn,
+  #raise-hand-btn { display: none; }
+
+  #media-controls {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Full-height screens respect the dynamic viewport */
+  #app-screen,
+  #random-call-screen {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+
+  /* ── Workspace: video on top, chat strip on bottom */
+  .workspace {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .video-grid-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .chat-pane {
+    width: 100%;
+    height: 200px;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 1px solid #30363d;
+  }
+
+  /* ── Random call screen ────────────────────────── */
+  .random-body {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .random-videos-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .random-chat-pane {
+    width: 100%;
+    height: 150px;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 1px solid #30363d;
+  }
+
+  /* Smaller picture-in-picture */
+  .random-local-wrapper {
+    width: 80px;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  .random-local-wrapper video {
+    height: 62px;
+  }
+
+  /* ── Participants panel: bottom sheet ──────────── */
+  .participants-panel {
+    position: fixed !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto !important;
+    width: 100%;
+    max-height: 60svh;
+    border-radius: 14px 14px 0 0;
+    overflow-y: auto;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    z-index: 500;
+  }
+
+  .participants-header {
+    position: sticky;
+    top: 0;
+    background: inherit;
+    z-index: 1;
+  }
+
+  /* ── Modals: slide up from bottom ──────────────── */
+  .creator-modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .creator-modal-card,
+  .server-list-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 88svh;
+    overflow-y: auto;
+  }
+
+  /* ── ToS overlay ───────────────────────────────── */
+  .tos-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .tos-card {
+    border-radius: 16px 16px 0 0;
+    min-height: 88svh;
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .tos-body { max-height: 42svh; }
+
+  .tos-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .tos-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── Host action context menu: centre on screen ── */
+  .host-action-menu {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    bottom: 90px !important;
+    top: auto !important;
+    width: 200px;
+  }
+
+  /* ── Ghost observer panel ──────────────────────── */
+  .ghost-observer-panel {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .ghost-observer-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ghost-observer-title-group {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .ghost-observer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Always show action buttons — no hover state on touch */
+  .ghost-observer-actions { opacity: 1; }
+
+  /* ── Recent rooms: truncate long IDs ──────────── */
+  .recent-room-id {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Random mod modal ──────────────────────────── */
+  .random-mod-duration-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  /* ── Dev dashboard: not usable at phone width ──── */
+  .dev-dashboard { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   TABLET / LANDSCAPE PHONE  641–900px
+══════════════════════════════════════════════════ */
+@media (min-width: 641px) and (max-width: 900px) {
+
+  .home-mode-grid { gap: 12px; }
+
+  /* Slightly narrower chat panes */
+  .chat-pane        { width: 240px; }
+  .random-chat-pane { width: 220px; }
+
+  /* Drop screen share on tablet — toolbar too crowded */
+  #screen-share-btn { display: none; }
+
+  .toolbar { padding: 8px 12px; }
+
+  /* Smaller PiP than desktop, bigger than phone */
+  .random-local-wrapper       { width: 110px; }
+  .random-local-wrapper video { height: 88px; }
+
+  /* Modals don't need to go full-screen on tablet */
+  .creator-modal-card,
+  .server-list-card { max-width: 520px; }
+}
