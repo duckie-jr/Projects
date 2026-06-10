@@ -2488,8 +2488,90 @@ select {
     gap: 4px;
   }
 
-  /* ── Dev dashboard: not usable at phone width ──── */
-  .dev-dashboard { display: none !important; }
+  /* ── Dev dashboard — portrait phone tab layout ──── */
+
+  /* Tab bar: hidden on desktop, visible here */
+  .dev-tab-bar {
+    display: flex;
+    flex-shrink: 0;
+    background: #0a0e14;
+    border-bottom: 1px solid #21262d;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dev-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 6px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #8b949e;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .dev-tab--active {
+    color: #e6edf3;
+    border-bottom-color: #6c63ff;
+  }
+
+  /* Header: two rows — title+actions on top, stats below */
+  .dev-dashboard-header {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 6px;
+    row-gap: 6px;
+  }
+
+  .dev-dashboard-title-group { flex-shrink: 0; }
+
+  .dev-dashboard-stats {
+    order: 3;        /* push below the title + actions row */
+    width: 100%;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  /* Hide noise on small screens */
+  #dev-popout-btn,
+  #dev-reload-all-btn,
+  .dev-stat-divider,
+  .dev-stat-chip--accent,
+  #dev-last-refresh { display: none; }
+
+  /* Larger tap targets for header action buttons */
+  .dev-dashboard-header-actions .btn { min-height: 38px; }
+
+  /* Body: single column; panels shown/hidden by JS tab class */
+  .dev-dashboard-body {
+    grid-template-columns: 1fr;
+  }
+
+  .dev-panel[data-tab]              { display: none; }
+  .dev-panel[data-tab].dev-panel--active { display: flex; }
+
+  /* Broadcast no longer needs to span columns in single-col layout */
+  .dev-panel--broadcast { grid-column: auto; }
+
+  /* Touch-friendly row action buttons */
+  .dev-row { padding: 10px 12px; }
+  .dev-row-actions { gap: 6px; }
+  .dev-row-actions .btn-xs {
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 0.74rem;
+  }
+
+  /* Panel filter input: give it breathing room */
+  .dev-panel-controls { flex-wrap: wrap; gap: 5px; }
+  .dev-panel-filter-input { width: 130px; }
 }
 
 /* ══════════════════════════════════════════════════
@@ -2515,4 +2597,67 @@ select {
   /* Modals don't need to go full-screen on tablet */
   .creator-modal-card,
   .server-list-card { max-width: 520px; }
+
+  /* ── Dev dashboard — landscape phone / small tablet ── */
+
+  /* Two-column grid: [Random | Rooms] then [Bans | Broadcast] */
+  .dev-dashboard-body {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dev-panel--broadcast {
+    grid-column: 1 / -1;
+  }
+
+  /* Compact single-row header — strip excess padding */
+  .dev-dashboard-header {
+    padding: 6px 14px;
+    gap: 10px;
+  }
+
+  /* Hide pop-out (window.open on mobile = same tab) and reload-all */
+  #dev-popout-btn,
+  #dev-reload-all-btn  { display: none; }
+
+  /* Drop historical accent stats to keep header short */
+  .dev-stat-chip--accent,
+  .dev-stat-divider    { display: none; }
+
+  /* Touch-friendly buttons in rows */
+  .dev-row-actions .btn-xs {
+    min-height: 32px;
+    padding: 5px 9px;
+  }
+
+  /* Tab bar not needed — both panels visible simultaneously */
+  .dev-tab-bar { display: none; }
+}
+
+/* ══════════════════════════════════════════════════
+   LANDSCAPE SHORT VIEWPORT (any width, height ≤ 480px)
+   Phones in landscape — maximise vertical space.
+══════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 480px) {
+
+  /* Ultra-compact header: single tight row */
+  .dev-dashboard-header {
+    padding: 4px 12px;
+    gap: 8px;
+    min-height: 0;
+  }
+
+  /* Shrink the badge so the title fits in one line */
+  .dev-dashboard-badge { display: none; }
+
+  /* Keep only live stat chips; hide refresh timestamp */
+  .dev-stat-chip--accent,
+  .dev-stat-divider,
+  #dev-last-refresh { display: none; }
+
+  /* Smaller panel headers to give list area maximum height */
+  .dev-panel-header { padding: 4px 10px; }
+  .dev-panel-title  { font-size: 0.68rem; }
+
+  /* Tighter rows */
+  .dev-row { padding: 6px 10px; }
 }
