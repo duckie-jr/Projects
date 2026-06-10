@@ -1255,3 +1255,41 @@ if (window.location.hash === '#devpopout' && isCreator) {
   // Small delay to let the rest of the scripts finish initialising.
   setTimeout(() => openDevDashboard(), 200);
 }
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — MOBILE TAB SWITCHING
+//
+//  The tab bar (<nav class="dev-tab-bar">) is only visible on portrait phones
+//  (≤640px) via CSS. Clicking a tab:
+//    1. Moves the `dev-tab--active` class to the clicked button.
+//    2. Moves the `dev-panel--active` class to the matching panel.
+//
+//  On wider viewports (641px+) all panels remain displayed normally; the
+//  `dev-panel--active` class has no effect because the CSS rule that hides
+//  panels is scoped to `@media (max-width: 640px)`.
+// ═══════════════════════════════════════════════════
+
+function activateDevTab(tabName) {
+  const tabBarEl = document.getElementById("dev-tab-bar");
+  if (!tabBarEl) return;
+
+  tabBarEl.querySelectorAll(".dev-tab").forEach((tabButtonEl) => {
+    tabButtonEl.classList.toggle("dev-tab--active", tabButtonEl.dataset.tab === tabName);
+  });
+
+  document.querySelectorAll(".dev-dashboard-body .dev-panel[data-tab]").forEach((panelEl) => {
+    panelEl.classList.toggle("dev-panel--active", panelEl.dataset.tab === tabName);
+  });
+}
+
+// Wire up tap events on the tab bar.
+document.getElementById("dev-tab-bar")?.addEventListener("click", (e) => {
+  const clickedTabEl = e.target.closest(".dev-tab");
+  if (clickedTabEl?.dataset?.tab) {
+    activateDevTab(clickedTabEl.dataset.tab);
+  }
+});
+
+// Ensure "random" is the active panel on page load.
+activateDevTab("random");
