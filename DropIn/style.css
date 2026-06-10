@@ -1697,6 +1697,24 @@ select {
   margin-left: 3px;
 }
 
+/* Accent variant for accumulated/historical stats */
+.dev-stat-chip--accent {
+  border-color: rgba(88, 166, 255, 0.25);
+  background: rgba(88, 166, 255, 0.06);
+}
+
+.dev-stat-chip--accent strong {
+  color: #79c0ff;
+}
+
+/* Thin vertical rule separating live stats from accumulated stats */
+.dev-stat-divider {
+  width: 1px;
+  height: 16px;
+  background: #30363d;
+  flex-shrink: 0;
+}
+
 .dev-last-refresh {
   font-size: 0.7rem;
   color: #484f58;
