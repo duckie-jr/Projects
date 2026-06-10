@@ -181,6 +181,29 @@ const registeredServers  = new Map();   // (holder only) roomId → { hostName, 
 let   registryAnnounceConn = null;       // host's data connection to the registry
 let   registryAnnounceTimer = null;      // host's heartbeat interval
 
+// ─── Platform-wide stats (holder only, reset when holder changes / page reloads) ─
+let registryStatsRoomsCreatedToday  = 0;
+let registryStatsPeakConcurrentUsers = 0;
+let registryStatsTotalBansIssued    = 0;
+
+// Returns the current total of live platform users: non-monitor Random users
+// plus all tracked room participants. Used to update the peak-concurrent counter.
+function calculateCurrentConcurrentUsers() {
+  const randomUserCount = [...randomPresence.values()].filter((entry) => !entry.isMonitor).length;
+  let roomParticipantCount = 0;
+  for (const server of registeredServers.values()) {
+    roomParticipantCount += server.participantCount ?? 1;
+  }
+  return randomUserCount + roomParticipantCount;
+}
+
+function updateRegistryPeakConcurrentUsers() {
+  const current = calculateCurrentConcurrentUsers();
+  if (current > registryStatsPeakConcurrentUsers) {
+    registryStatsPeakConcurrentUsers = current;
+  }
+}
+
 // ─── Random-mode presence + bans (lives on the registry holder) ───────────────
 //  Every Random user opens a persistent connection to the holder to announce
 //  who they are; a creator can then list them and push kick/ban commands back
@@ -830,11 +853,16 @@ function handleRegistryMessage(conn, message) {
   switch (message.type) {
     case "register_room":
     case "heartbeat": {
+      // Count genuinely new rooms (not repeated heartbeats for the same roomId).
+      if (message.type === "register_room" && !registeredServers.has(message.roomId)) {
+        registryStatsRoomsCreatedToday++;
+      }
       registeredServers.set(message.roomId, {
         hostName:         message.hostName,
         participantCount: message.participantCount ?? 1,
         updatedAt:        Date.now(),
       });
+      updateRegistryPeakConcurrentUsers();
       break;
     }
     case "unregister_room": {
@@ -869,6 +897,7 @@ function handleRegistryMessage(conn, message) {
         conn:       conn ?? null,
         updatedAt:  Date.now(),
       });
+      updateRegistryPeakConcurrentUsers();
       break;
     }
     case "random_unregister": {
@@ -927,6 +956,15 @@ function handleRegistryMessage(conn, message) {
       }
       break;
     }
+    case "get_platform_stats": {
+      conn?.send({
+        type:                "platform_stats",
+        roomsCreatedToday:   registryStatsRoomsCreatedToday,
+        peakConcurrentUsers: registryStatsPeakConcurrentUsers,
+        totalBansIssued:     registryStatsTotalBansIssued,
+      });
+      break;
+    }
   }
 }
 
@@ -973,6 +1011,7 @@ function kickRandomPresence(presenceId) {
 function banRandomPresence(userNumber, until = null) {
   const num = String(userNumber || "");
   if (!num) return;
+  registryStatsTotalBansIssued++;
   randomBans.set(num, until ?? null);
   for (const [id, entry] of randomPresence.entries()) {
     if (String(entry.userNumber || "") !== num) continue;
@@ -2486,6 +2525,32 @@ async function checkRandomBanStatus() {
 function sendRandomModeration(message) {
   if (registryHolderPeer) { handleRegistryMessage(null, message); return; }
   if (randomPresenceConn) { try { randomPresenceConn.send(message); } catch (_) {} }
+}
+
+// Queries the three accumulated stats from the registry holder (or reads them
+// directly if this client IS the holder). Returns null fields when unreachable.
+async function queryPlatformStats() {
+  const nullStats = { roomsCreatedToday: null, peakConcurrentUsers: null, totalBansIssued: null };
+  if (registryHolderPeer) {
+    return {
+      roomsCreatedToday:   registryStatsRoomsCreatedToday,
+      peakConcurrentUsers: registryStatsPeakConcurrentUsers,
+      totalBansIssued:     registryStatsTotalBansIssued,
+    };
+  }
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return nullStats;
+  const conn = helperPeer.connect(REGISTRY_PEER_ID, { reliable: true });
+  const result = await new Promise((resolve) => {
+    let settled = false;
+    const finish = (v) => { if (settled) return; settled = true; resolve(v); };
+    conn.on("open",  () => conn.send({ type: "get_platform_stats" }));
+    conn.on("data",  (m) => { if (m.type === "platform_stats") finish(m); });
+    conn.on("error", () => finish(nullStats));
+    setTimeout(() => finish(nullStats), REGISTRY_QUERY_TIMEOUT);
+  });
+  setTimeout(() => { try { helperPeer.destroy(); } catch (_) {} }, 500);
+  return result;
 }
 
 // ═══════════════════════════════════════════════════
