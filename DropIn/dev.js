@@ -447,7 +447,10 @@ const devRoomsListEl        = document.getElementById("dev-rooms-list");
 const devBansListEl         = document.getElementById("dev-bans-list");
 const devStatRandomCountEl  = document.getElementById("dev-stat-random-count");
 const devStatRoomsCountEl   = document.getElementById("dev-stat-rooms-count");
-const devStatBansCountEl    = document.getElementById("dev-stat-bans-count");
+const devStatBansCountEl       = document.getElementById("dev-stat-bans-count");
+const devStatRoomsTodayEl      = document.getElementById("dev-stat-rooms-today");
+const devStatPeakConcurrentEl  = document.getElementById("dev-stat-peak-concurrent");
+const devStatTotalBansEl       = document.getElementById("dev-stat-total-bans");
 const devLastRefreshEl      = document.getElementById("dev-last-refresh");
 const devDashboardRefreshEl = document.getElementById("dev-dashboard-refresh");
 const devDashboardCloseEl   = document.getElementById("dev-dashboard-close");
@@ -522,6 +525,12 @@ async function refreshDevDashboard() {
   const liveUserCount = (users || []).filter(user => !user.isMonitor).length;
   devStatRandomCountEl.textContent = liveUserCount;
   devStatRoomsCountEl.textContent  = (activeRooms || []).length;
+
+  const platformStats = await queryPlatformStats();
+  const formatStat = (val) => val == null ? "—" : String(val);
+  if (devStatRoomsTodayEl)     devStatRoomsTodayEl.textContent     = formatStat(platformStats.roomsCreatedToday);
+  if (devStatPeakConcurrentEl) devStatPeakConcurrentEl.textContent = formatStat(platformStats.peakConcurrentUsers);
+  if (devStatTotalBansEl)      devStatTotalBansEl.textContent      = formatStat(platformStats.totalBansIssued);
 
   const now = new Date();
   devLastRefreshEl.textContent =
@@ -1215,3 +1224,34 @@ document.getElementById("dev-reload-all-btn")?.addEventListener("click", () => f
 document.getElementById("dev-random-filter")?.addEventListener("input", () => {
   if (devDashboardIsOpen) refreshDevDashboard();
 });
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — POP-OUT WINDOW
+//
+//  Opens the dashboard in a standalone browser window so it doesn't sit on
+//  top of the main app. The new window loads the same page; the #devpopout
+//  hash signals it to auto-open the dashboard. localStorage carries the
+//  creator badge automatically (same origin, same storage).
+// ═══════════════════════════════════════════════════
+
+function popOutDevDashboard() {
+  const baseUrl = window.location.href.split('#')[0];
+  const popoutUrl = baseUrl + '#devpopout';
+  window.open(
+    popoutUrl,
+    'dropin-dev-dashboard',
+    'width=1380,height=860,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes'
+  );
+}
+
+document.getElementById("dev-popout-btn")?.addEventListener("click", () => {
+  popOutDevDashboard();
+});
+
+// Auto-open the dashboard when this page was launched via the pop-out button.
+// isCreator is already set from localStorage at this point (main.js ran first).
+if (window.location.hash === '#devpopout' && isCreator) {
+  // Small delay to let the rest of the scripts finish initialising.
+  setTimeout(() => openDevDashboard(), 200);
+}
