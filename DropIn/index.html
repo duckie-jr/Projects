@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DropIn</title>
-  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css" />
   <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
-  <script src="main.js" defer></script>
-  <script src="dev.js" defer></script>
+  <script src="./main.js" defer></script>
+  <script src="./dev.js" defer></script>
 </head>
 <body>
 
@@ -200,7 +201,10 @@
       <!-- Shown only while the creator badge is active -->
       <div id="creator-status" class="creator-status hidden">
         <span class="creator-status-label">★ Creator mode active</span>
-        <button id="creator-remove-btn" class="btn btn-xs btn-danger">Remove</button>
+        <div class="creator-status-actions">
+          <button id="creator-monitor-btn" class="btn btn-xs btn-secondary">Dashboard</button>
+          <button id="creator-remove-btn"  class="btn btn-xs btn-danger">Remove</button>
+        </div>
       </div>
 
       <div class="lobby-actions">
@@ -501,13 +505,25 @@
     <div class="dev-dashboard-inner">
 
       <div class="dev-dashboard-header">
-        <div class="dev-dashboard-title-group">
-          <span class="dev-dashboard-title">⚡ Dev Dashboard</span>
-          <span class="dev-dashboard-badge">CREATOR ONLY</span>
+
+        <!-- ── Row 1: title + action buttons ─────────────────── -->
+        <div class="dev-dashboard-header-top">
+          <div class="dev-dashboard-title-group">
+            <span class="dev-dashboard-title">Dev Dashboard</span>
+            <span class="dev-dashboard-badge">CREATOR ONLY</span>
+          </div>
+          <div class="dev-dashboard-header-actions">
+            <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
+            <button id="dev-reload-all-btn"    class="btn btn-sm btn-secondary" title="Force every connected client to reload">⟳ Reload All</button>
+            <button id="dev-popout-btn"        class="btn btn-sm btn-secondary" title="Open dashboard in its own window">↗ Pop Out</button>
+            <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
+          </div>
         </div>
+
+        <!-- ── Row 2: live stats + historical stats + last refresh ─ -->
         <div class="dev-dashboard-stats">
-          <span class="dev-stat-chip">Random Online <strong id="dev-stat-random-count">—</strong></span>
-          <span class="dev-stat-chip">Active Rooms <strong id="dev-stat-rooms-count">—</strong></span>
+          <span class="dev-stat-chip">Random <strong id="dev-stat-random-count">—</strong></span>
+          <span class="dev-stat-chip">Rooms <strong id="dev-stat-rooms-count">—</strong></span>
           <span class="dev-stat-chip">Bans <strong id="dev-stat-bans-count">—</strong></span>
           <div class="dev-stat-divider"></div>
           <span class="dev-stat-chip dev-stat-chip--accent">Rooms Today <strong id="dev-stat-rooms-today">—</strong></span>
@@ -515,21 +531,8 @@
           <span class="dev-stat-chip dev-stat-chip--accent">Total Bans <strong id="dev-stat-total-bans">—</strong></span>
           <span id="dev-last-refresh" class="dev-last-refresh">—</span>
         </div>
-        <div class="dev-dashboard-header-actions">
-          <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
-          <button id="dev-reload-all-btn"    class="btn btn-sm btn-secondary" title="Force every connected client to reload">⟳ Reload All</button>
-          <button id="dev-popout-btn"        class="btn btn-sm btn-secondary" title="Open dashboard in its own window">↗ Pop Out</button>
-          <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
-        </div>
-      </div>
 
-      <!-- Mobile-only tab bar — hidden on desktop via CSS -->
-      <nav class="dev-tab-bar" id="dev-tab-bar" aria-label="Dashboard panels">
-        <button class="dev-tab dev-tab--active" data-tab="random">👥 Random</button>
-        <button class="dev-tab" data-tab="rooms">🏠 Rooms</button>
-        <button class="dev-tab" data-tab="bans">🚫 Bans</button>
-        <button class="dev-tab" data-tab="broadcast">📢 Broadcast</button>
-      </nav>
+      </div>
 
       <div class="dev-dashboard-body">
 
@@ -581,21 +584,104 @@
         <!-- ─── Broadcast panel (spans full width) ──────────────── -->
         <div class="dev-panel dev-panel--broadcast" data-tab="broadcast">
           <div class="dev-panel-header">
-            <span class="dev-panel-title">📢 Broadcast to All Rooms</span>
+            <span class="dev-panel-title">Broadcast</span>
           </div>
           <div class="dev-broadcast-body">
-            <div class="dev-broadcast-row">
-              <input
-                type="text"
+
+            <!-- Message textarea -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label" for="dev-broadcast-input">Message</label>
+              <textarea
                 id="dev-broadcast-input"
-                class="dev-broadcast-input"
-                placeholder="Type a message to send to every active room…"
+                class="dev-broadcast-textarea"
+                placeholder="Type a message to broadcast to rooms…"
+                maxlength="400"
+                rows="3"
                 autocomplete="off"
-                maxlength="200"
-              />
-              <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send to All</button>
+              ></textarea>
             </div>
-            <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+
+            <div class="dev-broadcast-options">
+
+              <!-- Minimum view time -->
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label" for="dev-broadcast-duration">Minimum view time</label>
+                <div class="dev-broadcast-duration-row">
+                  <input
+                    type="number"
+                    id="dev-broadcast-duration"
+                    class="dev-broadcast-duration-input"
+                    value="0"
+                    min="0"
+                    max="300"
+                  />
+                  <span class="dev-broadcast-hint">seconds &nbsp;·&nbsp; 0 = dismiss anytime</span>
+                </div>
+              </div>
+
+              <!-- Broadcast target -->
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label">Target</label>
+                <div class="dev-broadcast-target">
+                  <label class="dev-broadcast-radio">
+                    <input type="radio" name="broadcast-target" id="broadcast-target-all" value="all" checked />
+                    All rooms
+                  </label>
+                  <label class="dev-broadcast-radio">
+                    <input type="radio" name="broadcast-target" id="broadcast-target-room" value="room" />
+                    Specific room
+                  </label>
+                  <input
+                    type="text"
+                    id="dev-broadcast-room-id"
+                    class="dev-broadcast-room-input"
+                    placeholder="Paste Room ID…"
+                    autocomplete="off"
+                    disabled
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Send + status -->
+            <div class="dev-broadcast-actions">
+              <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send Broadcast</button>
+              <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <!-- ─── Admin Pranks ───────────────────────────────── -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Admin Pranks</label>
+              <div class="dev-broadcast-options">
+                <div class="dev-broadcast-field">
+                  <label class="dev-broadcast-label">Target</label>
+                  <div class="dev-broadcast-target">
+                    <label class="dev-broadcast-radio">
+                      <input type="radio" name="prank-target" id="prank-target-all" value="all" checked />
+                      All rooms
+                    </label>
+                    <label class="dev-broadcast-radio">
+                      <input type="radio" name="prank-target" id="prank-target-room" value="room" />
+                      Specific room
+                    </label>
+                    <input
+                      type="text"
+                      id="dev-prank-room-id"
+                      class="dev-broadcast-room-input"
+                      placeholder="Paste Room ID…"
+                      autocomplete="off"
+                      disabled
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="dev-broadcast-actions">
+                <button id="dev-airhorn-btn" class="btn btn-sm btn-secondary" title="Blast a very loud air horn in the selected room(s)">📢 Air Horn</button>
+                <p id="dev-prank-status" class="dev-broadcast-status"></p>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -620,17 +706,39 @@
   <div id="ghost-observer-panel" class="ghost-observer-panel hidden">
     <div class="ghost-observer-header">
       <div class="ghost-observer-title-group">
-        <span class="ghost-observer-eyecon">👁</span>
+        <span class="ghost-observer-eyecon"></span>
         <span class="ghost-observer-title">Observer Mode</span>
         <span class="ghost-observer-badge">INVISIBLE</span>
         <span class="ghost-observer-room-label">
           Room&nbsp;<strong id="ghost-observer-room-id"></strong>
         </span>
       </div>
-      <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">✕ Stop Observing</button>
+      <!-- ── Ghost observer panel header ── -->
+      <div class="ghost-observer-header-actions">
+        <button id="ghost-observer-airhorn-btn"    class="btn btn-sm btn-secondary" title="Blast a loud air horn to everyone in this room">📢 Air Horn</button>
+        <button id="ghost-observer-whisper-all-btn" class="btn btn-sm btn-secondary" title="Send your mic audio to all participants — they cannot see who is speaking">🎤 Whisper All</button>
+        <button id="ghost-observer-mute-all-btn" class="btn btn-sm btn-secondary">Mute All</button>
+        <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">✕ Stop Observing</button>
+      </div>
     </div>
     <div id="ghost-observer-status" class="ghost-observer-status"></div>
     <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+  </div>
+
+  <!-- ========== BROADCAST OVERLAY ========== -->
+  <!-- Shown to every user in a room when the admin sends a broadcast.
+       The Dismiss button is locked until the admin-set timer expires.   -->
+  <div id="broadcast-overlay" class="broadcast-overlay hidden">
+    <div class="broadcast-card">
+      <div class="broadcast-header">
+        <span class="broadcast-label">Platform Notice</span>
+        <span id="broadcast-timer-badge" class="broadcast-timer-badge"></span>
+      </div>
+      <p id="broadcast-message-text" class="broadcast-message-text"></p>
+      <button id="broadcast-dismiss-btn" class="btn btn-primary broadcast-dismiss-btn" disabled>
+        Dismiss
+      </button>
+    </div>
   </div>
 
 </body>
