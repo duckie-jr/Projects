@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DropIn</title>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css" />
   <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
-  <script src="main.js" defer></script>
-  <script src="dev.js" defer></script>
+  <script src="./main.js" defer></script>
+  <script src="./dev.js" defer></script>
 </head>
 <body>
 
@@ -267,6 +267,7 @@
 
       <div class="toolbar-center">
         <span id="room-name-label" class="room-name-label hidden"></span>
+        <span id="room-lock-badge" class="room-lock-badge hidden" title="Password protected">🔒</span>
         <span id="room-id-label" role="button" title="Click to show full code"></span>
         <button id="copy-id-btn" class="btn btn-sm btn-secondary">Copy ID</button>
       </div>
@@ -597,6 +598,15 @@
         <div class="dev-panel" data-tab="rooms">
           <div class="dev-panel-header">
             <span class="dev-panel-title">Active Rooms</span>
+            <div class="dev-panel-controls">
+              <input
+                type="text"
+                id="dev-rooms-filter"
+                class="dev-panel-filter-input"
+                placeholder="Search by name or #ID…"
+                autocomplete="off"
+              />
+            </div>
           </div>
           <div id="dev-rooms-list" class="dev-panel-list">
             <p class="dev-empty">Press Refresh to load.</p>
@@ -813,11 +823,54 @@
         </select>
       </div>
 
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-password-input">
+          Password <span class="create-room-optional">(optional)</span>
+        </label>
+        <div class="create-room-input-wrapper create-room-pw-wrapper">
+          <input
+            type="password"
+            id="room-password-input"
+            class="creator-password-input"
+            placeholder="Leave blank for an open room"
+            maxlength="40"
+            autocomplete="new-password"
+          />
+          <button type="button" id="room-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide">👁</button>
+        </div>
+      </div>
+
       <p id="create-room-error" class="creator-password-error"></p>
 
       <div class="creator-modal-actions">
         <button id="create-room-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
         <button id="create-room-confirm-btn" class="btn btn-primary btn-sm">Create Room →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GUEST PASSWORD MODAL (shown when joining a password-protected room) ========== -->
+  <div id="guest-password-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">🔒 Password Required</div>
+      <p id="guest-password-modal-desc" class="creator-modal-desc">
+        This room requires a password to join.
+      </p>
+      <div class="create-room-input-wrapper create-room-pw-wrapper">
+        <input
+          type="password"
+          id="guest-password-entry"
+          class="creator-password-input"
+          placeholder="Enter room password"
+          autocomplete="off"
+          maxlength="40"
+        />
+        <button type="button" id="guest-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide">👁</button>
+      </div>
+      <p id="guest-password-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="guest-password-cancel-btn" class="btn btn-secondary btn-sm">Leave Room</button>
+        <button id="guest-password-submit-btn" class="btn btn-primary btn-sm">Join →</button>
       </div>
     </div>
   </div>
