@@ -1761,15 +1761,17 @@ select {
   flex-shrink: 0;
 }
 
-/* ── Three-column body ── */
+/* ── Tab-based body — one panel visible at a time ── */
 
 .dev-dashboard-body {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
   flex: 1;
   min-height: 0;
-  gap: 1px;
-  background: #21262d;  /* gap colour */
+  gap: 0;
+  overflow: hidden;
+  background: #0d1117;
 }
 
 /* ── Individual panel ── */
@@ -1779,6 +1781,13 @@ select {
   flex-direction: column;
   background: #0d1117;
   min-height: 0;
+}
+
+/* Hidden by default; only the active tab's panel is shown */
+.dev-panel[data-tab]               { display: none; }
+.dev-panel[data-tab].dev-panel--active {
+  display: flex;
+  overflow: hidden;
 }
 
 .dev-panel-header {
@@ -2184,12 +2193,71 @@ select {
   color: #8b92b2;
 }
 
+/* Actions bar overlaid at the bottom of each observer tile */
+.ghost-observer-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 4px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(3px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.ghost-observer-tile:hover .ghost-observer-actions,
+.ghost-observer-tile:focus-within .ghost-observer-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tab bar — always visible in the dashboard */
+.dev-tab-bar {
+  display: flex;
+  flex-shrink: 0;
+  background: #0a0e14;
+  border-bottom: 1px solid #21262d;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dev-tab {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #8b949e;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.dev-tab:hover { color: #c9d1d9; }
+
+.dev-tab--active {
+  color: #e6edf3;
+  border-bottom-color: #6c63ff;
+}
+
 /* ═══════════════════════════════════════════════════
    DEV DASHBOARD — BROADCAST PANEL
 ═══════════════════════════════════════════════════ */
 
 .dev-panel--broadcast {
-  grid-column: 1 / -1;
+  grid-column: auto;
   min-height: unset;
 }
 
@@ -2198,6 +2266,9 @@ select {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ── Field label ── */
@@ -2684,6 +2755,16 @@ select {
     gap: 4px;
   }
 
+  .ghost-observer-header-actions {
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: flex-end;
+  }
+
+  /* On mobile the ghost observer header shrinks to one compact row */
+  .ghost-observer-badge,
+  .ghost-observer-room-label { display: none; }
+
   .ghost-observer-grid {
     grid-template-columns: 1fr;
   }
@@ -2706,88 +2787,6 @@ select {
     gap: 4px;
   }
 
-  /* ── Dev dashboard — portrait phone tab layout ──── */
-
-  /* Tab bar: hidden on desktop, visible here */
-  .dev-tab-bar {
-    display: flex;
-    flex-shrink: 0;
-    background: #0a0e14;
-    border-bottom: 1px solid #21262d;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .dev-tab {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 6px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: #8b949e;
-    font-size: 0.72rem;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  .dev-tab--active {
-    color: #e6edf3;
-    border-bottom-color: #6c63ff;
-  }
-
-  /* Header: two rows — title+actions on top, stats below */
-  .dev-dashboard-header {
-    flex-wrap: wrap;
-    padding: 8px 12px;
-    gap: 6px;
-    row-gap: 6px;
-  }
-
-  .dev-dashboard-title-group { flex-shrink: 0; }
-
-  .dev-dashboard-stats {
-    order: 3;        /* push below the title + actions row */
-    width: 100%;
-    gap: 5px;
-    flex-wrap: wrap;
-  }
-
-  /* Hide noise on small screens */
-  #dev-popout-btn,
-  #dev-reload-all-btn,
-  .dev-stat-divider,
-  .dev-stat-chip--accent,
-  #dev-last-refresh { display: none; }
-
-  /* Larger tap targets for header action buttons */
-  .dev-dashboard-header-actions .btn { min-height: 38px; }
-
-  /* Body: single column; panels shown/hidden by JS tab class */
-  .dev-dashboard-body {
-    grid-template-columns: 1fr;
-  }
-
-  .dev-panel[data-tab]              { display: none; }
-  .dev-panel[data-tab].dev-panel--active { display: flex; }
-
-  /* Broadcast no longer needs to span columns in single-col layout */
-  .dev-panel--broadcast { grid-column: auto; }
-
-  /* Touch-friendly row action buttons */
-  .dev-row { padding: 10px 12px; }
-  .dev-row-actions { gap: 6px; }
-  .dev-row-actions .btn-xs {
-    min-height: 34px;
-    padding: 6px 10px;
-    font-size: 0.74rem;
-  }
-
-  /* Panel filter input: give it breathing room */
   .dev-panel-controls { flex-wrap: wrap; gap: 5px; }
   .dev-panel-filter-input { width: 130px; }
 
@@ -2814,30 +2813,6 @@ select {
 
   .dev-broadcast-target {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .dev-broadcast-hint { white-space: normal; }
-
-  .dev-broadcast-actions { flex-direction: column; align-items: stretch; }
-  .dev-broadcast-actions .btn { width: 100%; justify-content: center; }
-}
-
-/* ══════════════════════════════════════════════════
-   TABLET / LANDSCAPE PHONE  641–900px
-══════════════════════════════════════════════════ */
-@media (min-width: 641px) and (max-width: 900px) {
-
-  .home-mode-grid { gap: 12px; }
-
-  /* Slightly narrower chat panes */
-  .chat-pane        { width: 240px; }
-  .random-chat-pane { width: 220px; }
-
-  /* Drop screen share on tablet — toolbar too crowded */
-  #screen-share-btn { display: none; }
-
   .toolbar { padding: 8px 12px; }
 
   /* Smaller PiP than desktop, bigger than phone */
@@ -2847,17 +2822,6 @@ select {
   /* Modals don't need to go full-screen on tablet */
   .creator-modal-card,
   .server-list-card { max-width: 520px; }
-
-  /* ── Dev dashboard — landscape phone / small tablet ── */
-
-  /* Two-column grid: [Random | Rooms] then [Bans | Broadcast] */
-  .dev-dashboard-body {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .dev-panel--broadcast {
-    grid-column: 1 / -1;
-  }
 
   /* Compact single-row header — strip excess padding */
   .dev-dashboard-header {
@@ -2879,15 +2843,16 @@ select {
     padding: 5px 9px;
   }
 
-  /* Tab bar not needed — both panels visible simultaneously */
-  .dev-tab-bar { display: none; }
-}
 
 /* ══════════════════════════════════════════════════
    LANDSCAPE SHORT VIEWPORT (any width, height ≤ 480px)
    Phones in landscape — maximise vertical space.
 ══════════════════════════════════════════════════ */
 @media (orientation: landscape) and (max-height: 480px) {
+
+  /* Tab bar: ultra-compact in landscape — reclaim vertical space */
+  .dev-tab-bar { flex-shrink: 0; }
+  .dev-tab { padding: 6px 10px; font-size: 0.72rem; }
 
   /* Ultra-compact header: single tight row */
   .dev-dashboard-header {
@@ -2917,11 +2882,3 @@ select {
     padding: 16px 20px 14px;
     gap: 10px;
   }
-
-  .broadcast-message-text { font-size: 0.88rem; }
-
-  .broadcast-dismiss-btn { padding: 9px; font-size: 0.85rem; }
-
-  /* Dev broadcast panel options: stay in one row on short landscape */
-  .dev-broadcast-options { grid-template-columns: auto 1fr; }
-}
