@@ -424,6 +424,11 @@ function renderCreatorStatus() {
 // Reflect the saved creator state as soon as the page loads.
 renderCreatorStatus();
 
+// "Monitor" button in the creator-status lobby row — opens the Dev Dashboard.
+document.getElementById("creator-monitor-btn")?.addEventListener("click", () => {
+  openDevDashboard();
+});
+
 
 // ═══════════════════════════════════════════════════
 //  DEV DASHBOARD
@@ -649,7 +654,7 @@ function renderDevRoomsList(rooms) {
 
     const observeBtnEl       = document.createElement("button");
     observeBtnEl.className    = "btn btn-xs btn-primary";
-    observeBtnEl.textContent  = "👁 Observe";
+    observeBtnEl.textContent  = "Observe";
     observeBtnEl.title        = "Join invisibly — participants cannot see you";
     observeBtnEl.addEventListener("click", () => ghostJoinRoom(room.roomId));
 
@@ -663,7 +668,7 @@ function renderDevRoomsList(rooms) {
 
     const closeBtnEl       = document.createElement("button");
     closeBtnEl.className    = "btn btn-xs btn-danger";
-    closeBtnEl.textContent  = "⛔ Close";
+    closeBtnEl.textContent  = "Close";
     closeBtnEl.title        = "Force-close room — kicks every participant";
     closeBtnEl.addEventListener("click", () => {
       const count = room.participantCount ?? 1;
@@ -828,6 +833,125 @@ let ghostObserverPeer     = null;
 let ghostObserverDataConn = null;
 const ghostObserverCallMap = new Map();  // targetPeerId → PeerJS Call
 
+// ─── Whisper mode — lets the observer speak to selected participants ──────────
+//  The ghost calls each participant with a silent stream. When whisper is
+//  toggled on for a peer, we replace the outgoing audio track in that specific
+//  WebRTC sender with a real microphone track. Participants hear the voice but
+//  see no new tile and have no way to identify the source.
+let ghostObserverMicStream      = null;   // real mic stream, acquired on demand
+let ghostObserverMicAudioTrack  = null;   // the live mic track (shared across whisper targets)
+const ghostObserverWhisperPeerIds = new Set();  // peerIds currently receiving live audio
+
+// Acquires the microphone once and caches the track. Returns null on failure.
+async function acquireGhostMicForWhisper() {
+  if (ghostObserverMicAudioTrack) return ghostObserverMicAudioTrack;
+  try {
+    ghostObserverMicStream     = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    ghostObserverMicAudioTrack = ghostObserverMicStream.getAudioTracks()[0] ?? null;
+    return ghostObserverMicAudioTrack;
+  } catch (_) {
+    setGhostObserverStatus('Microphone access denied — cannot use whisper mode.');
+    return null;
+  }
+}
+
+// Stops the mic track and frees the microphone device when no one is whispered.
+function releaseGhostMicIfUnused() {
+  if (ghostObserverWhisperPeerIds.size > 0) return;
+  if (ghostObserverMicStream) {
+    ghostObserverMicStream.getTracks().forEach(track => track.stop());
+    ghostObserverMicStream = null;
+  }
+  ghostObserverMicAudioTrack = null;
+}
+
+// Replaces the outgoing audio track for a specific ghost call with newAudioTrack.
+async function replaceGhostCallAudioTrack(peerId, newAudioTrack) {
+  const call = ghostObserverCallMap.get(peerId);
+  if (!call?.peerConnection) return;
+  const audioSender = call.peerConnection.getSenders().find(sender => sender.track?.kind === 'audio');
+  if (audioSender && newAudioTrack) {
+    await audioSender.replaceTrack(newAudioTrack).catch(() => {});
+  }
+}
+
+// Toggles whisper on/off for one participant tile. Updates the button visually.
+async function toggleGhostWhisperForPeer(peerId, whisperBtnEl) {
+  if (ghostObserverWhisperPeerIds.has(peerId)) {
+    // Disable: replace with a fresh silent track so the participant hears nothing.
+    ghostObserverWhisperPeerIds.delete(peerId);
+    const silentTrack = createSilentMediaStream().getAudioTracks()[0];
+    await replaceGhostCallAudioTrack(peerId, silentTrack);
+    whisperBtnEl.textContent = '🎤 Whisper';
+    whisperBtnEl.classList.remove('btn-primary');
+    whisperBtnEl.classList.add('btn-secondary');
+    releaseGhostMicIfUnused();
+  } else {
+    // Enable: acquire mic (first time) and send it to this peer.
+    const micTrack = await acquireGhostMicForWhisper();
+    if (!micTrack) return;
+    ghostObserverWhisperPeerIds.add(peerId);
+    await replaceGhostCallAudioTrack(peerId, micTrack);
+    whisperBtnEl.textContent = '🎤 Whispering…';
+    whisperBtnEl.classList.remove('btn-secondary');
+    whisperBtnEl.classList.add('btn-primary');
+  }
+  // Keep the Whisper All button in sync.
+  syncWhisperAllButton();
+}
+
+// Toggles whisper for ALL currently observed participants at once.
+async function toggleGhostWhisperAll() {
+  const allPeerIds       = [...ghostObserverCallMap.keys()];
+  const allWhispering    = allPeerIds.length > 0 &&
+    allPeerIds.every(peerId => ghostObserverWhisperPeerIds.has(peerId));
+
+  if (allWhispering) {
+    // Turn whisper off for everyone.
+    for (const peerId of allPeerIds) {
+      if (!ghostObserverWhisperPeerIds.has(peerId)) continue;
+      ghostObserverWhisperPeerIds.delete(peerId);
+      const silentTrack = createSilentMediaStream().getAudioTracks()[0];
+      await replaceGhostCallAudioTrack(peerId, silentTrack);
+      updateTileWhisperButton(peerId, false);
+    }
+    releaseGhostMicIfUnused();
+  } else {
+    // Turn whisper on for everyone not yet whispering.
+    const micTrack = await acquireGhostMicForWhisper();
+    if (!micTrack) return;
+    for (const peerId of allPeerIds) {
+      if (ghostObserverWhisperPeerIds.has(peerId)) continue;
+      ghostObserverWhisperPeerIds.add(peerId);
+      await replaceGhostCallAudioTrack(peerId, micTrack);
+      updateTileWhisperButton(peerId, true);
+    }
+  }
+  syncWhisperAllButton();
+}
+
+// Updates the per-tile whisper button label and style for a given peerId.
+function updateTileWhisperButton(peerId, isWhispering) {
+  const tileEl = document.querySelector(`#ghost-observer-grid [data-peer-id="${peerId}"]`);
+  const whisperBtnEl = tileEl?.querySelector('.ghost-whisper-btn');
+  if (!whisperBtnEl) return;
+  whisperBtnEl.textContent = isWhispering ? '🎤 Whispering…' : '🎤 Whisper';
+  whisperBtnEl.classList.toggle('btn-primary',   isWhispering);
+  whisperBtnEl.classList.toggle('btn-secondary', !isWhispering);
+}
+
+// Syncs the "Whisper All" header button to reflect current state.
+function syncWhisperAllButton() {
+  const whisperAllBtnEl = document.getElementById('ghost-observer-whisper-all-btn');
+  if (!whisperAllBtnEl) return;
+  const allPeerIds    = [...ghostObserverCallMap.keys()];
+  const allWhispering = allPeerIds.length > 0 &&
+    allPeerIds.every(peerId => ghostObserverWhisperPeerIds.has(peerId));
+  whisperAllBtnEl.textContent = allWhispering ? '🎤 Stop Whispering' : '🎤 Whisper All';
+  whisperAllBtnEl.classList.toggle('btn-primary',   allWhispering);
+  whisperAllBtnEl.classList.toggle('btn-secondary', !allWhispering);
+}
+
 // Creates a MediaStream with one silent audio track so PeerJS can build a
 // valid WebRTC offer. Without at least one track, some browsers refuse to
 // create a media connection at all.
@@ -855,18 +979,26 @@ function addGhostObserverTile(peerId, username, stream) {
 
   const hasVideo = stream.getVideoTracks().length > 0;
 
+  // primaryMediaEl is the video or audio element — used by the local audio toggle.
+  let primaryMediaEl = null;
+
   if (hasVideo) {
     const videoEl = document.createElement('video');
-    videoEl.srcObject  = stream;
-    videoEl.autoplay   = true;
+    videoEl.srcObject   = stream;
+    videoEl.autoplay    = true;
     videoEl.playsInline = true;
-    videoEl.muted      = false;  // creator should hear participants
+    // Start unmuted so the observer hears audio by default.
+    // If master mute is active, honour it immediately.
+    videoEl.muted       = ghostObserverAllMuted;
+    primaryMediaEl = videoEl;
     tileEl.appendChild(videoEl);
   } else {
-    // Audio-only participant — show an avatar placeholder
+    // Audio-only participant — show an avatar placeholder.
     const audioEl = document.createElement('audio');
     audioEl.srcObject = stream;
     audioEl.autoplay  = true;
+    audioEl.muted     = ghostObserverAllMuted;
+    primaryMediaEl = audioEl;
     tileEl.appendChild(audioEl);
 
     const avatarEl = document.createElement('div');
@@ -883,29 +1015,50 @@ function addGhostObserverTile(peerId, username, stream) {
   const actionsBarEl = document.createElement('div');
   actionsBarEl.className = 'ghost-observer-actions';
 
+  // ── Whisper toggle — sends creator's live mic audio to this participant only ──
+  const whisperBtnEl     = document.createElement('button');
+  whisperBtnEl.className   = 'btn btn-xs btn-secondary ghost-whisper-btn';
+  whisperBtnEl.textContent = '🎤 Whisper';
+  whisperBtnEl.title       = 'Send your mic audio to this participant only — they cannot see who is speaking';
+  whisperBtnEl.addEventListener('click', () => toggleGhostWhisperForPeer(peerId, whisperBtnEl));
+
+  // ── Local audio toggle — only affects what the observer hears ──
+  const localAudioBtnEl     = document.createElement('button');
+  localAudioBtnEl.className   = 'btn btn-xs btn-secondary';
+  localAudioBtnEl.textContent = ghostObserverAllMuted ? 'Unmute Audio' : 'Mute Audio';
+  localAudioBtnEl.classList.toggle('btn-muted', ghostObserverAllMuted);
+  localAudioBtnEl.title       = 'Toggle audio from this participant (only affects you)';
+  localAudioBtnEl.addEventListener('click', () => {
+    primaryMediaEl.muted          = !primaryMediaEl.muted;
+    localAudioBtnEl.textContent   = primaryMediaEl.muted ? 'Unmute Audio' : 'Mute Audio';
+    localAudioBtnEl.classList.toggle('btn-muted', primaryMediaEl.muted);
+  });
+
+  // ── Remote moderation buttons ──
   const muteTileBtn     = document.createElement('button');
   muteTileBtn.className   = 'btn btn-xs btn-secondary';
-  muteTileBtn.textContent = '🔇 Mute';
+  muteTileBtn.textContent = 'Mute';
+  muteTileBtn.title       = 'Mute this participant\'s microphone for everyone';
   muteTileBtn.addEventListener('click', () => requestGhostModeration('mute', peerId));
 
   const reloadTileBtn     = document.createElement('button');
   reloadTileBtn.className   = 'btn btn-xs btn-secondary';
-  reloadTileBtn.textContent = '⟳ Reload';
+  reloadTileBtn.textContent = 'Reload';
   reloadTileBtn.addEventListener('click', () => requestGhostModeration('reload', peerId));
 
   const kickTileBtn     = document.createElement('button');
   kickTileBtn.className   = 'btn btn-xs btn-secondary';
-  kickTileBtn.textContent = '👟 Kick';
+  kickTileBtn.textContent = 'Kick';
   kickTileBtn.addEventListener('click', () => requestGhostModeration('kick', peerId));
 
   const banTileBtn     = document.createElement('button');
   banTileBtn.className   = 'btn btn-xs btn-danger';
-  banTileBtn.textContent = '⛔ Ban';
+  banTileBtn.textContent = 'Ban';
   banTileBtn.addEventListener('click', () => {
     if (confirm('Ban ' + username + ' from this room?')) requestGhostModeration('ban', peerId);
   });
 
-  actionsBarEl.append(muteTileBtn, reloadTileBtn, kickTileBtn, banTileBtn);
+  actionsBarEl.append(whisperBtnEl, localAudioBtnEl, muteTileBtn, reloadTileBtn, kickTileBtn, banTileBtn);
   tileEl.appendChild(actionsBarEl);
 
   gridEl.appendChild(tileEl);
@@ -930,6 +1083,26 @@ function closeGhostObserver() {
   // Destroy the ghost peer entirely
   try { ghostObserverPeer?.destroy(); } catch (_) {}
   ghostObserverPeer = null;
+
+  // Release the mic if whisper mode was active
+  ghostObserverWhisperPeerIds.clear();
+  releaseGhostMicIfUnused();
+
+  // Reset master mute state so the next session starts unmuted
+  ghostObserverAllMuted = false;
+  const muteAllBtnEl = document.getElementById('ghost-observer-mute-all-btn');
+  if (muteAllBtnEl) {
+    muteAllBtnEl.textContent = 'Mute All';
+    muteAllBtnEl.classList.remove('btn-muted');
+  }
+
+  // Reset Whisper All button
+  const whisperAllBtnEl = document.getElementById('ghost-observer-whisper-all-btn');
+  if (whisperAllBtnEl) {
+    whisperAllBtnEl.textContent = '🎤 Whisper All';
+    whisperAllBtnEl.classList.remove('btn-primary');
+    whisperAllBtnEl.classList.add('btn-secondary');
+  }
 
   // Hide and clear the panel
   const panelEl = document.getElementById('ghost-observer-panel');
@@ -1076,7 +1249,8 @@ function setDevBroadcastStatus(message) {
   if (statusEl) statusEl.textContent = message;
 }
 
-async function broadcastToAllRooms(messageText) {
+// Send to every active room, showing a mandatory-view overlay on each client.
+async function broadcastToAllRooms(messageText, dismissAfterSeconds = 0) {
   const trimmedText = messageText.trim();
   if (!trimmedText) return;
 
@@ -1097,7 +1271,7 @@ async function broadcastToAllRooms(messageText) {
     await new Promise((resolve) => {
       const timeout = setTimeout(() => { resolve(); }, 3500);
       conn.on("open", () => {
-        conn.send({ type: "creator_broadcast", ghostToken: CREATOR_PASSWORD, text: trimmedText });
+        conn.send({ type: "creator_broadcast", ghostToken: CREATOR_PASSWORD, text: trimmedText, dismissAfterSeconds });
         clearTimeout(timeout);
         setTimeout(resolve, 500);
         successCount++;
@@ -1109,12 +1283,136 @@ async function broadcastToAllRooms(messageText) {
 
   setDevBroadcastStatus(
     successCount === activeRooms.length
-      ? `✓ Sent to all ${successCount} room${successCount !== 1 ? "s" : ""}.`
+      ? `Sent to all ${successCount} room${successCount !== 1 ? "s" : ""}.`
       : `Sent to ${successCount} / ${activeRooms.length} rooms.`
   );
 
-  // Auto-clear the status after a few seconds
   setTimeout(() => setDevBroadcastStatus(""), 4000);
+}
+
+// Send to a single room by ID.
+async function broadcastToRoom(roomId, messageText, dismissAfterSeconds = 0) {
+  const trimmedRoomId = (roomId ?? "").trim();
+  const trimmedText   = (messageText ?? "").trim();
+  if (!trimmedRoomId || !trimmedText) return;
+
+  setDevBroadcastStatus(`Sending to room ${trimmedRoomId}…`);
+
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) {
+    setDevBroadcastStatus("Could not connect — room may be offline.");
+    setTimeout(() => setDevBroadcastStatus(""), 4000);
+    return;
+  }
+
+  const conn = helperPeer.connect(trimmedRoomId, { reliable: true });
+  let sent = false;
+
+  await new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve(), 3500);
+    conn.on("open", () => {
+      conn.send({ type: "creator_broadcast", ghostToken: CREATOR_PASSWORD, text: trimmedText, dismissAfterSeconds });
+      clearTimeout(timeout);
+      sent = true;
+      setTimeout(resolve, 400);
+    });
+    conn.on("error", () => { clearTimeout(timeout); resolve(); });
+  });
+
+  try { helperPeer.destroy(); } catch (_) {}
+  setDevBroadcastStatus(sent ? "Sent to room." : "Could not reach room — it may be offline.");
+  setTimeout(() => setDevBroadcastStatus(""), 4000);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  GHOST OBSERVER — AIR HORN
+//
+//  Sends a ghost_prank message to the host via the existing data connection.
+//  The host relays { type: "prank", action: "air_horn" } to all guests and
+//  plays it locally. The observer also hears it immediately.
+// ═══════════════════════════════════════════════════
+
+function sendGhostAirHorn() {
+  if (!ghostObserverDataConn) {
+    setGhostObserverStatus('Not connected to a room — cannot send air horn.');
+    return;
+  }
+  try {
+    ghostObserverDataConn.send({
+      type:       'ghost_prank',
+      action:     'air_horn',
+      ghostToken: CREATOR_PASSWORD,
+    });
+  } catch (_) {}
+  // Observer hears it too.
+  playAirHornLocally();
+}
+
+
+// ═══════════════════════════════════════════════════
+//  DEV DASHBOARD — AIR HORN (no active ghost session)
+//
+//  Connects a one-shot helper peer to each target room and sends
+//  { type: "creator_prank", action: "air_horn" }. The host relays it
+//  to guests and plays it locally. Works identically to broadcastToAllRooms.
+// ═══════════════════════════════════════════════════
+
+function setDevPrankStatus(message) {
+  const statusEl = document.getElementById('dev-prank-status');
+  if (statusEl) statusEl.textContent = message;
+}
+
+// Sends the air horn to a single room by ID via a helper peer.
+async function sendAirHornToRoomById(roomId) {
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) return false;
+  const conn = helperPeer.connect(roomId, { reliable: true });
+  let delivered = false;
+  await new Promise((resolve) => {
+    const timeout = setTimeout(resolve, 3500);
+    conn.on('open', () => {
+      conn.send({ type: 'creator_prank', action: 'air_horn', ghostToken: CREATOR_PASSWORD });
+      clearTimeout(timeout);
+      delivered = true;
+      setTimeout(resolve, 300);
+    });
+    conn.on('error', () => { clearTimeout(timeout); resolve(); });
+  });
+  try { helperPeer.destroy(); } catch (_) {}
+  return delivered;
+}
+
+// Sends the air horn to every active room (or a specific room if targetRoomId
+// is provided). The observer / dashboard itself also plays it locally.
+async function sendAirHornFromDashboard(targetRoomId = null) {
+  const devAirHornBtnEl = document.getElementById('dev-airhorn-btn');
+  if (devAirHornBtnEl) { devAirHornBtnEl.disabled = true; devAirHornBtnEl.textContent = '📢 Honking…'; }
+
+  if (targetRoomId) {
+    setDevPrankStatus(`Sending to room ${targetRoomId}…`);
+    const delivered = await sendAirHornToRoomById(targetRoomId);
+    setDevPrankStatus(delivered ? 'Air horn sent!' : 'Could not reach room — it may be offline.');
+  } else {
+    const activeRooms = await fetchActiveServers();
+    if (activeRooms.length === 0) {
+      setDevPrankStatus('No active rooms to send to.');
+    } else {
+      setDevPrankStatus(`Honking at ${activeRooms.length} room${activeRooms.length !== 1 ? 's' : ''}…`);
+      let successCount = 0;
+      for (const room of activeRooms) {
+        const delivered = await sendAirHornToRoomById(room.roomId);
+        if (delivered) successCount++;
+      }
+      setDevPrankStatus(`Air horn sent to ${successCount}/${activeRooms.length} rooms.`);
+    }
+  }
+
+  // The dashboard operator hears it too.
+  playAirHornLocally();
+
+  if (devAirHornBtnEl) { devAirHornBtnEl.disabled = false; devAirHornBtnEl.textContent = '📢 Air Horn'; }
+  setTimeout(() => setDevPrankStatus(''), 4000);
 }
 
 
@@ -1198,23 +1496,111 @@ document.getElementById('ghost-observer-close-btn')?.addEventListener('click', (
   closeGhostObserver();
 });
 
+// Ghost observer panel — Air Horn button
+document.getElementById('ghost-observer-airhorn-btn')?.addEventListener('click', () => {
+  sendGhostAirHorn();
+});
+
+// Ghost observer panel — Whisper All button
+document.getElementById('ghost-observer-whisper-all-btn')?.addEventListener('click', () => {
+  toggleGhostWhisperAll();
+});
+
+// Master mute all — toggles every video/audio element in the observer grid
+document.getElementById('ghost-observer-mute-all-btn')?.addEventListener('click', () => {
+  ghostObserverAllMuted = !ghostObserverAllMuted;
+
+  // Apply to every media element currently in the grid
+  document.querySelectorAll('#ghost-observer-grid video, #ghost-observer-grid audio').forEach(mediaEl => {
+    mediaEl.muted = ghostObserverAllMuted;
+  });
+
+  // Sync per-tile "Mute Audio" button labels
+  document.querySelectorAll('#ghost-observer-grid .ghost-observer-tile').forEach(tileEl => {
+    const localAudioBtn = tileEl.querySelector('.ghost-observer-actions .btn-xs');
+    if (localAudioBtn) {
+      localAudioBtn.textContent = ghostObserverAllMuted ? 'Unmute Audio' : 'Mute Audio';
+      localAudioBtn.classList.toggle('btn-muted', ghostObserverAllMuted);
+    }
+  });
+
+  const muteAllBtnEl = document.getElementById('ghost-observer-mute-all-btn');
+  if (muteAllBtnEl) {
+    muteAllBtnEl.textContent = ghostObserverAllMuted ? 'Unmute All' : 'Mute All';
+    muteAllBtnEl.classList.toggle('btn-muted', ghostObserverAllMuted);
+  }
+});
+
 // ─── Broadcast panel ──────────────────────────────
 const devBroadcastBtnEl   = document.getElementById("dev-broadcast-btn");
 const devBroadcastInputEl = document.getElementById("dev-broadcast-input");
+const devBroadcastDurationEl  = document.getElementById("dev-broadcast-duration");
+const devBroadcastRoomIdEl    = document.getElementById("dev-broadcast-room-id");
+const broadcastTargetAllEl    = document.getElementById("broadcast-target-all");
+const broadcastTargetRoomEl   = document.getElementById("broadcast-target-room");
+
+// Enable/disable the room ID input depending on which radio is selected.
+broadcastTargetRoomEl?.addEventListener("change", () => {
+  if (devBroadcastRoomIdEl) devBroadcastRoomIdEl.disabled = !broadcastTargetRoomEl.checked;
+});
+broadcastTargetAllEl?.addEventListener("change", () => {
+  if (devBroadcastRoomIdEl) devBroadcastRoomIdEl.disabled = broadcastTargetAllEl.checked;
+});
 
 devBroadcastBtnEl?.addEventListener("click", async () => {
   const text = devBroadcastInputEl?.value ?? "";
   if (!text.trim()) { setDevBroadcastStatus("Type a message first."); return; }
+
+  const dismissAfterSeconds = Math.max(0, Math.floor(Number(devBroadcastDurationEl?.value ?? "0") || 0));
+  const targetIsRoom        = broadcastTargetRoomEl?.checked ?? false;
+  const specificRoomId      = devBroadcastRoomIdEl?.value ?? "";
+
+  if (targetIsRoom && !specificRoomId.trim()) {
+    setDevBroadcastStatus("Paste a Room ID to target a specific room.");
+    return;
+  }
+
   devBroadcastBtnEl.disabled    = true;
   devBroadcastBtnEl.textContent = "Sending…";
-  await broadcastToAllRooms(text);
+
+  if (targetIsRoom) {
+    await broadcastToRoom(specificRoomId, text, dismissAfterSeconds);
+  } else {
+    await broadcastToAllRooms(text, dismissAfterSeconds);
+  }
+
   devBroadcastBtnEl.disabled    = false;
-  devBroadcastBtnEl.textContent = "Send to All";
+  devBroadcastBtnEl.textContent = "Send Broadcast";
+
+  // Clear the textarea after a successful send
   if (devBroadcastInputEl) devBroadcastInputEl.value = "";
 });
 
 devBroadcastInputEl?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") devBroadcastBtnEl?.click();
+  // Ctrl/Cmd+Enter submits; plain Enter is allowed for multi-line messages
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) devBroadcastBtnEl?.click();
+});
+
+// ─── Dev dashboard prank target radio ─────────────
+const prankTargetAllEl  = document.getElementById('prank-target-all');
+const prankTargetRoomEl = document.getElementById('prank-target-room');
+const devPrankRoomIdEl  = document.getElementById('dev-prank-room-id');
+
+prankTargetRoomEl?.addEventListener('change', () => {
+  if (devPrankRoomIdEl) devPrankRoomIdEl.disabled = !prankTargetRoomEl.checked;
+});
+prankTargetAllEl?.addEventListener('change', () => {
+  if (devPrankRoomIdEl) devPrankRoomIdEl.disabled = prankTargetAllEl.checked;
+});
+
+document.getElementById('dev-airhorn-btn')?.addEventListener('click', () => {
+  const targetIsRoom   = prankTargetRoomEl?.checked ?? false;
+  const specificRoomId = devPrankRoomIdEl?.value?.trim() ?? '';
+  if (targetIsRoom && !specificRoomId) {
+    setDevPrankStatus('Paste a Room ID to target a specific room.');
+    return;
+  }
+  sendAirHornFromDashboard(targetIsRoom ? specificRoomId : null);
 });
 
 // ─── Force Reload All ─────────────────────────────
@@ -1255,41 +1641,3 @@ if (window.location.hash === '#devpopout' && isCreator) {
   // Small delay to let the rest of the scripts finish initialising.
   setTimeout(() => openDevDashboard(), 200);
 }
-
-
-// ═══════════════════════════════════════════════════
-//  DEV DASHBOARD — MOBILE TAB SWITCHING
-//
-//  The tab bar (<nav class="dev-tab-bar">) is only visible on portrait phones
-//  (≤640px) via CSS. Clicking a tab:
-//    1. Moves the `dev-tab--active` class to the clicked button.
-//    2. Moves the `dev-panel--active` class to the matching panel.
-//
-//  On wider viewports (641px+) all panels remain displayed normally; the
-//  `dev-panel--active` class has no effect because the CSS rule that hides
-//  panels is scoped to `@media (max-width: 640px)`.
-// ═══════════════════════════════════════════════════
-
-function activateDevTab(tabName) {
-  const tabBarEl = document.getElementById("dev-tab-bar");
-  if (!tabBarEl) return;
-
-  tabBarEl.querySelectorAll(".dev-tab").forEach((tabButtonEl) => {
-    tabButtonEl.classList.toggle("dev-tab--active", tabButtonEl.dataset.tab === tabName);
-  });
-
-  document.querySelectorAll(".dev-dashboard-body .dev-panel[data-tab]").forEach((panelEl) => {
-    panelEl.classList.toggle("dev-panel--active", panelEl.dataset.tab === tabName);
-  });
-}
-
-// Wire up tap events on the tab bar.
-document.getElementById("dev-tab-bar")?.addEventListener("click", (e) => {
-  const clickedTabEl = e.target.closest(".dev-tab");
-  if (clickedTabEl?.dataset?.tab) {
-    activateDevTab(clickedTabEl.dataset.tab);
-  }
-});
-
-// Ensure "random" is the active panel on page load.
-activateDevTab("random");
