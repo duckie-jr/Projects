@@ -462,13 +462,25 @@ const devDashboardCloseEl   = document.getElementById("dev-dashboard-close");
 const devClearAllBansEl     = document.getElementById("dev-clear-all-bans");
 const devBanDurationEl      = document.getElementById("dev-ban-duration");
 
-let devDashboardIsOpen = false;
+// Shared AudioContext primed when the dashboard is opened (user-gesture context).
+// Reusing it lets playAirHornLocally work from async callbacks and network messages
+// where no fresh user gesture is present.
+let dashboardAudioCtx   = null;
+let devDashboardIsOpen  = false;
 // randomDashboardTimer is declared in main.js; reused here for the auto-refresh interval.
 
 // ─── Open / close ─────────────────────────────────
 
 async function openDevDashboard() {
   if (!isCreator) return;
+
+  // ── Prime audio while still inside the user-gesture handler ──────────────
+  // AudioContext must be created/resumed synchronously during a user gesture;
+  // any code after the first 'await' loses that privilege.
+  if (!dashboardAudioCtx || dashboardAudioCtx.state === 'closed') {
+    dashboardAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (dashboardAudioCtx.state === 'suspended') dashboardAudioCtx.resume();
   devDashboardIsOpen = true;
   devDashboardEl.classList.remove("hidden");
 
@@ -488,6 +500,23 @@ async function openDevDashboard() {
 
   if (!randomDashboardTimer) {
     randomDashboardTimer = setInterval(refreshDevDashboard, 5000);
+  }
+
+  // Activate the first tab when opening so mobile users see the Random panel.
+  activateDashboardTab('random');
+}
+
+// Switches the visible panel by toggling dev-panel--active and dev-tab--active.
+// Works on mobile (tab bar visible) and is a no-op on desktop (panels all shown).
+function activateDashboardTab(targetTabName) {
+  const allPanels = document.querySelectorAll('.dev-panel[data-tab]');
+  const allTabs   = document.querySelectorAll('.dev-tab');
+
+  for (const panelEl of allPanels) {
+    panelEl.classList.toggle('dev-panel--active', panelEl.dataset.tab === targetTabName);
+  }
+  for (const tabEl of allTabs) {
+    tabEl.classList.toggle('dev-tab--active', tabEl.dataset.target === targetTabName);
   }
 }
 
@@ -804,9 +833,15 @@ function devClearAllBans() {
 
 // ─── Event listeners ──────────────────────────────
 
-devDashboardRefreshEl?.addEventListener("click", () => refreshDevDashboard());
-devDashboardCloseEl?.addEventListener("click",   () => closeDevDashboard());
-devClearAllBansEl?.addEventListener("click",     () => devClearAllBans());
+devDashboardRefreshEl?.addEventListener('click', () => refreshDevDashboard());
+devDashboardCloseEl?.addEventListener('click',   () => closeDevDashboard());
+devClearAllBansEl?.addEventListener('click',     () => devClearAllBans());
+
+// Tab bar — delegate tap events to activateDashboardTab.
+document.querySelector('.dev-tab-bar')?.addEventListener('click', (e) => {
+  const clickedTab = e.target.closest('.dev-tab');
+  if (clickedTab?.dataset.target) activateDashboardTab(clickedTab.dataset.target);
+});
 
 
 // ═══════════════════════════════════════════════════
@@ -832,6 +867,8 @@ devClearAllBansEl?.addEventListener("click",     () => devClearAllBans());
 let ghostObserverPeer     = null;
 let ghostObserverDataConn = null;
 const ghostObserverCallMap = new Map();  // targetPeerId → PeerJS Call
+
+let ghostObserverAllMuted = false;  // master mute state for the observer grid
 
 // ─── Whisper mode — lets the observer speak to selected participants ──────────
 //  The ghost calls each participant with a silent stream. When whisper is
@@ -865,23 +902,48 @@ function releaseGhostMicIfUnused() {
   ghostObserverMicAudioTrack = null;
 }
 
-// Replaces the outgoing audio track for a specific ghost call with newAudioTrack.
+// Replaces the outgoing audio track on the ghost observer's call to peerId.
+// The ghost called the participant with a silent stream, so there should always
+// be exactly one audio sender on the RTCPeerConnection.
 async function replaceGhostCallAudioTrack(peerId, newAudioTrack) {
   const call = ghostObserverCallMap.get(peerId);
-  if (!call?.peerConnection) return;
-  const audioSender = call.peerConnection.getSenders().find(sender => sender.track?.kind === 'audio');
-  if (audioSender && newAudioTrack) {
-    await audioSender.replaceTrack(newAudioTrack).catch(() => {});
+  if (!call) {
+    console.warn('[whisper] no ghost call found for peer', peerId);
+    return;
   }
+
+  // PeerJS v1.5.x exposes the underlying RTCPeerConnection as .peerConnection.
+  // Fall back to private field names used in some builds.
+  const pc = call.peerConnection ?? call._peerConnection ?? call._pc;
+  if (!pc) {
+    console.warn('[whisper] RTCPeerConnection not available for peer', peerId);
+    return;
+  }
+
+  const senders     = pc.getSenders();
+  // Match a live audio sender or one whose track was previously nulled-out by
+  // a prior replaceTrack(null) call — both need to be found for toggling to work.
+  const audioSender = senders.find(
+    sender => sender.track?.kind === 'audio' || sender.track === null
+  );
+
+  if (!audioSender) {
+    console.warn('[whisper] no audio sender for peer', peerId,
+      '— senders:', senders.map(s => s.track?.kind ?? 'null'));
+    return;
+  }
+
+  await audioSender.replaceTrack(newAudioTrack ?? null).catch((replaceError) => {
+    console.warn('[whisper] replaceTrack failed for', peerId, replaceError);
+  });
 }
 
 // Toggles whisper on/off for one participant tile. Updates the button visually.
 async function toggleGhostWhisperForPeer(peerId, whisperBtnEl) {
   if (ghostObserverWhisperPeerIds.has(peerId)) {
-    // Disable: replace with a fresh silent track so the participant hears nothing.
+    // Disable: restore the one persistent silent track.
     ghostObserverWhisperPeerIds.delete(peerId);
-    const silentTrack = createSilentMediaStream().getAudioTracks()[0];
-    await replaceGhostCallAudioTrack(peerId, silentTrack);
+    await replaceGhostCallAudioTrack(peerId, getOrCreateGhostSilentTrack());
     whisperBtnEl.textContent = '🎤 Whisper';
     whisperBtnEl.classList.remove('btn-primary');
     whisperBtnEl.classList.add('btn-secondary');
@@ -911,8 +973,7 @@ async function toggleGhostWhisperAll() {
     for (const peerId of allPeerIds) {
       if (!ghostObserverWhisperPeerIds.has(peerId)) continue;
       ghostObserverWhisperPeerIds.delete(peerId);
-      const silentTrack = createSilentMediaStream().getAudioTracks()[0];
-      await replaceGhostCallAudioTrack(peerId, silentTrack);
+      await replaceGhostCallAudioTrack(peerId, getOrCreateGhostSilentTrack());
       updateTileWhisperButton(peerId, false);
     }
     releaseGhostMicIfUnused();
@@ -952,16 +1013,44 @@ function syncWhisperAllButton() {
   whisperAllBtnEl.classList.toggle('btn-secondary', !allWhispering);
 }
 
-// Creates a MediaStream with one silent audio track so PeerJS can build a
-// valid WebRTC offer. Without at least one track, some browsers refuse to
-// create a media connection at all.
+// Module-level AudioContext and track for the ghost observer's silent stream.
+// Storing both at module level prevents garbage collection from killing the track
+// and avoids the bug of spawning a new oscillator on every replaceTrack() call.
+let ghostSilentAudioCtx = null;
+let ghostSilentTrack    = null;  // single reused track — never recreated mid-session
+
+// Returns the one persistent live-but-silent MediaStreamTrack for the observer
+// session. Creates it (along with its AudioContext) on first call and reuses it
+// for every subsequent whisper-off replaceTrack call.
+// Using a single track per session means the WebRTC sender always has the same
+// track object and replaceTrack operates predictably.
+function getOrCreateGhostSilentTrack() {
+  if (ghostSilentTrack && ghostSilentTrack.readyState === 'live') {
+    return ghostSilentTrack;
+  }
+
+  if (!ghostSilentAudioCtx || ghostSilentAudioCtx.state === 'closed') {
+    ghostSilentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (ghostSilentAudioCtx.state === 'suspended') ghostSilentAudioCtx.resume();
+
+  const oscillator = ghostSilentAudioCtx.createOscillator();
+  const silentGain = ghostSilentAudioCtx.createGain();
+  silentGain.gain.value = 0;  // completely inaudible
+  oscillator.connect(silentGain);
+  const destination = ghostSilentAudioCtx.createMediaStreamDestination();
+  silentGain.connect(destination);
+  oscillator.start();  // runs indefinitely; stopped only when the ctx is closed
+
+  ghostSilentTrack = destination.stream.getAudioTracks()[0];
+  return ghostSilentTrack;
+}
+
+// Wraps the persistent silent track in a fresh MediaStream for use as the initial
+// call stream. Using the same underlying track is intentional — the RTCPeerConnection
+// sender points at this one track for the entire session.
 function createSilentMediaStream() {
-  const audioCtx    = new (window.AudioContext || window.webkitAudioContext)();
-  const gainNode    = audioCtx.createGain();
-  gainNode.gain.value = 0;  // completely silent
-  const destination = audioCtx.createMediaStreamDestination();
-  gainNode.connect(destination);
-  return destination.stream;
+  return new MediaStream([getOrCreateGhostSilentTrack()]);
 }
 
 function setGhostObserverStatus(message) {
@@ -1087,6 +1176,13 @@ function closeGhostObserver() {
   // Release the mic if whisper mode was active
   ghostObserverWhisperPeerIds.clear();
   releaseGhostMicIfUnused();
+
+  // Release the persistent silent AudioContext and track reference
+  if (ghostSilentAudioCtx) {
+    try { ghostSilentAudioCtx.close(); } catch (_) {}
+    ghostSilentAudioCtx = null;
+  }
+  ghostSilentTrack = null;
 
   // Reset master mute state so the next session starts unmuted
   ghostObserverAllMuted = false;
@@ -1324,6 +1420,67 @@ async function broadcastToRoom(roomId, messageText, dismissAfterSeconds = 0) {
   setTimeout(() => setDevBroadcastStatus(""), 4000);
 }
 
+
+// ═══════════════════════════════════════════════════
+//  PRANK AUDIO — AIR HORN + DISPATCH
+//
+//  playAirHornLocally() synthesises a loud air horn using the Web Audio API.
+//  handlePrankAction() dispatches network-delivered prank messages to the
+//  correct local handler. Both are called by main.js when prank payloads
+//  arrive from the network, so they must exist in the shared global scope.
+// ═══════════════════════════════════════════════════
+
+// Synthesises and plays an air horn locally using the shared dashboardAudioCtx.
+// Using a pre-primed shared context (initialised on dashboard open, a user gesture)
+// means this works even when called from async callbacks or network messages where
+// the browser's autoplay policy would block creating a fresh AudioContext.
+async function playAirHornLocally() {
+  try {
+    // If the dashboard AudioContext isn't available (e.g. horn triggered on a client
+    // that has never opened the dashboard), create one now. Modern browsers allow
+    // this if the page has ever received user input, which it has by this point.
+    if (!dashboardAudioCtx || dashboardAudioCtx.state === 'closed') {
+      dashboardAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (dashboardAudioCtx.state === 'suspended') await dashboardAudioCtx.resume();
+
+    const audioCtx  = dashboardAudioCtx;
+    const masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    masterGain.gain.setValueAtTime(0, now);
+    masterGain.gain.linearRampToValueAtTime(1.0, now + 0.02);
+    masterGain.gain.setValueAtTime(1.0, now + 0.55);
+    masterGain.gain.linearRampToValueAtTime(0, now + 0.75);
+
+    // Three detuned sawtooth oscillators — classic air-horn chord A♭/E♭/A♭
+    [[233, 0.7], [311, 0.5], [466, 0.35]].forEach(([baseFrequency, relativeVolume]) => {
+      const oscillator = audioCtx.createOscillator();
+      const oscGain    = audioCtx.createGain();
+      oscillator.type = 'sawtooth';
+      // Start ~4% sharp then glide down for realism
+      oscillator.frequency.setValueAtTime(baseFrequency * 1.04, now);
+      oscillator.frequency.exponentialRampToValueAtTime(baseFrequency, now + 0.12);
+      oscGain.gain.value = relativeVolume;
+      oscillator.connect(oscGain);
+      oscGain.connect(masterGain);
+      oscillator.start(now);
+      oscillator.stop(now + 0.75);
+    });
+
+    // Disconnect the master gain after playback to free node references.
+    // We do NOT close the AudioContext — it is shared and reused.
+    setTimeout(() => { try { masterGain.disconnect(); } catch (_) {} }, 1000);
+  } catch (audioError) {
+    console.warn('Air horn audio failed:', audioError);
+  }
+}
+
+// Dispatches a prank action received from the network to its local handler.
+function handlePrankAction(action) {
+  if (action === 'air_horn') playAirHornLocally();
+}
 
 // ═══════════════════════════════════════════════════
 //  GHOST OBSERVER — AIR HORN
