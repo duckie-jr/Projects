@@ -636,13 +636,19 @@ function renderDevRandomList(users) {
         devBanUser(user.userNumber, user.username)
       );
 
+      const pullBtnEl       = document.createElement("button");
+      pullBtnEl.className    = "btn btn-xs btn-secondary";
+      pullBtnEl.textContent  = "Pull →";
+      pullBtnEl.title        = "Pull this person into a room with you";
+      pullBtnEl.addEventListener("click", () => devPullUserToRoom(user.userNumber));
+
         const reloadUserBtnEl      = document.createElement("button");
         reloadUserBtnEl.className   = "btn btn-xs btn-secondary";
         reloadUserBtnEl.textContent = "⟳";
         reloadUserBtnEl.title       = "Force-reload this client";
         reloadUserBtnEl.addEventListener("click", () => forceReloadRandomUser(user.id));
 
-        actionsEl.append(reloadUserBtnEl, kickBtnEl, banBtnEl);
+        actionsEl.append(reloadUserBtnEl, kickBtnEl, banBtnEl, pullBtnEl);
     }
 
     rowEl.append(infoEl, actionsEl);
@@ -1075,7 +1081,7 @@ function setGhostObserverStatus(message) {
   if (statusEl) statusEl.textContent = message;
 }
 
-function addGhostObserverTile(peerId, username, stream) {
+function addGhostObserverTile(peerId, username, persistentUserNumber, stream) {
   const gridEl = document.getElementById('ghost-observer-grid');
   if (!gridEl || gridEl.querySelector(`[data-peer-id="${peerId}"]`)) return;
 
@@ -1116,6 +1122,12 @@ function addGhostObserverTile(peerId, username, stream) {
   const labelEl = document.createElement('div');
   labelEl.className   = 'ghost-observer-label';
   labelEl.textContent = username;
+  if (persistentUserNumber) {
+    const numSpanEl       = document.createElement('span');
+    numSpanEl.className   = 'ghost-observer-user-number';
+    numSpanEl.textContent = ' #' + persistentUserNumber;
+    labelEl.appendChild(numSpanEl);
+  }
   tileEl.appendChild(labelEl);
 
   const actionsBarEl = document.createElement('div');
@@ -1276,6 +1288,8 @@ async function ghostJoinRoom(roomId) {
   }
 
   const roomUsers = approvedPayload.users || [];
+  // Map peerId to permanent userNumber so tiles can show it.
+  const peerIdToUserNum = new Map(roomUsers.map(u => [u.peerId, u.userNumber ?? ""]));
 
   if (roomUsers.length === 0) {
     setGhostObserverStatus('Room is empty.');
@@ -1299,7 +1313,7 @@ async function ghostJoinRoom(roomId) {
     ghostObserverCallMap.set(user.peerId, call);
 
     call.on('stream', (remoteStream) => {
-      addGhostObserverTile(user.peerId, user.username, remoteStream);
+      addGhostObserverTile(user.peerId, user.username, peerIdToUserNum.get(user.peerId) ?? "", remoteStream);
     });
 
     call.on('close', () => {
@@ -1618,6 +1632,39 @@ function requestGhostModeration(action, targetPeerId) {
   } catch (_) {}
 }
 
+
+// ─── Pull to Room by user number ─────────────────
+
+function setDevPullStatus(message) {
+  const statusEl = document.getElementById("dev-pull-status");
+  if (statusEl) statusEl.textContent = message;
+}
+
+// Sends a pull_to_room command via the registry.
+// Uses currentRoomId if the creator is currently in a room; otherwise falls
+// back to whatever the creator typed in the pull-room input.
+function devPullUserToRoom(targetUserNumber) {
+  const num      = String(targetUserNumber || "").trim().replace(/^#/, "");
+  const roomInput = document.getElementById("dev-pull-room");
+  const targetRoom = (roomInput?.value ?? "").trim() || currentRoomId;
+
+  if (!num) { setDevPullStatus("No user number provided."); return; }
+  if (!targetRoom) { setDevPullStatus("Enter a Room ID or join a room first."); return; }
+
+  sendDashboardModeration({ type: "pull_to_room", userNumber: num, roomId: targetRoom });
+  setDevPullStatus(`Pulling #${num} → ${targetRoom}…`);
+  setTimeout(() => setDevPullStatus(""), 3500);
+}
+
+document.getElementById("dev-pull-btn")?.addEventListener("click", () => {
+  const numInput  = document.getElementById("dev-pull-number");
+  const rawNum    = (numInput?.value ?? "").trim().replace(/^#/, "");
+  devPullUserToRoom(rawNum);
+});
+
+document.getElementById("dev-pull-number")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") devPullUserToRoom((e.target.value ?? "").trim().replace(/^#/, ""));
+});
 
 // ═══════════════════════════════════════════════════
 //  DEV DASHBOARD — FORCE RELOAD
