@@ -1331,6 +1331,26 @@ select {
   background: rgba(248, 81, 73, 0.1);
 }
 
+/* Monitor button — creator-only, purple accent to match the creator badge theme */
+.recent-room-monitor {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #484f58;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.recent-room-monitor:hover {
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.12);
+}
+
 /* ── Import rooms section ── */
 
 .import-rooms-section {
@@ -1502,6 +1522,12 @@ select {
   color: #a78bfa;
 }
 
+.creator-status-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 /* ── Creator: active servers list ── */
 
 .server-list-card {
@@ -1635,16 +1661,24 @@ select {
   height: 100%;
 }
 
-/* ── Header ── */
+/* ── Header — two rows ───────────────────────────── */
 
 .dev-dashboard-header {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 18px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 18px 10px;
   background: #0a0e14;
   border-bottom: 1px solid #21262d;
   flex-shrink: 0;
+}
+
+/* Row 1: title + badge on the left, action buttons on the right */
+.dev-dashboard-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .dev-dashboard-title-group {
@@ -1673,13 +1707,12 @@ select {
   text-transform: uppercase;
 }
 
+/* Row 2: all stat chips in a wrappable row */
 .dev-dashboard-stats {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
+  gap: 8px;
   flex-wrap: wrap;
-  min-width: 0;
 }
 
 .dev-stat-chip {
@@ -2049,6 +2082,14 @@ select {
   gap: .6rem;
 }
 
+/* Buttons on the right side of the observer header */
+.ghost-observer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .ghost-observer-eyecon {
   font-size: 1.1rem;
   line-height: 1;
@@ -2148,70 +2189,247 @@ select {
 ═══════════════════════════════════════════════════ */
 
 .dev-panel--broadcast {
-  grid-column: 1 / -1;   /* span all three columns */
+  grid-column: 1 / -1;
   min-height: unset;
 }
 
 .dev-broadcast-body {
-  padding: 10px 14px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
-.dev-broadcast-row {
+/* ── Field label ── */
+
+.dev-broadcast-field {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.dev-broadcast-input {
-  flex: 1;
+.dev-broadcast-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #8b949e;
+}
+
+/* ── Message textarea ── */
+
+.dev-broadcast-textarea {
+  width: 100%;
   background: #0d1117;
   border: 1px solid #30363d;
   border-radius: 6px;
   color: #e6edf3;
   font-size: 0.85rem;
-  padding: 6px 10px;
+  font-family: inherit;
+  padding: 8px 10px;
   outline: none;
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.5;
   transition: border-color 0.15s;
 }
 
-.dev-broadcast-input:focus {
-  border-color: #6c63ff;
+.dev-broadcast-textarea:focus { border-color: #6c63ff; }
+
+/* ── Options row: duration + target side-by-side on desktop ── */
+
+.dev-broadcast-options {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Duration ── */
+
+.dev-broadcast-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dev-broadcast-duration-input {
+  width: 66px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+
+.dev-broadcast-duration-input::-webkit-outer-spin-button,
+.dev-broadcast-duration-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.dev-broadcast-duration-input:focus { border-color: #6c63ff; }
+
+.dev-broadcast-hint {
+  font-size: 0.72rem;
+  color: #484f58;
+  white-space: nowrap;
+}
+
+/* ── Target radio group ── */
+
+.dev-broadcast-target {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dev-broadcast-radio {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: #c9d1d9;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dev-broadcast-radio input[type="radio"] {
+  accent-color: #6c63ff;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.dev-broadcast-room-input {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 0.82rem;
+  font-family: monospace;
+  padding: 4px 8px;
+  outline: none;
+  width: 220px;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.dev-broadcast-room-input:focus  { border-color: #6c63ff; }
+.dev-broadcast-room-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Actions row ── */
+
+.dev-broadcast-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .dev-broadcast-status {
   font-size: 0.78rem;
   color: #8b949e;
-  min-height: 1.1em;
   margin: 0;
 }
 
-/* ═══ GHOST OBSERVER — TILE ACTION BAR ═════════ */
-.ghost-observer-actions {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  display: flex; gap: 4px; padding: 6px 8px; flex-wrap: wrap;
-  background: linear-gradient(transparent, rgba(0,0,0,.82));
-  opacity: 0; transition: opacity .18s ease;
-}
-.ghost-observer-tile:hover .ghost-observer-actions { opacity: 1; }
+/* ═══════════════════════════════════════════════════
+   BROADCAST OVERLAY
+   Shown to all room users when admin sends a broadcast.
+   Dismiss button is locked until the countdown expires.
+═══════════════════════════════════════════════════ */
 
-/* ═══ DEV DASHBOARD — PERSISTENT USER ID BADGE ═ */
-.dev-uid-badge {
-  font-family: ui-monospace, "Cascadia Code", monospace;
-  font-size: 0.82rem !important; font-weight: 700 !important;
-  color: #9d97ff !important; letter-spacing: 0.03em;
+.broadcast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
 }
 
-/* ═══ DEV DASHBOARD — PANEL FILTER INPUT ══════ */
-.dev-panel-filter-input {
-  background: #0d1117; border: 1px solid #30363d; border-radius: 5px;
-  color: #e6edf3; font-size: 0.75rem; padding: 3px 7px;
-  outline: none; width: 140px; transition: border-color .15s;
-}
-.dev-panel-filter-input:focus { border-color: #6c63ff; }
+.broadcast-overlay.hidden { display: none; }
 
+.broadcast-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  animation: broadcastIn 0.22s ease;
+}
+
+@keyframes broadcastIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1); }
+}
+
+.broadcast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.broadcast-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #f0b429;
+  background: rgba(240, 180, 41, 0.1);
+  border: 1px solid rgba(240, 180, 41, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.broadcast-timer-badge {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  color: #8b949e;
+  min-width: 36px;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+.broadcast-message-text {
+  font-size: 1rem;
+  color: #e6edf3;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.broadcast-dismiss-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: filter 0.15s, transform 0.1s, opacity 0.15s !important;
+}
+
+.broadcast-dismiss-btn:disabled {
+  opacity: 0.38 !important;
+  cursor: not-allowed;
+  filter: none !important;
+  transform: none !important;
+}
 
 /* ═══════════════════════════════════════════════════
    MOBILE RESPONSIVE
@@ -2572,6 +2790,38 @@ select {
   /* Panel filter input: give it breathing room */
   .dev-panel-controls { flex-wrap: wrap; gap: 5px; }
   .dev-panel-filter-input { width: 130px; }
+
+  /* Broadcast overlay: near-full screen card from bottom */
+  .broadcast-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .broadcast-card {
+    border-radius: 16px 16px 0 0;
+    max-width: 100%;
+    padding: 24px 20px 20px;
+    gap: 14px;
+  }
+
+  /* Dev broadcast panel: stack options vertically */
+  .dev-broadcast-options {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dev-broadcast-room-input { width: 100%; }
+
+  .dev-broadcast-target {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dev-broadcast-hint { white-space: normal; }
+
+  .dev-broadcast-actions { flex-direction: column; align-items: stretch; }
+  .dev-broadcast-actions .btn { width: 100%; justify-content: center; }
 }
 
 /* ══════════════════════════════════════════════════
@@ -2660,4 +2910,18 @@ select {
 
   /* Tighter rows */
   .dev-row { padding: 6px 10px; }
+
+  /* Compact overlay in landscape — side-by-side header + shorter card */
+  .broadcast-card {
+    max-width: 520px;
+    padding: 16px 20px 14px;
+    gap: 10px;
+  }
+
+  .broadcast-message-text { font-size: 0.88rem; }
+
+  .broadcast-dismiss-btn { padding: 9px; font-size: 0.85rem; }
+
+  /* Dev broadcast panel options: stay in one row on short landscape */
+  .dev-broadcast-options { grid-template-columns: auto 1fr; }
 }
