@@ -692,7 +692,7 @@ function handleDataFromGuest(fromPeerId, data) {
       const guestEntry    = guestConnectionMap.get(fromPeerId);
       guestEntry.username  = data.username;
       guestEntry.isCreator = data.isCreator ?? false;
-      connectedUsers.push({ peerId: fromPeerId, username: data.username, isCreator: data.isCreator ?? false });
+      connectedUsers.push({ peerId: fromPeerId, username: data.username, isCreator: data.isCreator ?? false, userNumber: data.userNumber ?? "" });
       renderUsersList();
       guestEntry.conn.send({ type: "full_sync", users: connectedUsers, roomName: currentRoomName, maxSize: currentRoomMaxSize });
       appendSystemMessage(data.username + " joined the room.");
@@ -1052,6 +1052,23 @@ function handleRegistryMessage(conn, message) {
       });
       break;
     }
+
+    // ─── Pull a Random user by their permanent number into a specific room ──
+    case "pull_to_room": {
+      const targetUserNumber = String(message.userNumber || "");
+      const targetRoomId     = String(message.roomId || "");
+      if (!targetUserNumber || !targetRoomId) break;
+      for (const [presenceId, entry] of randomPresence.entries()) {
+        if (String(entry.userNumber || "") !== targetUserNumber) continue;
+        if (presenceId === SELF_PRESENCE_ID) {
+          handleRandomControlMessage({ type: "force_join_room", roomId: targetRoomId });
+        } else {
+          try { entry.conn?.send({ type: "force_join_room", roomId: targetRoomId }); } catch (_) {}
+        }
+        break;
+      }
+      break;
+    }
   }
 }
 
@@ -1235,7 +1252,7 @@ function joinRoom(targetRoomId) {
 }
 
 function setupConnectionToHost(conn) {
-  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
+  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator, userNumber }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
   conn.on("data",  (data) => handleDataFromHost(data));
   conn.on("close", ()     => {
     appendSystemMessage("Disconnected from host.");
@@ -1715,6 +1732,15 @@ function renderUsersList() {
       handIconEl.innerHTML    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>`;
       handIconEl.title       = "Hand raised";
       rowEl.appendChild(handIconEl);
+    }
+
+    // Show the permanent user ID to host/creator for moderation purposes.
+    if ((isHost || isCreator) && user.userNumber) {
+      const userNumEl       = document.createElement("span");
+      userNumEl.className   = "participant-user-number";
+      userNumEl.textContent = "#" + user.userNumber;
+      userNumEl.title       = "Permanent user ID";
+      rowEl.appendChild(userNumEl);
     }
 
     // The host can moderate everyone; a verified creator can moderate everyone
@@ -2740,6 +2766,16 @@ function handleRandomControlMessage(message) {
     saveMyRandomBan(message.until ?? null);
     leaveRandomToHome(randomBanMessage(message.until ?? null));
   } else if (message.type === "random_reload") {
+    setTimeout(() => location.reload(), 600);
+  } else if (message.type === "force_join_room") {
+    // Creator is pulling this user into a specific room. Clean up Random
+    // mode, store the target room, then reload so resumePendingMove picks it up.
+    if (!message.roomId) return;
+    sessionStorage.setItem(STORAGE_KEY_PENDING_MOVE, message.roomId);
+    cleanupRandomMode();
+    stopRandomPresence();
+    randomCallScreenEl.classList.add("hidden");
+    randomLobbyScreenEl.classList.add("hidden");
     setTimeout(() => location.reload(), 600);
   }
 }
