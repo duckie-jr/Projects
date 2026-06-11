@@ -2882,3 +2882,94 @@ select {
     padding: 16px 20px 14px;
     gap: 10px;
   }
+
+/* ═══════════════════════════════════════════════════
+   CREATE ROOM MODAL — form fields
+   ═══════════════════════════════════════════════════ */
+
+.create-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.create-room-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a0a0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.create-room-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Wrapper that lets the char counter sit inside the input */
+.create-room-input-wrapper {
+  position: relative;
+}
+
+.create-room-input-wrapper .creator-password-input {
+  width: 100%;
+  padding-right: 52px;
+  box-sizing: border-box;
+}
+
+.create-room-counter {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #555;
+  pointer-events: none;
+  user-select: none;
+}
+
+.create-room-select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #111;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+
+.create-room-select:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════
+   TOOLBAR — room name badge
+   ═══════════════════════════════════════════════════ */
+
+.room-name-label {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e8e8f8;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 9px;
+  background: rgba(124, 58, 237, 0.14);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
+.room-name-label.hidden {
+  display: none;
+}
