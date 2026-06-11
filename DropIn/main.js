@@ -129,6 +129,7 @@ let currentRoomId   = "";
 let currentUsername = "";
 let currentRoomName    = "";   // custom name set by the host at creation time
 let currentRoomMaxSize = 0;    // max participants; 0 = unlimited
+let currentRoomPassword  = "";   // room password; empty = open room
 let localStream     = null;
 let isMuted         = false;
 let isCamOff        = false;
@@ -560,6 +561,16 @@ const roomMaxSizeSelectEl    = document.getElementById("room-max-size-select");
 const createRoomErrorEl      = document.getElementById("create-room-error");
 const createRoomCancelBtnEl  = document.getElementById("create-room-cancel-btn");
 const createRoomConfirmBtnEl = document.getElementById("create-room-confirm-btn");
+const roomPasswordInputEl    = document.getElementById("room-password-input");
+const roomPasswordToggleBtnEl = document.getElementById("room-password-toggle");
+const roomLockBadgeEl        = document.getElementById("room-lock-badge");
+const guestPasswordModalEl   = document.getElementById("guest-password-modal");
+const guestPasswordDescEl    = document.getElementById("guest-password-modal-desc");
+const guestPasswordEntryEl   = document.getElementById("guest-password-entry");
+const guestPasswordToggleBtnEl = document.getElementById("guest-password-toggle");
+const guestPasswordErrorEl   = document.getElementById("guest-password-error");
+const guestPasswordSubmitBtnEl = document.getElementById("guest-password-submit-btn");
+const guestPasswordCancelBtnEl = document.getElementById("guest-password-cancel-btn");
 
 // ═══════════════════════════════════════════════════
 //  ROOMS — BROADCAST
@@ -606,11 +617,22 @@ function showAppScreen() {
     roomNameLabelEl.classList.add("hidden");
   }
 
-  // Reflect the active room in the URL so it can be shared, bookmarked,
-  // or pasted straight into the join field by anyone.
+  // Show the lock badge in the toolbar if this room has a password.
+  if (roomLockBadgeEl) roomLockBadgeEl.classList.toggle("hidden", !currentRoomPassword);
+
+  // Reflect the active room in the URL — include the human-readable name so
+  // anyone who copies the link sees "Game Night" when they open it.
   const roomUrl = new URL(window.location.href);
   roomUrl.searchParams.set("room", currentRoomId);
+  if (currentRoomName) {
+    roomUrl.searchParams.set("name", currentRoomName);
+  } else {
+    roomUrl.searchParams.delete("name");
+  }
   window.history.replaceState({ roomId: currentRoomId }, "", roomUrl);
+
+  // Replay any messages stored from a previous session in this tab.
+  restoreChatHistory();
 }
 
 // ═══════════════════════════════════════════════════
@@ -630,7 +652,7 @@ function createRoom() {
   peer.on("open", (assignedId) => {
     currentRoomId  = assignedId;
     hostPeerId     = assignedId;
-    connectedUsers = [{ peerId: assignedId, username: currentUsername, isCreator }];
+    connectedUsers = [{ peerId: assignedId, username: currentUsername, isCreator, userNumber }];
     saveRecentRoom(assignedId, true);
     showAppScreen();
     renderUsersList();
@@ -689,6 +711,15 @@ function handleDataFromGuest(fromPeerId, data) {
         }
         return;
       }
+      // Password protection — challenge the guest before letting them in
+      if (currentRoomPassword) {
+        const entry = guestConnectionMap.get(fromPeerId);
+        if (!entry) return;
+        entry.pendingHelloData   = { ...data };
+        entry.passwordAttempts   = 0;
+        entry.conn.send({ type: "password_required", roomName: currentRoomName });
+        return;
+      }
       const guestEntry    = guestConnectionMap.get(fromPeerId);
       guestEntry.username  = data.username;
       guestEntry.isCreator = data.isCreator ?? false;
@@ -698,6 +729,34 @@ function handleDataFromGuest(fromPeerId, data) {
       appendSystemMessage(data.username + " joined the room.");
       relayToOthers(fromPeerId, { type: "user_joined", username: data.username, peerId: fromPeerId });
       broadcastUserList();
+      break;
+    }
+    case "password_attempt": {
+      const guestEntry = guestConnectionMap.get(fromPeerId);
+      if (!guestEntry || !guestEntry.pendingHelloData) return;
+
+      guestEntry.passwordAttempts = (guestEntry.passwordAttempts ?? 0) + 1;
+
+      if (data.password === currentRoomPassword) {
+        // Correct — complete the hello flow using the stored pending data
+        const pendingData = guestEntry.pendingHelloData;
+        delete guestEntry.pendingHelloData;
+        guestEntry.username  = pendingData.username;
+        guestEntry.isCreator = pendingData.isCreator ?? false;
+        connectedUsers.push({ peerId: fromPeerId, username: pendingData.username, isCreator: pendingData.isCreator ?? false, userNumber: pendingData.userNumber ?? "" });
+        renderUsersList();
+        guestEntry.conn.send({ type: "full_sync", users: connectedUsers, roomName: currentRoomName, maxSize: currentRoomMaxSize });
+        appendSystemMessage(pendingData.username + " joined the room.");
+        relayToOthers(fromPeerId, { type: "user_joined", username: pendingData.username, peerId: fromPeerId });
+        broadcastUserList();
+      } else if (guestEntry.passwordAttempts >= 3) {
+        appendSystemMessage("A guest was removed for too many wrong password attempts.");
+        guestEntry.conn.send({ type: "banned" });
+        guestEntry.conn.close();
+        guestConnectionMap.delete(fromPeerId);
+      } else {
+        guestEntry.conn.send({ type: "wrong_password", attemptsLeft: 3 - guestEntry.passwordAttempts });
+      }
       break;
     }
     case "chat": { renderChatMessage(data); relayToOthers(fromPeerId, data); break; }
@@ -929,6 +988,7 @@ function serializeActiveServers() {
     roomName:         entry.roomName ?? "",
     maxSize:          entry.maxSize ?? 0,
     participantCount: entry.participantCount,
+    participants:     entry.participants ?? [],
   }));
 }
 
@@ -947,6 +1007,7 @@ function handleRegistryMessage(conn, message) {
         roomName:         message.roomName ?? "",
         maxSize:          message.maxSize ?? 0,
         participantCount: message.participantCount ?? 1,
+        participants:     message.participants ?? [],
         updatedAt:        Date.now(),
       });
       updateRegistryPeakConcurrentUsers();
@@ -1179,6 +1240,7 @@ async function announceRoomToRegistry() {
       roomName:         currentRoomName,
       maxSize:          currentRoomMaxSize,
       participantCount: connectedUsers.length,
+      participants:     connectedUsers.map(u => ({ username: u.username, userNumber: u.userNumber ?? "" })),
       updatedAt:        Date.now(),
     });
     registryAnnounceTimer = setInterval(() => {
@@ -1198,6 +1260,7 @@ function sendRegistryPresence(type) {
       roomName:         currentRoomName,
       maxSize:          currentRoomMaxSize,
       participantCount: connectedUsers.length,
+      participants:     connectedUsers.map(u => ({ username: u.username, userNumber: u.userNumber ?? "" })),
     });
   } catch (_) {
     // connection dropped — heartbeat will keep failing harmlessly
@@ -1362,7 +1425,7 @@ async function takeOverAsHost(oldRoomId, failoverPeerId) {
   hostConnection = null;
 
   // Register the only current participant: ourselves.
-  connectedUsers = [{ peerId: newRoomId, username: currentUsername, isCreator }];
+  connectedUsers = [{ peerId: newRoomId, username: currentUsername, isCreator, userNumber }];
 
   // Wire up all standard host event handlers on the new peer.
   newRoomPeer.on("disconnected", () => { if (!newRoomPeer.destroyed) newRoomPeer.reconnect(); });
@@ -1451,6 +1514,13 @@ function handleDataFromHost(data) {
       } else {
         roomNameLabelEl.classList.add("hidden");
       }
+      // Update the URL with the definitive room name from the host so the
+      // link is always accurate (may differ from any name baked into the URL).
+      const syncedUrl = new URL(window.location.href);
+      syncedUrl.searchParams.set("room", currentRoomId);
+      if (currentRoomName) { syncedUrl.searchParams.set("name", currentRoomName); }
+      else { syncedUrl.searchParams.delete("name"); }
+      window.history.replaceState({ roomId: currentRoomId }, "", syncedUrl);
       appendSystemMessage("Synced with room!");
       initMedia(data.users);
       break;
@@ -1464,6 +1534,20 @@ function handleDataFromHost(data) {
       appendSystemMessage(`This room is full (max ${data.maxSize} participants). Returning to lobby…`);
       clearRoomFromUrl();
       setTimeout(() => location.reload(), 3000);
+      break;
+    }
+    case "password_required": {
+      // Host is asking for a password before letting us in
+      openGuestPasswordModal(data.roomName || "");
+      break;
+    }
+    case "wrong_password": {
+      const attemptsLeft = data.attemptsLeft ?? 0;
+      showGuestPasswordError(
+        attemptsLeft === 1
+          ? "Wrong password — 1 attempt left."
+          : "Wrong password — " + attemptsLeft + " attempts left."
+      );
       break;
     }
     case "force_mute": {
@@ -1851,7 +1935,64 @@ function forceCamOffGuest(peerId) {
   renderUsersList();
 }
 
-function renderChatMessage(message) {
+// ═══════════════════════════════════════════════════
+//  CHAT HISTORY (sessionStorage — survives refresh, cleared on leave)
+// ═══════════════════════════════════════════════════
+
+const MAX_CHAT_HISTORY        = 50;
+const SESSION_KEY_CHAT_PREFIX = "dropin_chat_";
+
+function buildChatKey(roomId) {
+  return SESSION_KEY_CHAT_PREFIX + roomId;
+}
+
+// Append one chat message to the stored list for the current room.
+function saveChatMessage(message) {
+  if (!currentRoomId) return;
+  try {
+    const key     = buildChatKey(currentRoomId);
+    const raw     = sessionStorage.getItem(key);
+    const history = raw ? JSON.parse(raw) : [];
+    history.push({ sender: message.sender, text: message.text, timestamp: message.timestamp });
+    if (history.length > MAX_CHAT_HISTORY) history.splice(0, history.length - MAX_CHAT_HISTORY);
+    sessionStorage.setItem(key, JSON.stringify(history));
+  } catch (_) {}
+}
+
+// Re-render stored messages into the chat log, wrapped in a subtle divider.
+function restoreChatHistory() {
+  if (!currentRoomId) return;
+  try {
+    const raw     = sessionStorage.getItem(buildChatKey(currentRoomId));
+    if (!raw) return;
+    const history = JSON.parse(raw);
+    if (!history || history.length === 0) return;
+
+    const topDividerEl       = document.createElement("div");
+    topDividerEl.className   = "chat-history-divider";
+    topDividerEl.textContent = "— previous messages —";
+    chatLogEl.appendChild(topDividerEl);
+
+    for (const msg of history) {
+      renderChatMessage(msg, true); // isRestored = true → skip re-saving
+    }
+
+    const bottomDividerEl       = document.createElement("div");
+    bottomDividerEl.className   = "chat-history-divider";
+    bottomDividerEl.textContent = "— back in the room —";
+    chatLogEl.appendChild(bottomDividerEl);
+
+    chatLogEl.scrollTop = chatLogEl.scrollHeight;
+  } catch (_) {}
+}
+
+// Wipe stored messages for the current room (called on intentional leave).
+function clearChatHistory() {
+  if (!currentRoomId) return;
+  try { sessionStorage.removeItem(buildChatKey(currentRoomId)); } catch (_) {}
+}
+
+function renderChatMessage(message, isRestored = false) {
   const messageEl = document.createElement("div"); messageEl.className = "chat-message";
   const metaEl    = document.createElement("div"); metaEl.className    = "chat-meta";
   const senderEl  = document.createElement("span"); senderEl.className = "chat-sender"; senderEl.textContent = message.sender;
@@ -1861,6 +2002,8 @@ function renderChatMessage(message) {
   messageEl.append(metaEl, textEl);
   chatLogEl.appendChild(messageEl);
   chatLogEl.scrollTop = chatLogEl.scrollHeight;
+  // Persist every new (non-replay) message so it survives a page refresh.
+  if (!isRestored) saveChatMessage(message);
 }
 
 function appendSystemMessage(text) {
@@ -2138,6 +2281,8 @@ function clearRoomFromUrl() {
 }
 
 leaveBtnEl.addEventListener("click", () => {
+  // Wipe chat history so the log doesn't bleed into a future session.
+  clearChatHistory();
   // Stop screen share cleanly before leaving
   if (isScreenSharing) {
     screenShareStream?.getTracks().forEach(t => t.stop());
@@ -2367,11 +2512,14 @@ function attemptContinue() {
   usernameScreenEl.classList.add("hidden");
 
   // If the user arrived via a ?room= link, drop them straight into that room.
-  const pendingUrlRoom = sessionStorage.getItem("dropin_url_room");
+  const pendingUrlRoom     = sessionStorage.getItem("dropin_url_room");
+  const pendingUrlRoomName = sessionStorage.getItem("dropin_url_room_name") ?? "";
   if (pendingUrlRoom) {
     sessionStorage.removeItem("dropin_url_room");
+    sessionStorage.removeItem("dropin_url_room_name");
+    if (pendingUrlRoomName) currentRoomName = pendingUrlRoomName;
     lobbyScreenEl.classList.remove("hidden");
-    setLobbyStatus("Joining room from link…");
+    setLobbyStatus(pendingUrlRoomName ? 'Joining "' + pendingUrlRoomName + '"…' : "Joining room from link…");
     startJoinRoom(pendingUrlRoom);
     return;
   }
@@ -2426,21 +2574,25 @@ let _resumedByPendingMove = false;
 // If the user has no saved name yet, store the ID for use after name entry.
 (function resumeRoomFromUrl() {
   if (_resumedByPendingMove) return; // force-move already handled startup
-  const urlRoomId = new URLSearchParams(window.location.search).get("room");
+  const params      = new URLSearchParams(window.location.search);
+  const urlRoomId   = params.get("room");
+  const urlRoomName = (params.get("name") ?? "").trim();
   if (!urlRoomId) return;
 
   const savedName = loadSavedUsername();
   if (!savedName) {
-    // Stash it — attemptContinue() will pick it up after the name is entered.
+    // Stash both — attemptContinue() will pick them up after the name is entered.
     sessionStorage.setItem("dropin_url_room", urlRoomId);
+    if (urlRoomName) sessionStorage.setItem("dropin_url_room_name", urlRoomName);
     return;
   }
 
   // Has a saved name — skip straight to joining the room.
   screenName = savedName;
+  if (urlRoomName) currentRoomName = urlRoomName; // pre-populate before full_sync
   usernameScreenEl.classList.add("hidden");
   lobbyScreenEl.classList.remove("hidden");
-  setLobbyStatus("Joining room from link…");
+  setLobbyStatus(urlRoomName ? 'Joining "' + urlRoomName + '"…' : "Joining room from link…");
   startJoinRoom(urlRoomId);
 })();
 
@@ -3068,6 +3220,70 @@ raiseHandBtnEl.addEventListener("click", () => {
 });
 
 // ═══════════════════════════════════════════════════
+//  GUEST PASSWORD MODAL
+// ═══════════════════════════════════════════════════
+
+function openGuestPasswordModal(roomName) {
+  guestPasswordEntryEl.value       = "";
+  guestPasswordErrorEl.textContent = "";
+  guestPasswordDescEl.textContent  = roomName
+    ? '"' + roomName + '" requires a password to join.'
+    : "This room requires a password to join.";
+  guestPasswordModalEl.classList.remove("hidden");
+  setTimeout(() => guestPasswordEntryEl.focus(), 50);
+}
+
+function closeGuestPasswordModal() {
+  guestPasswordModalEl.classList.add("hidden");
+}
+
+function showGuestPasswordError(message) {
+  guestPasswordErrorEl.textContent = message;
+  guestPasswordEntryEl.value       = "";
+  guestPasswordEntryEl.focus();
+}
+
+function submitGuestPassword() {
+  const password = guestPasswordEntryEl.value;
+  if (!password) { showGuestPasswordError("Please enter the password."); return; }
+  hostConnection?.send({ type: "password_attempt", password });
+  guestPasswordSubmitBtnEl.disabled    = true;
+  guestPasswordSubmitBtnEl.textContent = "Checking…";
+  // Re-enable after a moment so the user can retry if the error comes back
+  setTimeout(() => {
+    guestPasswordSubmitBtnEl.disabled    = false;
+    guestPasswordSubmitBtnEl.textContent = "Join →";
+  }, 1500);
+}
+
+// ── Guest password modal event listeners ─────────────
+guestPasswordSubmitBtnEl?.addEventListener("click", () => submitGuestPassword());
+
+guestPasswordCancelBtnEl?.addEventListener("click", () => {
+  closeGuestPasswordModal();
+  peer?.destroy();
+  clearRoomFromUrl();
+  location.reload();
+});
+
+guestPasswordEntryEl?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); submitGuestPassword(); }
+});
+
+guestPasswordToggleBtnEl?.addEventListener("click", () => {
+  const isHidden = guestPasswordEntryEl.type === "password";
+  guestPasswordEntryEl.type       = isHidden ? "text" : "password";
+  guestPasswordToggleBtnEl.textContent = isHidden ? "🙈" : "👁";
+});
+
+// ── Host password field: show/hide toggle ────────────
+roomPasswordToggleBtnEl?.addEventListener("click", () => {
+  const isHidden = roomPasswordInputEl.type === "password";
+  roomPasswordInputEl.type         = isHidden ? "text" : "password";
+  roomPasswordToggleBtnEl.textContent = isHidden ? "🙈" : "👁";
+});
+
+// ═══════════════════════════════════════════════════
 //  CREATE ROOM MODAL
 // ═══════════════════════════════════════════════════
 
@@ -3075,6 +3291,7 @@ function openCreateRoomModal() {
   roomNameInputEl.value         = "";
   roomNameCounterEl.textContent = "0 / 30";
   roomMaxSizeSelectEl.value     = "0";
+  roomPasswordInputEl.value     = "";
   createRoomErrorEl.textContent = "";
   createRoomModalEl.classList.remove("hidden");
   setTimeout(() => roomNameInputEl.focus(), 50);
@@ -3103,6 +3320,7 @@ function submitCreateRoom() {
 
   currentRoomName    = rawRoomName;
   currentRoomMaxSize = parseInt(roomMaxSizeSelectEl.value, 10);
+  currentRoomPassword = roomPasswordInputEl.value;   // empty = open room
 
   closeCreateRoomModal();
 
