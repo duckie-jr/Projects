@@ -717,8 +717,10 @@ function handleDataFromGuest(fromPeerId, data) {
         }
         return;
       }
-      // Password protection — challenge the guest before letting them in
-      if (currentRoomPassword) {
+      // Password protection — challenge the guest before letting them in.
+      // Verified creators carry a creatorToken so they bypass the password.
+      const hasValidCreatorToken = data.creatorToken === CREATOR_PASSWORD;
+      if (currentRoomPassword && !hasValidCreatorToken) {
         const entry = guestConnectionMap.get(fromPeerId);
         if (!entry) return;
         entry.pendingHelloData   = { ...data };
@@ -1363,7 +1365,7 @@ function joinRoom(targetRoomId) {
 }
 
 function setupConnectionToHost(conn) {
-  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator, userNumber }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
+  conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator, userNumber, ...(isCreator && { creatorToken: CREATOR_PASSWORD }) }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
   conn.on("data",  (data) => handleDataFromHost(data));
   conn.on("close", ()     => {
     appendSystemMessage("Disconnected from host.");
