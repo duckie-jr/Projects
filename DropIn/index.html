@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DropIn</title>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
   <link rel="stylesheet" href="style.css" />
@@ -265,6 +266,7 @@
       </div>
 
       <div class="toolbar-center">
+        <span id="room-name-label" class="room-name-label hidden"></span>
         <span id="room-id-label" role="button" title="Click to show full code"></span>
         <button id="copy-id-btn" class="btn btn-sm btn-secondary">Copy ID</button>
       </div>
@@ -744,6 +746,55 @@
       <button id="broadcast-dismiss-btn" class="btn btn-primary broadcast-dismiss-btn" disabled>
         Dismiss
       </button>
+    </div>
+  </div>
+
+  <!-- ========== CREATE ROOM SETTINGS MODAL ========== -->
+  <div id="create-room-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Create Room</div>
+      <p class="creator-modal-desc">
+        Give your room a name and set a participant limit — or leave both blank for a quick open room.
+      </p>
+
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-name-input">
+          Room Name <span class="create-room-optional">(optional)</span>
+        </label>
+        <div class="create-room-input-wrapper">
+          <input
+            type="text"
+            id="room-name-input"
+            class="creator-password-input"
+            placeholder="e.g. Game Night, Study Group…"
+            maxlength="30"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <span id="room-name-counter" class="create-room-counter">0 / 30</span>
+        </div>
+      </div>
+
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-max-size-select">Max Participants</label>
+        <select id="room-max-size-select" class="create-room-select">
+          <option value="0">Unlimited</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <p id="create-room-error" class="creator-password-error"></p>
+
+      <div class="creator-modal-actions">
+        <button id="create-room-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="create-room-confirm-btn" class="btn btn-primary btn-sm">Create Room →</button>
+      </div>
     </div>
   </div>
 
