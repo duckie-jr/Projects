@@ -127,6 +127,8 @@ let peer            = null;
 let isHost          = false;
 let currentRoomId   = "";
 let currentUsername = "";
+let currentRoomName    = "";   // custom name set by the host at creation time
+let currentRoomMaxSize = 0;    // max participants; 0 = unlimited
 let localStream     = null;
 let isMuted         = false;
 let isCamOff        = false;
@@ -495,6 +497,7 @@ const createRoomBtnEl  = document.getElementById("create-room-btn");
 const joinRoomBtnEl    = document.getElementById("join-room-btn");
 const lobbyStatusEl    = document.getElementById("lobby-status");
 const roomIdLabelEl    = document.getElementById("room-id-label");
+const roomNameLabelEl  = document.getElementById("room-name-label");
 const copyIdBtnEl      = document.getElementById("copy-id-btn");
 const roomCodeOverlayEl     = document.getElementById("room-code-overlay");
 const roomCodeOverlayTextEl = document.getElementById("room-code-overlay-text");
@@ -549,6 +552,15 @@ const randomModBansEl        = document.getElementById("random-mod-bans");
 const randomModRefreshBtnEl  = document.getElementById("random-mod-refresh");
 const randomModCloseBtnEl    = document.getElementById("random-mod-close");
 
+// ─── Create Room modal DOM refs ───────────────────
+const createRoomModalEl      = document.getElementById("create-room-modal");
+const roomNameInputEl        = document.getElementById("room-name-input");
+const roomNameCounterEl      = document.getElementById("room-name-counter");
+const roomMaxSizeSelectEl    = document.getElementById("room-max-size-select");
+const createRoomErrorEl      = document.getElementById("create-room-error");
+const createRoomCancelBtnEl  = document.getElementById("create-room-cancel-btn");
+const createRoomConfirmBtnEl = document.getElementById("create-room-confirm-btn");
+
 // ═══════════════════════════════════════════════════
 //  ROOMS — BROADCAST
 // ═══════════════════════════════════════════════════
@@ -586,6 +598,14 @@ function showAppScreen() {
   lobbyScreenEl.classList.add("hidden");
   appScreenEl.classList.remove("hidden");
   roomIdLabelEl.textContent = currentRoomId;
+
+  if (currentRoomName) {
+    roomNameLabelEl.textContent = currentRoomName;
+    roomNameLabelEl.classList.remove("hidden");
+  } else {
+    roomNameLabelEl.classList.add("hidden");
+  }
+
   // Reflect the active room in the URL so it can be shared, bookmarked,
   // or pasted straight into the join field by anyone.
   const roomUrl = new URL(window.location.href);
@@ -614,7 +634,10 @@ function createRoom() {
     saveRecentRoom(assignedId, true);
     showAppScreen();
     renderUsersList();
-    appendSystemMessage("Room created! Share the Room ID to invite others.");
+    const creationMsg = currentRoomName
+      ? `Room "${currentRoomName}" created! Share the Room ID to invite others.`
+      : "Room created! Share the Room ID to invite others.";
+    appendSystemMessage(creationMsg);
     initMedia([]);
     announceRoomToRegistry();
   });
@@ -656,12 +679,22 @@ function handleDataFromGuest(fromPeerId, data) {
         if (entry) { entry.conn.send({ type: "banned" }); entry.conn.close(); guestConnectionMap.delete(fromPeerId); }
         return;
       }
+      // Enforce max room size (0 = unlimited)
+      if (currentRoomMaxSize > 0 && connectedUsers.length >= currentRoomMaxSize) {
+        const entry = guestConnectionMap.get(fromPeerId);
+        if (entry) {
+          entry.conn.send({ type: "room_full", maxSize: currentRoomMaxSize });
+          entry.conn.close();
+          guestConnectionMap.delete(fromPeerId);
+        }
+        return;
+      }
       const guestEntry    = guestConnectionMap.get(fromPeerId);
       guestEntry.username  = data.username;
       guestEntry.isCreator = data.isCreator ?? false;
       connectedUsers.push({ peerId: fromPeerId, username: data.username, isCreator: data.isCreator ?? false });
       renderUsersList();
-      guestEntry.conn.send({ type: "full_sync", users: connectedUsers });
+      guestEntry.conn.send({ type: "full_sync", users: connectedUsers, roomName: currentRoomName, maxSize: currentRoomMaxSize });
       appendSystemMessage(data.username + " joined the room.");
       relayToOthers(fromPeerId, { type: "user_joined", username: data.username, peerId: fromPeerId });
       broadcastUserList();
@@ -893,6 +926,8 @@ function serializeActiveServers() {
   return [...registeredServers.entries()].map(([roomId, entry]) => ({
     roomId,
     hostName:         entry.hostName,
+    roomName:         entry.roomName ?? "",
+    maxSize:          entry.maxSize ?? 0,
     participantCount: entry.participantCount,
   }));
 }
@@ -909,6 +944,8 @@ function handleRegistryMessage(conn, message) {
       }
       registeredServers.set(message.roomId, {
         hostName:         message.hostName,
+        roomName:         message.roomName ?? "",
+        maxSize:          message.maxSize ?? 0,
         participantCount: message.participantCount ?? 1,
         updatedAt:        Date.now(),
       });
@@ -1122,6 +1159,8 @@ async function announceRoomToRegistry() {
     // Seed our own room, then keep its timestamp fresh locally.
     registeredServers.set(currentRoomId, {
       hostName:         currentUsername,
+      roomName:         currentRoomName,
+      maxSize:          currentRoomMaxSize,
       participantCount: connectedUsers.length,
       updatedAt:        Date.now(),
     });
@@ -1139,6 +1178,8 @@ function sendRegistryPresence(type) {
       type,
       roomId:           currentRoomId,
       hostName:         currentUsername,
+      roomName:         currentRoomName,
+      maxSize:          currentRoomMaxSize,
       participantCount: connectedUsers.length,
     });
   } catch (_) {
@@ -1381,10 +1422,18 @@ async function joinNewHostRoom(oldRoomId, failoverPeerId) {
 function handleDataFromHost(data) {
   switch (data.type) {
     case "full_sync": {
-      connectedUsers = data.users;
-      hostPeerId     = data.users[0]?.peerId ?? "";
+      connectedUsers     = data.users;
+      hostPeerId         = data.users[0]?.peerId ?? "";
+      currentRoomName    = data.roomName ?? "";
+      currentRoomMaxSize = data.maxSize ?? 0;
       saveRecentRoom(currentRoomId, false);
       renderUsersList();
+      if (currentRoomName) {
+        roomNameLabelEl.textContent = currentRoomName;
+        roomNameLabelEl.classList.remove("hidden");
+      } else {
+        roomNameLabelEl.classList.add("hidden");
+      }
       appendSystemMessage("Synced with room!");
       initMedia(data.users);
       break;
@@ -1394,6 +1443,12 @@ function handleDataFromHost(data) {
     case "user_list":   { connectedUsers = data.users; renderUsersList(); break; }
     case "kicked":      { appendSystemMessage("You were kicked."); clearRoomFromUrl(); setTimeout(() => location.reload(), 2500); break; }
     case "banned":      { appendSystemMessage("You have been banned."); clearRoomFromUrl(); setTimeout(() => location.reload(), 3000); break; }
+    case "room_full": {
+      appendSystemMessage(`This room is full (max ${data.maxSize} participants). Returning to lobby…`);
+      clearRoomFromUrl();
+      setTimeout(() => location.reload(), 3000);
+      break;
+    }
     case "force_mute": {
       // Creators are immune — the host cannot lock their microphone
       if (isCreator) break;
@@ -1988,14 +2043,7 @@ function tickSpeakingDetection() {
 //  ROOMS — EVENT LISTENERS
 // ═══════════════════════════════════════════════════
 
-createRoomBtnEl.addEventListener("click", () => {
-  currentUsername          = screenName;
-  isHost                   = true;
-  createRoomBtnEl.disabled = true;
-  joinRoomBtnEl.disabled   = true;
-  setLobbyStatus("Creating room...");
-  createRoom();
-});
+createRoomBtnEl.addEventListener("click", () => openCreateRoomModal());
 
 // Shared by the Join button and the active-servers menu.
 function startJoinRoom(targetRoomId) {
@@ -2052,6 +2100,7 @@ document.addEventListener("keydown", (e) => {
     roomCodeOverlayEl.classList.add("hidden");
     participantsPanelEl.classList.add("hidden");
     closeHostActionMenu();
+    closeCreateRoomModal();
   }
 });
 
@@ -2980,4 +3029,68 @@ raiseHandBtnEl.addEventListener("click", () => {
 
   sendToAll({ type: "hand_raise", peerId: peer.id, username: currentUsername, raised: localHandRaised });
   renderUsersList();
+});
+
+// ═══════════════════════════════════════════════════
+//  CREATE ROOM MODAL
+// ═══════════════════════════════════════════════════
+
+function openCreateRoomModal() {
+  roomNameInputEl.value         = "";
+  roomNameCounterEl.textContent = "0 / 30";
+  roomMaxSizeSelectEl.value     = "0";
+  createRoomErrorEl.textContent = "";
+  createRoomModalEl.classList.remove("hidden");
+  setTimeout(() => roomNameInputEl.focus(), 50);
+}
+
+function closeCreateRoomModal() {
+  createRoomModalEl.classList.add("hidden");
+}
+
+function submitCreateRoom() {
+  const rawRoomName = roomNameInputEl.value.trim();
+
+  if (rawRoomName.length > 0) {
+    if (!/^[a-zA-Z0-9 _\-]+$/.test(rawRoomName)) {
+      createRoomErrorEl.textContent = "Only letters, numbers, spaces, _ and - are allowed.";
+      return;
+    }
+    const compressedName = rawRoomName.toLowerCase().replace(/[\s_\-]/g, "");
+    for (const blockedWord of PROFANITY_BLOCKLIST) {
+      if (compressedName.includes(blockedWord)) {
+        createRoomErrorEl.textContent = "That name isn't allowed. Please choose something appropriate.";
+        return;
+      }
+    }
+  }
+
+  currentRoomName    = rawRoomName;
+  currentRoomMaxSize = parseInt(roomMaxSizeSelectEl.value, 10);
+
+  closeCreateRoomModal();
+
+  currentUsername          = screenName;
+  isHost                   = true;
+  createRoomBtnEl.disabled = true;
+  joinRoomBtnEl.disabled   = true;
+  setLobbyStatus("Creating room...");
+  createRoom();
+}
+
+createRoomCancelBtnEl.addEventListener("click", () => closeCreateRoomModal());
+createRoomConfirmBtnEl.addEventListener("click", () => submitCreateRoom());
+
+roomNameInputEl.addEventListener("input", () => {
+  roomNameCounterEl.textContent = roomNameInputEl.value.length + " / 30";
+  createRoomErrorEl.textContent = "";
+});
+
+roomNameInputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter")  { e.preventDefault(); submitCreateRoom(); }
+  if (e.key === "Escape") { closeCreateRoomModal(); }
+});
+
+createRoomModalEl.addEventListener("click", (e) => {
+  if (e.target === createRoomModalEl) closeCreateRoomModal();
 });
