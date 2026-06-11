@@ -881,6 +881,15 @@ const ghostObserverWhisperPeerIds = new Set();  // peerIds currently receiving l
 
 // Acquires the microphone once and caches the track. Returns null on failure.
 async function acquireGhostMicForWhisper() {
+  // Discard a cached track that has ended — the OS kills getUserMedia tracks
+  // when the tab is backgrounded on mobile (iOS Safari, Android Chrome).
+  if (ghostObserverMicAudioTrack && ghostObserverMicAudioTrack.readyState === 'ended') {
+    ghostObserverMicAudioTrack = null;
+    if (ghostObserverMicStream) {
+      ghostObserverMicStream.getTracks().forEach(track => track.stop());
+      ghostObserverMicStream = null;
+    }
+  }
   if (ghostObserverMicAudioTrack) return ghostObserverMicAudioTrack;
   try {
     ghostObserverMicStream     = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -905,37 +914,40 @@ function releaseGhostMicIfUnused() {
 // Replaces the outgoing audio track on the ghost observer's call to peerId.
 // The ghost called the participant with a silent stream, so there should always
 // be exactly one audio sender on the RTCPeerConnection.
+// Returns true if the track was successfully replaced, false otherwise.
 async function replaceGhostCallAudioTrack(peerId, newAudioTrack) {
   const call = ghostObserverCallMap.get(peerId);
   if (!call) {
-    console.warn('[whisper] no ghost call found for peer', peerId);
-    return;
+    console.warn('[whisper] no ghost call for peer', peerId);
+    return false;
   }
 
   // PeerJS v1.5.x exposes the underlying RTCPeerConnection as .peerConnection.
   // Fall back to private field names used in some builds.
   const pc = call.peerConnection ?? call._peerConnection ?? call._pc;
   if (!pc) {
-    console.warn('[whisper] RTCPeerConnection not available for peer', peerId);
-    return;
+    console.warn('[whisper] no RTCPeerConnection for peer', peerId);
+    return false;
   }
 
-  const senders     = pc.getSenders();
-  // Match a live audio sender or one whose track was previously nulled-out by
-  // a prior replaceTrack(null) call — both need to be found for toggling to work.
+  const senders = pc.getSenders();
+  // Find the audio sender. After replaceTrack(null) the sender track is null,
+  // so we also accept null-track senders to handle the restore-silence case.
   const audioSender = senders.find(
-    sender => sender.track?.kind === 'audio' || sender.track === null
+    s => s.track?.kind === 'audio' || s.track === null
   );
 
   if (!audioSender) {
-    console.warn('[whisper] no audio sender for peer', peerId,
-      '— senders:', senders.map(s => s.track?.kind ?? 'null'));
-    return;
+    console.warn('[whisper] no audio sender for', peerId,
+      '— senders:', senders.length, senders.map(s => s.track?.kind ?? 'null'));
+    return false;
   }
 
-  await audioSender.replaceTrack(newAudioTrack ?? null).catch((replaceError) => {
-    console.warn('[whisper] replaceTrack failed for', peerId, replaceError);
-  });
+  let succeeded = false;
+  await audioSender.replaceTrack(newAudioTrack ?? null)
+    .then(() => { succeeded = true; })
+    .catch(err => { console.warn('[whisper] replaceTrack failed for', peerId, err); });
+  return succeeded;
 }
 
 // Toggles whisper on/off for one participant tile. Updates the button visually.
@@ -949,11 +961,16 @@ async function toggleGhostWhisperForPeer(peerId, whisperBtnEl) {
     whisperBtnEl.classList.add('btn-secondary');
     releaseGhostMicIfUnused();
   } else {
-    // Enable: acquire mic (first time) and send it to this peer.
+    // Enable: acquire mic (or re-acquire if track ended) then send it to this peer.
     const micTrack = await acquireGhostMicForWhisper();
     if (!micTrack) return;
+    // Only mark as whispering after confirming replaceTrack actually succeeded.
+    const replaced = await replaceGhostCallAudioTrack(peerId, micTrack);
+    if (!replaced) {
+      setGhostObserverStatus('Whisper failed — could not reach WebRTC sender. Check DevTools console.');
+      return;
+    }
     ghostObserverWhisperPeerIds.add(peerId);
-    await replaceGhostCallAudioTrack(peerId, micTrack);
     whisperBtnEl.textContent = '🎤 Whispering…';
     whisperBtnEl.classList.remove('btn-secondary');
     whisperBtnEl.classList.add('btn-primary');
@@ -1436,15 +1453,27 @@ async function broadcastToRoom(roomId, messageText, dismissAfterSeconds = 0) {
 // the browser's autoplay policy would block creating a fresh AudioContext.
 async function playAirHornLocally() {
   try {
-    // If the dashboard AudioContext isn't available (e.g. horn triggered on a client
-    // that has never opened the dashboard), create one now. Modern browsers allow
-    // this if the page has ever received user input, which it has by this point.
-    if (!dashboardAudioCtx || dashboardAudioCtx.state === 'closed') {
-      dashboardAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Use the best already-running AudioContext to avoid autoplay blocks.
+    // Guests receive the prank via a network callback — no user-gesture context —
+    // so new AudioContext() there is silently blocked by the browser.
+    //  1. dashboardAudioCtx   — primed when creator opened the dashboard.
+    //  2. audioContextInstance — main.js speaking-indicator context; already live
+    //     for every room participant once their first video/audio tile appears.
+    //     This is the key fallback for guests who never opened the dashboard.
+    //  3. Last resort: create a new one (works if page had any prior user input).
+    let audioCtx = (dashboardAudioCtx && dashboardAudioCtx.state !== 'closed')
+      ? dashboardAudioCtx
+      : (typeof audioContextInstance !== 'undefined'
+          && audioContextInstance
+          && audioContextInstance.state !== 'closed')
+        ? audioContextInstance
+        : null;
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      dashboardAudioCtx = audioCtx;
     }
-    if (dashboardAudioCtx.state === 'suspended') await dashboardAudioCtx.resume();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-    const audioCtx  = dashboardAudioCtx;
     const masterGain = audioCtx.createGain();
     masterGain.connect(audioCtx.destination);
 
