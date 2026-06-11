@@ -568,6 +568,30 @@
           <div id="dev-random-list" class="dev-panel-list">
             <p class="dev-empty">Press Refresh to load.</p>
           </div>
+
+          <!-- ─── Pull to Room by permanent ID ─────────────────── -->
+          <div class="dev-pull-section">
+            <div class="dev-panel-header" style="margin-top:8px; padding-top:8px; border-top:1px solid #222;">
+              <span class="dev-panel-title">Pull to Room by ID</span>
+            </div>
+            <div class="dev-pull-row">
+              <input
+                type="text"
+                id="dev-pull-number"
+                placeholder="#user number"
+                autocomplete="off"
+              />
+              <input
+                type="text"
+                id="dev-pull-room"
+                placeholder="Room ID (blank = current room)"
+                autocomplete="off"
+              />
+              <button id="dev-pull-btn" class="btn btn-sm btn-primary">Pull →</button>
+            </div>
+            <p id="dev-pull-status" class="dev-broadcast-status"></p>
+          </div>
+
         </div>
 
         <div class="dev-panel" data-tab="rooms">
