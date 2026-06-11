@@ -162,6 +162,21 @@ const ghostObserverPeerIds      = new Set();  // creator ghost observers — inv
 let   hostActionMenuTargetPeerId = null;      // peerId the action menu is currently open for
 let   hostPeerId               = "";          // peerId of the room owner (known on both sides)
 
+// ─── Host failover ────────────────────────────────
+// When the host drops, connectedUsers[1] (the first guest to join) becomes
+// the designated successor. It claims a well-known signaling peer so every
+// other guest can discover the new room ID and auto-rejoin.
+const FAILOVER_PEER_PREFIX = "dropin-fo-";  // short prefix for signaling peer ID
+const FAILOVER_GRACE_MS    = 2000;           // wait before triggering failover
+const FAILOVER_TIMEOUT_MS  = 12000;          // give up waiting for the new room
+
+let failoverInProgress = false;
+
+// Deterministic signaling peer ID derived from the old room's ID.
+function buildFailoverPeerId(oldRoomId) {
+  return FAILOVER_PEER_PREFIX + oldRoomId.replace(/-/g, "").slice(0, 20);
+}
+
 // ═══════════════════════════════════════════════════
 //  ACTIVE-SERVER REGISTRY
 //
@@ -500,6 +515,13 @@ const hostActionMenuEl = document.getElementById("host-action-menu");
 const screenShareBtnEl = document.getElementById("screen-share-btn");
 const raiseHandBtnEl   = document.getElementById("raise-hand-btn");
 
+// ─── Broadcast overlay ───────────────────────────
+const broadcastOverlayEl     = document.getElementById("broadcast-overlay");
+const broadcastMessageTextEl = document.getElementById("broadcast-message-text");
+const broadcastDismissBtnEl  = document.getElementById("broadcast-dismiss-btn");
+const broadcastTimerBadgeEl  = document.getElementById("broadcast-timer-badge");
+let   broadcastCountdownTimer = null;
+
 // ═══════════════════════════════════════════════════
 //  DOM REFS — RANDOM
 // ═══════════════════════════════════════════════════
@@ -700,14 +722,15 @@ function handleDataFromGuest(fromPeerId, data) {
     // ── Relay a platform-wide broadcast into this room ──────────────────────
     case "creator_broadcast": {
       if (data.ghostToken !== CREATOR_PASSWORD || !data.text) return;
-      const broadcastMsg = { type: "system_broadcast", text: data.text };
+      const dismissAfterSeconds = data.dismissAfterSeconds ?? 0;
+      const broadcastMsg = { type: "system_broadcast", text: data.text, dismissAfterSeconds };
       for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
         if (guestPeerId !== fromPeerId) {
           try { guestConn.send(broadcastMsg); } catch (_) {}
         }
       }
-      // Show it to the host themselves as well
-      appendSystemMessage("📢 " + data.text);
+      // Show to the host as well
+      showBroadcastOverlay(data.text, dismissAfterSeconds);
       break;
     }
 
@@ -742,6 +765,33 @@ function handleDataFromGuest(fromPeerId, data) {
         appendSystemMessage("⟳ Reload requested by platform owner.");
         setTimeout(() => { peer?.destroy(); clearRoomFromUrl(); location.reload(); }, 900);
       }
+      break;
+    }
+
+    // ── Ghost prank — from ghost observer's data connection ──────────────────
+    case "ghost_prank": {
+      if (data.ghostToken !== CREATOR_PASSWORD) return;
+      const ghostPrankMsg = { type: "prank", action: data.action };
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send(ghostPrankMsg); } catch (_) {}
+        }
+      }
+      // Play on the host too.
+      handlePrankAction(data.action);
+      break;
+    }
+
+    // ── Creator prank — delivered via one-shot helper peer ───────────────────
+    case "creator_prank": {
+      if (data.ghostToken !== CREATOR_PASSWORD) return;
+      const creatorPrankMsg = { type: "prank", action: data.action };
+      for (const [guestPeerId, { conn: guestConn }] of guestConnectionMap.entries()) {
+        if (guestPeerId !== fromPeerId) {
+          try { guestConn.send(creatorPrankMsg); } catch (_) {}
+        }
+      }
+      handlePrankAction(data.action);
       break;
     }
   }
@@ -1146,8 +1196,186 @@ function joinRoom(targetRoomId) {
 function setupConnectionToHost(conn) {
   conn.on("open",  ()     => { conn.send({ type: "hello", username: currentUsername, isCreator }); showAppScreen(); appendSystemMessage("Connected! Waiting for sync..."); });
   conn.on("data",  (data) => handleDataFromHost(data));
-  conn.on("close", ()     => appendSystemMessage("Disconnected from host."));
+  conn.on("close", ()     => {
+    appendSystemMessage("Disconnected from host.");
+    // Kick off automatic failover — the designated successor will take over
+    // and everyone else will auto-rejoin the new room.
+    handleHostDisconnect();
+  });
   conn.on("error", (err)  => appendSystemMessage("Connection error: " + err.message));
+}
+
+// ═══════════════════════════════════════════════════
+//  HOST FAILOVER
+// ═══════════════════════════════════════════════════
+
+// Entry point called on every guest when the host data connection closes.
+// Determines whether this client is the designated successor, then either
+// takes over as host or waits for the new host's room ID.
+async function handleHostDisconnect() {
+  // Hosts never need failover handling; also guard against re-entry.
+  if (isHost || failoverInProgress) return;
+  if (!currentRoomId || connectedUsers.length < 2) return;
+
+  failoverInProgress = true;
+  const oldRoomId      = currentRoomId;
+  const failoverPeerId = buildFailoverPeerId(oldRoomId);
+
+  // connectedUsers[0] = host (gone), connectedUsers[1] = designated successor.
+  const successorEntry = connectedUsers[1];
+  const iAmSuccessor   = successorEntry?.peerId === peer?.id;
+
+  appendSystemMessage("Host disconnected — starting automatic failover…");
+
+  // Grace period: give PeerJS a moment to attempt its own reconnect before
+  // we declare the host truly gone.
+  await new Promise(resolve => setTimeout(resolve, FAILOVER_GRACE_MS));
+
+  // If there are only 2 people (host + me) and the host left, I'm alone —
+  // just become the host so people can rejoin with the same signaling flow.
+  try {
+    if (iAmSuccessor) {
+      await takeOverAsHost(oldRoomId, failoverPeerId);
+    } else {
+      await joinNewHostRoom(oldRoomId, failoverPeerId);
+    }
+  } catch (failoverError) {
+    appendSystemMessage("Failover failed — please refresh and rejoin manually.");
+  }
+
+  failoverInProgress = false;
+}
+
+// Called on the designated successor: creates a new room, claims a signaling
+// peer so waiting guests can discover the new room ID, then re-initialises
+// this client as host.
+async function takeOverAsHost(oldRoomId, failoverPeerId) {
+  appendSystemMessage("You are the designated successor. Creating new room…");
+
+  // Claim the well-known signaling peer so other guests can reach us.
+  // If the claim fails, another guest beat us to it — fall back to waiting.
+  const signalingPeer = await new Promise(resolve => {
+    const p = createPeer(failoverPeerId);
+    let   settled = false;
+    const finish  = (v) => { if (!settled) { settled = true; resolve(v); } };
+    p.once("open",  () => finish(p));
+    p.once("error", () => { try { p.destroy(); } catch (_) {} finish(null); });
+    setTimeout(() => finish(null), 4000);
+  });
+
+  if (!signalingPeer) {
+    // Someone else is already acting as host — just wait for the room ID.
+    appendSystemMessage("Another guest is taking over. Reconnecting…");
+    await joinNewHostRoom(oldRoomId, failoverPeerId);
+    return;
+  }
+
+  // Create the actual new room.
+  const newRoomPeer = createPeer();
+  const newRoomId   = await new Promise(resolve => {
+    newRoomPeer.once("open",  id => resolve(id));
+    newRoomPeer.once("error", ()  => resolve(null));
+    setTimeout(() => resolve(null), 8000);
+  });
+
+  if (!newRoomId) {
+    appendSystemMessage("Could not create new room. Please refresh and rejoin.");
+    try { signalingPeer.destroy(); } catch (_) {}
+    return;
+  }
+
+  // Answer every waiting guest's query with the new room ID.
+  signalingPeer.on("connection", sigConn => {
+    sigConn.on("open", () => {
+      try { sigConn.send({ type: "failover_new_room", newRoomId }); } catch (_) {}
+    });
+  });
+
+  // ── Transition this client from guest → host ──────────────────────────
+
+  // Tear down the old (dead) guest peer cleanly.
+  try { peer?.destroy(); } catch (_) {}
+
+  // Switch to host mode with the new peer.
+  peer          = newRoomPeer;
+  isHost        = true;
+  currentRoomId = newRoomId;
+  hostPeerId    = newRoomId;
+  hostConnection = null;
+
+  // Register the only current participant: ourselves.
+  connectedUsers = [{ peerId: newRoomId, username: currentUsername, isCreator }];
+
+  // Wire up all standard host event handlers on the new peer.
+  newRoomPeer.on("disconnected", () => { if (!newRoomPeer.destroyed) newRoomPeer.reconnect(); });
+  newRoomPeer.on("connection",   conn => registerGuestConnection(conn));
+  newRoomPeer.on("call",         call => handleIncomingCall(call));
+
+  // Update the toolbar and URL to show the new room ID.
+  roomIdLabelEl.textContent = newRoomId;
+  const roomUrl = new URL(window.location.href);
+  roomUrl.searchParams.set("room", newRoomId);
+  window.history.replaceState({ roomId: newRoomId }, "", roomUrl);
+  saveRecentRoom(newRoomId, true);
+  announceRoomToRegistry();
+
+  // Clear stale video tiles and re-add only the local feed.
+  videoGridEl.innerHTML = "";
+  if (localStream) addMediaTile("local", currentUsername, localStream);
+
+  renderUsersList();
+  appendSystemMessage(
+    `Room handed over. New ID: ${newRoomId} — guests are rejoining automatically.`
+  );
+
+  // Keep the signaling peer alive long enough for all guests to connect,
+  // then destroy it to free the well-known ID.
+  setTimeout(() => { try { signalingPeer.destroy(); } catch (_) {} }, 25000);
+}
+
+// Called on non-successor guests: waits for the successor to claim the
+// signaling peer and broadcast the new room ID, then auto-rejoins.
+async function joinNewHostRoom(oldRoomId, failoverPeerId) {
+  // Give the successor a moment to create and announce the new room.
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  appendSystemMessage("Connecting to new host…");
+
+  const helperPeer = await createHelperPeer();
+  if (!helperPeer) {
+    appendSystemMessage("Could not reach new host. Please refresh and rejoin manually.");
+    return;
+  }
+
+  const sigConn = helperPeer.connect(failoverPeerId, { reliable: true });
+
+  const newRoomId = await new Promise(resolve => {
+    let settled = false;
+    const finish = (v) => { if (!settled) { settled = true; resolve(v); } };
+    sigConn.on("data",  msg  => { if (msg?.type === "failover_new_room") finish(msg.newRoomId); });
+    sigConn.on("error", ()   => finish(null));
+    sigConn.on("close", ()   => finish(null));
+    setTimeout(() => finish(null), FAILOVER_TIMEOUT_MS);
+  });
+
+  try { helperPeer.destroy(); } catch (_) {}
+
+  if (!newRoomId) {
+    appendSystemMessage("Could not find new host. Please refresh and rejoin manually.");
+    return;
+  }
+
+  appendSystemMessage(`New host found — rejoining room…`);
+
+  // Destroy the old peer and join the new room as a regular guest.
+  try { peer?.destroy(); } catch (_) {}
+  peer = null;
+
+  // Clear stale tiles; localStream is still live.
+  videoGridEl.innerHTML = "";
+
+  // Reset guest failover flag before joining so the join flow works normally.
+  failoverInProgress = false;
+  startJoinRoom(newRoomId);
 }
 
 function handleDataFromHost(data) {
@@ -1247,7 +1475,7 @@ function handleDataFromHost(data) {
 
     // ── Platform-wide broadcast message ─────────────────────────────────────
     case "system_broadcast": {
-      appendSystemMessage("📢 " + data.text);
+      showBroadcastOverlay(data.text, data.dismissAfterSeconds ?? 0);
       break;
     }
 
@@ -1255,6 +1483,12 @@ function handleDataFromHost(data) {
     case "force_reload": {
       appendSystemMessage("⟳ Reloading at platform owner's request…");
       setTimeout(() => location.reload(), 600);
+      break;
+    }
+
+    // ── Admin prank effect ───────────────────────────────────────────────────
+    case "prank": {
+      handlePrankAction(data.action);
       break;
     }
   }
@@ -1546,6 +1780,65 @@ function resetLobbyButtons() {
   createRoomBtnEl.disabled = false;
   joinRoomBtnEl.disabled   = false;
 }
+
+// ─── Broadcast overlay ───────────────────────────
+
+// Shows the full-screen overlay with the admin's message.
+// If dismissAfterSeconds > 0 the Dismiss button is locked and a countdown
+// runs until it reaches zero.
+function showBroadcastOverlay(text, dismissAfterSeconds) {
+  broadcastMessageTextEl.textContent = text;
+  broadcastOverlayEl.classList.remove("hidden");
+
+  if (broadcastCountdownTimer) {
+    clearInterval(broadcastCountdownTimer);
+    broadcastCountdownTimer = null;
+  }
+
+  const totalSeconds = Math.max(0, Math.floor(Number(dismissAfterSeconds) || 0));
+
+  if (totalSeconds > 0) {
+    broadcastDismissBtnEl.disabled    = true;
+    let secondsLeft = totalSeconds;
+
+    const updateCountdown = () => {
+      broadcastTimerBadgeEl.textContent = secondsLeft + "s";
+      broadcastDismissBtnEl.textContent = `Dismiss (${secondsLeft}s)`;
+    };
+
+    updateCountdown();
+
+    broadcastCountdownTimer = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        clearInterval(broadcastCountdownTimer);
+        broadcastCountdownTimer          = null;
+        broadcastTimerBadgeEl.textContent = "";
+        broadcastDismissBtnEl.disabled    = false;
+        broadcastDismissBtnEl.textContent = "Dismiss";
+      } else {
+        updateCountdown();
+      }
+    }, 1000);
+  } else {
+    broadcastDismissBtnEl.disabled    = false;
+    broadcastDismissBtnEl.textContent = "Dismiss";
+    broadcastTimerBadgeEl.textContent  = "";
+  }
+}
+
+function hideBroadcastOverlay() {
+  broadcastOverlayEl.classList.add("hidden");
+  if (broadcastCountdownTimer) {
+    clearInterval(broadcastCountdownTimer);
+    broadcastCountdownTimer = null;
+  }
+  broadcastDismissBtnEl.disabled    = true;
+  broadcastDismissBtnEl.textContent = "Dismiss";
+  broadcastTimerBadgeEl.textContent  = "";
+}
+
+broadcastDismissBtnEl?.addEventListener("click", hideBroadcastOverlay);
 
 // ═══════════════════════════════════════════════════
 //  ROOMS — SCREEN SHARING
