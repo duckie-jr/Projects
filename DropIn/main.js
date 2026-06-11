@@ -1559,12 +1559,29 @@ function handleIncomingCall(call) {
   call.answer(localStream ?? new MediaStream());
   mediaCallMap.set(call.peer, call);
   call.on("stream", (remoteStream) => {
-    // Ghost observers are invisible — answer their call but never render a tile
-    if (ghostObserverPeerIds.has(call.peer)) return;
+    // Ghost observers are invisible — never render a tile.
+    // But we DO attach a hidden audio element so that when the ghost activates
+    // whisper mode and replaceTrack() swaps in mic audio, the participant's
+    // browser is already consuming the stream and hears it immediately.
+    if (ghostObserverPeerIds.has(call.peer)) {
+      let hiddenAudioEl = document.querySelector(`audio[data-ghost-peer-id="${call.peer}"]`);
+      if (!hiddenAudioEl) {
+        hiddenAudioEl = document.createElement("audio");
+        hiddenAudioEl.dataset.ghostPeerId = call.peer;
+        hiddenAudioEl.autoplay = true;
+        hiddenAudioEl.style.display = "none";
+        document.body.appendChild(hiddenAudioEl);
+      }
+      hiddenAudioEl.srcObject = remoteStream;
+      return;
+    }
     const callerUser = connectedUsers.find((u) => u.peerId === call.peer);
     addMediaTile(call.peer, callerUser ? callerUser.username : "Unknown", remoteStream);
   });
-  call.on("close", () => removeMediaTile(call.peer));
+  call.on("close", () => {
+    removeMediaTile(call.peer);
+    document.querySelector(`audio[data-ghost-peer-id="${call.peer}"]`)?.remove();
+  });
 }
 
 function addMediaTile(peerId, username, stream) {
