@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DropIn</title>
-  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="style.css" />
   <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
-  <script src="./main.js" defer></script>
-  <script src="./dev.js" defer></script>
+  <script src="main.js" defer></script>
+  <script src="dev.js" defer></script>
 </head>
 <body>
 
@@ -534,8 +533,15 @@
 
       </div>
 
-      <div class="dev-dashboard-body">
+      <!-- Tab bar: hidden on desktop, shown on mobile via CSS -->
+      <div class="dev-tab-bar">
+        <button class="dev-tab dev-tab--active" data-target="random">Random</button>
+        <button class="dev-tab" data-target="rooms">Rooms</button>
+        <button class="dev-tab" data-target="bans">Bans</button>
+        <button class="dev-tab" data-target="broadcast">Broadcast</button>
+      </div>
 
+      <div class="dev-dashboard-body">
         <div class="dev-panel" data-tab="random">
           <div class="dev-panel-header">
             <span class="dev-panel-title">Random Users</span>
