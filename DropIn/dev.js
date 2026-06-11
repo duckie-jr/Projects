@@ -92,12 +92,12 @@ function renderServerList(servers) {
 
     const hostNameEl       = document.createElement("div");
     hostNameEl.className    = "server-list-host";
-    hostNameEl.textContent  = server.hostName || "Unknown host";
+    hostNameEl.textContent  = server.roomName || server.hostName || "Unnamed room";
 
     const metaEl       = document.createElement("div");
     metaEl.className    = "server-list-meta";
     const count        = server.participantCount ?? 1;
-    metaEl.textContent  = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
+    metaEl.textContent  = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId} · hosted by ${server.hostName || "Unknown"}`;
 
     infoEl.append(hostNameEl, metaEl);
 
@@ -188,11 +188,11 @@ async function openMoveUserModal(targetPeerId, targetUsername) {
     infoEl.className = "server-list-info";
     const hostNameEl      = document.createElement("div");
     hostNameEl.className   = "server-list-host";
-    hostNameEl.textContent = server.hostName || "Unknown host";
+    hostNameEl.textContent = server.roomName || server.hostName || "Unnamed room";
     const metaEl      = document.createElement("div");
     metaEl.className   = "server-list-meta";
     const count       = server.participantCount ?? 1;
-    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId}`;
+    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${server.roomId} · hosted by ${server.hostName || "Unknown"}`;
     infoEl.append(hostNameEl, metaEl);
 
     const pickBtnEl      = document.createElement("button");
@@ -669,12 +669,12 @@ function renderDevRoomsList(rooms) {
 
     const hostEl       = document.createElement("span");
     hostEl.className   = "dev-row-name";
-    hostEl.textContent = room.hostName || "Unknown host";
+    hostEl.textContent = room.roomName || room.hostName || "Unnamed room";
 
     const count        = room.participantCount ?? 1;
     const metaEl       = document.createElement("span");
     metaEl.className   = "dev-row-meta";
-    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${room.roomId}`;
+    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${room.roomId} · hosted by ${room.hostName || "Unknown"}`;
 
     infoEl.append(hostEl, metaEl);
 
