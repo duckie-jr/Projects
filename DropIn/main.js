@@ -136,6 +136,11 @@ let isCamOff        = false;
 let isForceMutedByHost  = false;  // guest: host locked mic off
 let isForceCamOffByHost = false;  // guest: host locked camera off (one-way)
 
+// ─── Connection heartbeat (host-side) ─────────────────
+const HEARTBEAT_INTERVAL_MS = 5000;   // how often the host pings each guest
+const HEARTBEAT_TIMEOUT_MS  = 12000;  // drop a guest after this many ms with no pong
+let   heartbeatTimer        = null;
+
 // ─── Screen sharing ───────────────────────────────
 let isScreenSharing   = false;
 let screenShareStream = null;
@@ -662,6 +667,7 @@ function createRoom() {
     appendSystemMessage(creationMsg);
     initMedia([]);
     announceRoomToRegistry();
+    startHeartbeat();
   });
 
   peer.on("connection", (conn) => registerGuestConnection(conn));
@@ -806,6 +812,7 @@ function handleDataFromGuest(fromPeerId, data) {
       }
       appendSystemMessage("⚠️ Room closed by the platform owner.");
       stopRoomAnnouncement();
+      stopHeartbeat();
       // Short pause so guests receive the message before the peer closes
       setTimeout(() => { peer?.destroy(); clearRoomFromUrl(); location.reload(); }, 1200);
       break;
@@ -884,6 +891,13 @@ function handleDataFromGuest(fromPeerId, data) {
         }
       }
       handlePrankAction(data.action);
+      break;
+    }
+
+    // ── Guest acknowledging a heartbeat ping ─────────────────────────────────
+    case "pong": {
+      const pongEntry = guestConnectionMap.get(fromPeerId);
+      if (pongEntry) pongEntry.lastPong = Date.now();
       break;
     }
   }
@@ -1277,6 +1291,40 @@ function stopRoomAnnouncement() {
   registeredServers.delete(currentRoomId);
 }
 
+// Host sends a ping to every admitted guest on a fixed interval. If a guest
+// does not respond within HEARTBEAT_TIMEOUT_MS the host treats them as gone.
+// This covers hard disconnects (tab killed, network loss) where the WebRTC
+// data channel never emits a "close" event on its own.
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    const now = Date.now();
+    // Snapshot the map so we can safely delete stale entries mid-loop.
+    for (const [peerId, entry] of [...guestConnectionMap.entries()]) {
+      if (entry.pendingHelloData) continue;  // still in password challenge — skip
+      if (!entry.lastPong) entry.lastPong = now;  // first tick: treat join time as baseline
+      if (now - entry.lastPong > HEARTBEAT_TIMEOUT_MS) {
+        appendSystemMessage(entry.username + " lost connection.");
+        forceMutedPeerIds.delete(peerId);
+        forceCamOffPeerIds.delete(peerId);
+        raisedHandPeerIds.delete(peerId);
+        guestConnectionMap.delete(peerId);
+        connectedUsers = connectedUsers.filter((u) => u.peerId !== peerId);
+        removeMediaTile(peerId);
+        renderUsersList();
+        broadcastUserList();
+        try { entry.conn.close(); } catch (_) {}
+      } else {
+        try { entry.conn.send({ type: "ping" }); } catch (_) {}
+      }
+    }
+  }, HEARTBEAT_INTERVAL_MS);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+}
+
 // Creator side: ask the registry for the list of live rooms.
 async function fetchActiveServers() {
   const helperPeer = await createHelperPeer();
@@ -1645,6 +1693,12 @@ function handleDataFromHost(data) {
     // ── Admin prank effect ───────────────────────────────────────────────────
     case "prank": {
       handlePrankAction(data.action);
+      break;
+    }
+
+    // ── Host keepalive ping — reply immediately ──────────────────────────────
+    case "ping": {
+      hostConnection?.send({ type: "pong" });
       break;
     }
   }
@@ -2290,6 +2344,7 @@ leaveBtnEl.addEventListener("click", () => {
     isScreenSharing   = false;
   }
   stopRoomAnnouncement();
+  stopHeartbeat();
   peer?.destroy();
   clearRoomFromUrl();
   location.reload();
@@ -3348,3 +3403,9 @@ roomNameInputEl.addEventListener("keydown", (e) => {
 createRoomModalEl.addEventListener("click", (e) => {
   if (e.target === createRoomModalEl) closeCreateRoomModal();
 });
+
+// ─── Clean disconnect when the tab is closed or navigated away ───────────────
+// "pagehide" fires reliably on mobile/modern browsers; "beforeunload" covers
+// older desktop engines. peer.destroy() is safe to call even if already gone.
+window.addEventListener("pagehide",     () => { peer?.destroy(); randomPeer?.destroy(); });
+window.addEventListener("beforeunload", () => { peer?.destroy(); randomPeer?.destroy(); });
