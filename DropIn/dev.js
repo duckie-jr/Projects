@@ -553,6 +553,7 @@ async function refreshDevDashboard() {
   const { users, bans } = presenceResult;
 
   renderDevRandomList(users);
+  devRoomsListEl._cachedRooms = activeRooms;
   renderDevRoomsList(activeRooms);
   renderDevBansList(bans);
 
@@ -660,61 +661,152 @@ function renderDevRandomList(users) {
 
 function renderDevRoomsList(rooms) {
   devRoomsListEl.innerHTML = "";
+  // Cache so the search filter can re-render without a full network refresh.
+  devRoomsListEl._lastRooms = rooms;
+
+  const filterInput = document.getElementById("dev-rooms-filter");
+  const filterText  = (filterInput?.value ?? "").trim().toLowerCase().replace(/^#/, "");
 
   if (!rooms || rooms.length === 0) {
     devRoomsListEl.innerHTML = `<p class="dev-empty">No active rooms right now.</p>`;
     return;
   }
 
+  // ── Search mode: flat view of participants matching the typed name / ID ───
+  if (filterText) {
+    let anyMatch = false;
+    for (const room of rooms) {
+      const matchingParticipants = (room.participants ?? []).filter(p =>
+        String(p.userNumber || "").includes(filterText) ||
+        (p.username || "").toLowerCase().includes(filterText)
+      );
+      if (matchingParticipants.length === 0) continue;
+      anyMatch = true;
+
+      const findHeaderEl       = document.createElement("div");
+      findHeaderEl.className   = "dev-room-find-header";
+      findHeaderEl.textContent = (room.roomName || room.hostName || "Unnamed") + "  ·  " + room.roomId;
+      devRoomsListEl.appendChild(findHeaderEl);
+
+      for (const participant of matchingParticipants) {
+        const rowEl     = document.createElement("div"); rowEl.className     = "dev-row dev-row--indented";
+        const infoEl    = document.createElement("div"); infoEl.className    = "dev-row-info";
+        const nameEl    = document.createElement("span"); nameEl.className   = "dev-row-name"; nameEl.textContent = participant.username || "Unknown";
+        const numEl     = document.createElement("span"); numEl.className    = "dev-row-meta"; numEl.textContent  = participant.userNumber ? "#" + participant.userNumber : "no ID";
+        infoEl.append(nameEl, numEl);
+
+        const actionsEl = document.createElement("div"); actionsEl.className = "dev-row-actions";
+
+        if (participant.userNumber) {
+          const copyIdBtnEl      = document.createElement("button");
+          copyIdBtnEl.className   = "btn btn-xs btn-secondary";
+          copyIdBtnEl.textContent = "Copy ID";
+          const numForCopy = participant.userNumber;
+          copyIdBtnEl.addEventListener("click", () => {
+            navigator.clipboard.writeText(numForCopy);
+            copyIdBtnEl.textContent = "Copied!";
+            setTimeout(() => { copyIdBtnEl.textContent = "Copy ID"; }, 1500);
+          });
+          actionsEl.appendChild(copyIdBtnEl);
+        }
+
+        const observeRoomBtnEl      = document.createElement("button");
+        observeRoomBtnEl.className   = "btn btn-xs btn-primary";
+        observeRoomBtnEl.textContent = "Observe Room";
+        const roomIdForObserve = room.roomId;
+        observeRoomBtnEl.addEventListener("click", () => ghostJoinRoom(roomIdForObserve));
+        actionsEl.appendChild(observeRoomBtnEl);
+
+        rowEl.append(infoEl, actionsEl);
+        devRoomsListEl.appendChild(rowEl);
+      }
+    }
+    if (!anyMatch) {
+      devRoomsListEl.innerHTML = `<p class="dev-empty">No participants match that ID or name.</p>`;
+    }
+    return;
+  }
+
+  // ── Normal mode: one card per room with inline participant list ───────────
   for (const room of rooms) {
-    const rowEl = document.createElement("div");
-    rowEl.className = "dev-row";
+    const roomWrapEl     = document.createElement("div");
+    roomWrapEl.className = "dev-room-wrap";
 
-    const infoEl = document.createElement("div");
-    infoEl.className = "dev-row-info";
-
-    const hostEl       = document.createElement("span");
-    hostEl.className   = "dev-row-name";
-    hostEl.textContent = room.roomName || room.hostName || "Unnamed room";
-
-    const count        = room.participantCount ?? 1;
-    const metaEl       = document.createElement("span");
-    metaEl.className   = "dev-row-meta";
-    metaEl.textContent = `${count} ${count === 1 ? "person" : "people"} · ${room.roomId} · hosted by ${room.hostName || "Unknown"}`;
-
+    // Room header row
+    const rowEl     = document.createElement("div"); rowEl.className     = "dev-row";
+    const infoEl    = document.createElement("div"); infoEl.className    = "dev-row-info";
+    const hostEl    = document.createElement("span"); hostEl.className   = "dev-row-name"; hostEl.textContent = room.roomName || room.hostName || "Unnamed room";
+    const count     = room.participantCount ?? 1;
+    const metaEl    = document.createElement("span"); metaEl.className   = "dev-row-meta";
+    metaEl.textContent = count + " " + (count === 1 ? "person" : "people") + " · " + room.roomId + " · hosted by " + (room.hostName || "Unknown");
     infoEl.append(hostEl, metaEl);
 
-    const actionsEl = document.createElement("div");
-    actionsEl.className = "dev-row-actions";
+    const actionsEl = document.createElement("div"); actionsEl.className = "dev-row-actions";
 
-    const observeBtnEl       = document.createElement("button");
-    observeBtnEl.className    = "btn btn-xs btn-primary";
-    observeBtnEl.textContent  = "Observe";
-    observeBtnEl.title        = "Join invisibly — participants cannot see you";
-    observeBtnEl.addEventListener("click", () => ghostJoinRoom(room.roomId));
+    const observeBtnEl = document.createElement("button");
+    observeBtnEl.className = "btn btn-xs btn-primary"; observeBtnEl.textContent = "Observe";
+    observeBtnEl.title = "Join invisibly — participants cannot see you";
+    const roomIdO = room.roomId;
+    observeBtnEl.addEventListener("click", () => ghostJoinRoom(roomIdO));
 
-    const joinBtnEl       = document.createElement("button");
-    joinBtnEl.className    = "btn btn-xs btn-secondary";
-    joinBtnEl.textContent  = "Join";
-    joinBtnEl.addEventListener("click", () => {
-      closeDevDashboard();
-      startJoinRoom(room.roomId);
-    });
+    const joinBtnEl = document.createElement("button");
+    joinBtnEl.className = "btn btn-xs btn-secondary"; joinBtnEl.textContent = "Join";
+    const roomIdJ = room.roomId;
+    joinBtnEl.addEventListener("click", () => { closeDevDashboard(); startJoinRoom(roomIdJ); });
 
-    const closeBtnEl       = document.createElement("button");
-    closeBtnEl.className    = "btn btn-xs btn-danger";
-    closeBtnEl.textContent  = "Close";
-    closeBtnEl.title        = "Force-close room — kicks every participant";
+    const closeBtnEl = document.createElement("button");
+    closeBtnEl.className = "btn btn-xs btn-danger"; closeBtnEl.textContent = "Close";
+    closeBtnEl.title = "Force-close room — kicks every participant";
+    const roomIdC = room.roomId; const countC = room.participantCount ?? 1;
     closeBtnEl.addEventListener("click", () => {
-      const count = room.participantCount ?? 1;
-      if (confirm(`Force-close room "${room.roomId}" and disconnect all ${count} participant${count !== 1 ? "s" : ""}?`)) {
-        forceCloseRoom(room.roomId);
+      if (confirm("Force-close room and disconnect all " + countC + " participant" + (countC !== 1 ? "s" : "") + "?")) {
+        forceCloseRoom(roomIdC);
       }
     });
 
     actionsEl.append(observeBtnEl, joinBtnEl, closeBtnEl);
     rowEl.append(infoEl, actionsEl);
-    devRoomsListEl.appendChild(rowEl);
+    roomWrapEl.appendChild(rowEl);
+
+    // ── Participant sub-list ──────────────────────────────────────────────
+    const participants = room.participants ?? [];
+    if (participants.length > 0) {
+      const participantsContainerEl = document.createElement("div");
+      participantsContainerEl.className = "dev-room-participants";
+
+      for (const participant of participants) {
+        const pRowEl     = document.createElement("div"); pRowEl.className = "dev-room-participant-row";
+        const pNameEl    = document.createElement("span"); pNameEl.className = "dev-room-participant-name"; pNameEl.textContent = participant.username || "Unknown";
+        const pActionsEl = document.createElement("div"); pActionsEl.className = "dev-room-participant-actions";
+
+        if (participant.userNumber) {
+          const numBadgeEl       = document.createElement("span");
+          numBadgeEl.className   = "dev-room-participant-number";
+          numBadgeEl.textContent = "#" + participant.userNumber;
+
+          const copyIdBtnEl      = document.createElement("button");
+          copyIdBtnEl.className   = "btn btn-xs btn-secondary";
+          copyIdBtnEl.textContent = "Copy ID";
+          const numForCopy2 = participant.userNumber;
+          copyIdBtnEl.addEventListener("click", () => {
+            navigator.clipboard.writeText(numForCopy2);
+            copyIdBtnEl.textContent = "Copied!";
+            setTimeout(() => { copyIdBtnEl.textContent = "Copy ID"; }, 1500);
+          });
+
+          pActionsEl.append(numBadgeEl, copyIdBtnEl);
+        } else {
+          const noIdEl = document.createElement("span"); noIdEl.className = "dev-row-meta"; noIdEl.textContent = "no ID";
+          pActionsEl.appendChild(noIdEl);
+        }
+
+        pRowEl.append(pNameEl, pActionsEl);
+        participantsContainerEl.appendChild(pRowEl);
+      }
+      roomWrapEl.appendChild(participantsContainerEl);
+    }
+
+    devRoomsListEl.appendChild(roomWrapEl);
   }
 }
 
@@ -840,6 +932,13 @@ function devClearAllBans() {
 // ─── Event listeners ──────────────────────────────
 
 devDashboardRefreshEl?.addEventListener('click', () => refreshDevDashboard());
+
+// Re-render rooms list when the search filter changes (no network request needed).
+document.getElementById("dev-rooms-filter")?.addEventListener("input", () => {
+  if (devDashboardIsOpen) renderDevRoomsList(devRoomsListEl._lastRooms ?? []);
+});
+
+
 devDashboardCloseEl?.addEventListener('click',   () => closeDevDashboard());
 devClearAllBansEl?.addEventListener('click',     () => devClearAllBans());
 
