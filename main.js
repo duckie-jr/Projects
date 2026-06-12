@@ -5,14 +5,14 @@ const PROJECTS = [
   {
     title: "Devlink",
     description: "Devlink lets users create or join a shared room where they can edit code together in real-time and chat, all peer-to-peer with no server or account needed.",
-    url: "https://duckie-jr.github.io/Projects/Devlink/",
-    tag: "Media",
+    url: "https://duckie-jr.github.io/Projects/Social/Devlink/",
+    tag: "Social",
   },
     {
     title: "DropIn",
     description: "Instant calls with the people you actually want to talk to — no scheduling, no friction.",
-    url: "https://duckie-jr.github.io/Projects/DropIn",
-    tag: "Media",
+    url: "https://duckie-jr.github.io/Projects/Social/DropIn",
+    tag: "Social",
   },
   {
     title: "Jr's Movies",
