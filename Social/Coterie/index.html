@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coterie</title>
+  <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <link rel="stylesheet" href="./style.css" />
+  <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
+  <script src="./main.js" defer></script>
+  <script src="./dev.js" defer></script>
+
+  <style id="lobby-inline-styles">
+  /* ─── LOBBY SCREEN ─────────────────────────────── */
+  #room-browser-screen {
+    display: flex; flex-direction: column;
+    height: 100vh;
+    background: #080808;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* TOP NAV */
+  .lob-nav {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 28px; height: 58px;
+    background: #0f0f0f;
+    border-bottom: 2px solid #4a9eff;
+    flex-shrink: 0; gap: 16px;
+  }
+  .lob-nav-left { display: flex; align-items: baseline; gap: 12px; }
+  .lob-wordmark {
+    font-family: Georgia, serif;
+    font-size: 1.55rem; font-weight: 700;
+    color: #4a9eff; letter-spacing: .06em;
+  }
+  .lob-nav-sub {
+    font-size: .62rem; color: #283848;
+    text-transform: uppercase; letter-spacing: .18em;
+  }
+  .lob-nav-right { display: flex; align-items: center; gap: 10px; }
+  .lob-welcome { font-size: .82rem; color: #4a5a6a; font-style: italic; }
+  .lob-pill {
+    padding: 2px 11px; border-radius: 20px;
+    background: rgba(74,158,255,.1);
+    border: 1px solid rgba(74,158,255,.25);
+    font-size: .7rem; font-weight: 700;
+    color: #4a9eff; white-space: nowrap;
+  }
+
+  /* CREATOR BAR */
+  .lob-creator-bar {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 6px 28px;
+    background: rgba(74,158,255,.07);
+    border-bottom: 1px solid rgba(74,158,255,.2);
+    font-size: .78rem; font-weight: 600; color: #7bbfff;
+    flex-shrink: 0;
+  }
+  .lob-creator-bar.hidden { display: none !important; }
+  .lob-creator-btns { display: flex; gap: 8px; }
+
+  /* BODY: scrollable middle */
+  .lob-body {
+    flex: 1; overflow-y: auto; min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    padding: 28px;
+  }
+
+  /* Section heading row */
+  .lob-section-head {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .lob-section-title {
+    font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .16em; color: #283848;
+  }
+  .lob-hide-pw {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .78rem; color: #4a5a6a; cursor: pointer; user-select: none;
+  }
+  .lob-hide-pw input { accent-color: #4a9eff; cursor: pointer; }
+
+  /* Table header */
+  .lob-thead {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px;
+    padding: 0 16px; height: 30px;
+    align-items: center;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .lob-thead span {
+    font-size: .6rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em; color: #1e2e3e;
+  }
+  .lob-thead span:nth-child(2) { text-align: center; }
+  .lob-thead span:nth-child(3) { text-align: right; }
+
+  /* Room list */
+  .lob-rooms {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  /* Empty state */
+  .lob-empty {
+    padding: 52px 16px; text-align: center;
+    font-size: .88rem; color: #1e2e3e;
+    font-style: italic; line-height: 1.8;
+  }
+
+  /* Individual room row */
+  .lob-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px;
+    align-items: center;
+    padding: 0 16px; min-height: 64px;
+    background: #111111;
+    border: 1px solid #1a1a1a;
+    border-left: 3px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .12s, border-left-color .15s;
+    gap: 12px;
+  }
+  .lob-row:hover {
+    background: #161616; border-left-color: #4a9eff;
+    border-color: #242424; border-left-color: #4a9eff;
+  }
+
+  /* Name cell */
+  .lob-row-name { display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .lob-lock { color: #4a9eff; opacity: .75; flex-shrink: 0; display: flex; }
+  .lob-name-wrap { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .lob-rname {
+    font-size: .9rem; font-weight: 600; color: #c8d4e0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lob-row:hover .lob-rname { color: #e4eef8; }
+  .lob-rhost { font-size: .67rem; color: #203040; }
+
+  /* Count cell */
+  .lob-row-count {
+    font-size: .85rem; font-weight: 600; color: #3a4a5a;
+    text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .lob-row:hover .lob-row-count { color: #4a9eff; }
+
+  /* Join cell */
+  .lob-row-action { display: flex; justify-content: flex-end; }
+  .lob-join-btn {
+    padding: 6px 14px; border: 1px solid rgba(74,158,255,.35);
+    border-radius: 5px; background: transparent;
+    color: #4a9eff; font-size: .74rem; font-weight: 600;
+    font-family: inherit; cursor: pointer; white-space: nowrap;
+    transition: background .1s, border-color .1s;
+  }
+  .lob-join-btn:hover { background: rgba(74,158,255,.12); border-color: #4a9eff; }
+
+  /* FOOTER */
+  .lob-foot {
+    flex-shrink: 0; padding: 14px 28px 18px;
+    background: #0f0f0f; border-top: 1px solid #1e1e1e;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .lob-id-row { display: flex; gap: 8px; }
+  .lob-id-row input {
+    flex: 1; min-width: 0; padding: 9px 13px;
+    background: #111111; border: 1px solid #222222;
+    border-radius: 6px; color: #c8d4e0;
+    font-size: .84rem; font-family: inherit; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .lob-id-row input:focus {
+    border-color: #4a9eff; box-shadow: 0 0 0 3px rgba(74,158,255,.1);
+  }
+  .lob-id-row input::placeholder { color: #1e2e3e; }
+  .lob-id-join {
+    padding: 9px 16px; background: #181818;
+    border: 1px solid #2a2a2a; border-radius: 6px;
+    color: #c8d4e0; font-size: .84rem; font-family: inherit;
+    cursor: pointer; white-space: nowrap; transition: background .1s;
+  }
+  .lob-id-join:hover { background: #1e1e1e; }
+  .lob-status {
+    font-size: .75rem; color: #4a5a6a;
+    text-align: center; margin: 0; min-height: 14px;
+  }
+  .lob-status.error { color: #f87171; }
+  .lob-action-row { display: flex; gap: 10px; }
+  .lob-btn-create {
+    flex: 1; padding: 12px;
+    background: linear-gradient(135deg,#4a9eff 0%,#1e6bcc 100%);
+    border: none; border-radius: 7px;
+    color: #0f0f0f; font-size: .92rem; font-weight: 700;
+    font-family: inherit; letter-spacing: .02em; cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .lob-btn-create:hover { filter: brightness(1.1); }
+  .lob-btn-create:active { transform: scale(.98); }
+  .lob-btn-create:disabled { opacity: .5; cursor: not-allowed; }
+  .lob-btn-refresh {
+    padding: 12px 20px; background: #181818;
+    border: 1px solid #262626; border-radius: 7px;
+    color: #c8d4e0; font-size: .88rem; font-family: inherit;
+    cursor: pointer; transition: background .1s;
+  }
+  .lob-btn-refresh:hover { background: #1e1e1e; }
+  .lob-btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Desktop: center with max-width */
+  @media (min-width: 700px) {
+    .lob-body { max-width: 860px; width: 100%; margin: 0 auto; padding: 32px 40px; }
+    .lob-nav  { padding: 0 40px; }
+    .lob-foot { padding: 14px 40px 20px; }
+    .lob-nav-sub { display: inline; }
+  }
+  @media (max-width: 699px) {
+    .lob-nav    { padding: 0 16px; }
+    .lob-body   { padding: 16px; }
+    .lob-foot   { padding: 12px 16px 16px; }
+    .lob-nav-sub { display: none; }
+    .lob-welcome { display: none; }
+    .lob-row    { grid-template-columns: 1fr 60px 80px; }
+    .lob-thead  { grid-template-columns: 1fr 60px 80px; }
+  }
+  
+
+  /* ══════════════════════════════════════════════
+     USERNAME SCREEN  —  Noir + Gold
+  ══════════════════════════════════════════════ */
+
+  #username-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px 16px;
+    background: radial-gradient(ellipse at 50% 30%, #08101e 0%, #060606 70%);
+  }
+
+  .username-card {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 22px; width: 100%; max-width: 400px; text-align: center;
+    background: #111111;
+    border-top: 3px solid #4a9eff;
+    border: 1px solid #1e1e1e;
+    border-top: 3px solid #4a9eff;
+    border-radius: 12px;
+    padding: 36px 32px 32px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+  }
+
+  .username-logo {
+    display: flex; align-items: center; gap: 14px;
+    font-family: Georgia, serif;
+    font-size: 2rem; font-weight: 700;
+    color: #4a9eff; letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  .username-logo-icon {
+    width: 48px; height: 48px; border-radius: 11px; flex-shrink: 0;
+  }
+
+  .username-heading {
+    font-size: 1.05rem; font-weight: 600;
+    color: #e4eef8; letter-spacing: -0.2px;
+    margin-top: -4px;
+  }
+
+  .username-desc {
+    font-size: 0.84rem; color: #4a5a6a; line-height: 1.65; margin-top: -8px;
+  }
+
+  .username-input-wrapper {
+    position: relative; width: 100%;
+  }
+
+  .username-input-wrapper input {
+    font-size: 1rem; padding: 13px 54px 13px 16px;
+    text-align: center; letter-spacing: 0.3px;
+    background: #0d0d0d; border: 1px solid #252525;
+    border-radius: 7px; color: #c8d4e0; width: 100%;
+    box-sizing: border-box; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .username-input-wrapper input:focus {
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 3px rgba(74,158,255,.12);
+  }
+
+  .username-input-wrapper input::placeholder { color: #1e2e3e; }
+
+  .name-counter {
+    position: absolute; right: 13px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.68rem; color: #283848; pointer-events: none;
+  }
+
+  .name-counter.near-limit { color: #c0392b; }
+
+  .username-continue-btn {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, #4a9eff 0%, #1e6bcc 100%);
+    border: none; border-radius: 7px;
+    color: #0f0f0f; font-size: 1rem; font-weight: 700;
+    font-family: inherit; letter-spacing: .02em; cursor: pointer;
+    transition: filter .15s, transform .1s;
+  }
+  .username-continue-btn:hover  { filter: brightness(1.1); }
+  .username-continue-btn:active { transform: scale(.98); }
+
+  #username-error {
+    min-height: 18px; font-size: .8rem; color: #f87171; font-weight: 500;
+    margin-top: -8px;
+  }
+
+  .username-note {
+    font-size: .72rem; color: #1e2e3e; line-height: 1.55; margin-top: -8px;
+  }
+
+  /* ══════════════════════════════════════════════
+     TOS OVERLAY  —  Noir + Gold
+  ══════════════════════════════════════════════ */
+
+  .tos-overlay {
+    position: fixed; inset: 0;
+    background: #060606;
+    display: flex; align-items: flex-start; justify-content: center;
+    overflow-y: auto; z-index: 9999; padding: 2rem 1rem;
+  }
+
+  .tos-card {
+    background: #111111;
+    border: 1px solid #1e1e1e;
+    border-top: 3px solid #4a9eff;
+    border-radius: 12px;
+    width: 100%; max-width: 640px;
+    padding: 2rem 2rem 1.5rem;
+    display: flex; flex-direction: column; gap: 1.2rem;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+    margin: auto 0;
+  }
+
+  .tos-header {
+    display: flex; align-items: center; gap: .75rem;
+  }
+
+  .tos-logo-icon { width: 32px; height: 32px; border-radius: 8px; }
+
+  .tos-logo-name {
+    font-family: Georgia, serif;
+    font-size: 1.3rem; font-weight: 700;
+    color: #4a9eff; letter-spacing: .06em;
+  }
+
+  .tos-title {
+    margin: 0; font-size: 1.3rem; font-weight: 700; color: #e4eef8;
+    letter-spacing: -.3px;
+  }
+
+  .tos-intro { margin: 0; color: #4a5a6a; font-size: .88rem; line-height: 1.6; }
+
+  .tos-body {
+    border: 1px solid #1a1a1a; border-radius: 8px;
+    padding: 1rem 1.2rem; max-height: 42vh; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 1rem;
+    font-size: .875rem; color: #c8d4e0; line-height: 1.6;
+    background: #0d0d0d;
+  }
+
+  .tos-body::-webkit-scrollbar       { width: 3px; }
+  .tos-body::-webkit-scrollbar-thumb { background: rgba(74,158,255,.25); border-radius: 4px; }
+
+  .tos-body h3 {
+    margin: 0 0 .35rem; font-size: .88rem; font-weight: 700;
+    color: #4a9eff; letter-spacing: .01em;
+  }
+
+  .tos-body p { margin: 0; }
+
+  .tos-body ul { margin: .35rem 0 .35rem 1.2rem; padding: 0; }
+  .tos-body li { margin-bottom: .25rem; color: #8090a4; }
+
+  .tos-section {
+    border-bottom: 1px solid #181818; padding-bottom: .75rem;
+  }
+  .tos-section:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .tos-actions {
+    display: flex; gap: .75rem; justify-content: flex-end; margin-top: .25rem;
+  }
+
+  /* Override base btn for TOS context */
+  .tos-actions .btn-primary {
+    background: linear-gradient(135deg, #4a9eff 0%, #1e6bcc 100%);
+    color: #0f0f0f; font-weight: 700; padding: 10px 22px;
+  }
+
+  .tos-actions .btn-secondary {
+    background: #181818; border: 1px solid #2a2a2a; color: #c8d4e0;
+  }
+
+  .tos-note { margin: 0; font-size: .75rem; color: #1e2e3e; text-align: center; }
+
+  /* ── Declined screen ── */
+
+  .tos-declined-screen {
+    position: fixed; inset: 0; background: #060606;
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+
+  .tos-declined-card {
+    text-align: center; display: flex; flex-direction: column;
+    align-items: center; gap: 1rem; padding: 2.5rem 2rem;
+    background: #111111; border: 1px solid #1e1e1e;
+    border-top: 3px solid #7f1d1d; border-radius: 12px;
+    max-width: 360px; width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  }
+
+  .tos-declined-icon { font-size: 2.5rem; }
+  .tos-declined-card h2 { margin: 0; font-size: 1.25rem; color: #e4eef8; }
+  .tos-declined-card p  { margin: 0; color: #4a5a6a; font-size: .88rem; }
+
+  /* Mobile TOS */
+  @media (max-width: 640px) {
+    .tos-overlay { padding: 0; align-items: flex-end; }
+    .tos-card {
+      border-radius: 16px 16px 0 0; min-height: 88svh;
+      padding: 1.5rem 1rem 1rem; border-top: 3px solid #4a9eff;
+    }
+    .tos-actions { flex-direction: column-reverse; gap: 8px; }
+    .tos-actions .btn { width: 100%; justify-content: center; padding: 12px; }
+    .username-card { border-radius: 0; border-left: none; border-right: none; border-top: none; padding: 2rem 1.25rem; }
+  }
+
+  </style>
+</head>
+<body>
+
+    <!-- ========== TERMS OF SERVICE MODAL (shown on first visit only) ========== -->
+  <div id="tos-overlay" class="tos-overlay hidden">
+    <div class="tos-card">
+
+      <div class="tos-header">
+        <img src="logo.svg" class="tos-logo-icon" alt="Coterie logo" />
+        <span class="tos-logo-name">Coterie</span>
+      </div>
+
+      <h2 class="tos-title">Terms of Service</h2>
+      <p class="tos-intro">
+        Before using Coterie, please read and agree to the following terms.
+        You must accept these terms to access the platform.
+      </p>
+
+      <div class="tos-body">
+
+        <div class="tos-section">
+          <h3>1. Acceptable Use</h3>
+          <p>You agree not to use Coterie for any unlawful purpose, including but not limited to
+            sharing illegal content, harassment, threats, distribution of CSAM, or any
+            activity that violates applicable law.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>2. Platform Monitoring &amp; Moderation</h3>
+          <p><strong>By using Coterie you expressly consent to the following:</strong></p>
+          <ul>
+            <li>The platform owner and authorised developers may join any active room at any time for the purposes of safety review, abuse
+                investigation, or legal compliance.</li>
+            <li>Such oversight may occur without prior notice and without appearing in
+                the visible participant list.</li>
+            <li>Sessions may be observed in real time. If evidence of illegal activity
+                is identified it may be preserved and reported to relevant authorities.</li>
+          </ul>
+          <p>This monitoring capability exists solely to keep the platform safe and to
+             comply with applicable law. It will not be used for commercial purposes.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>3. No Expectation of Privacy in Rooms</h3>
+          <p>Rooms are not end-to-end encrypted against the platform operator. You should not share information in a session that you consider
+             strictly private.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>4. Age Requirement</h3>
+          <p>You must be at least 13 years of age to use Coterie. If you are under 18,
+             you must have a parent or guardian's permission.</p>
+        </div>
+
+        <div class="tos-section">
+          <h3>5. Enforcement</h3>
+          <p>Violations may result in removal from a session, a temporary or permanent ban,
+             and/or reporting to law-enforcement agencies where required by law.</p>
+        </div>
+
+      </div>
+
+      <div class="tos-actions">
+        <button id="tos-decline-btn" class="btn btn-secondary">Decline</button>
+        <button id="tos-accept-btn"  class="btn btn-primary">I Agree →</button>
+      </div>
+
+      <p class="tos-note">
+        Declining will prevent access to Coterie. You can clear your browser data to
+        be shown these terms again.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ========== DECLINED SCREEN (shown if user declines ToS) ========== -->
+  <div id="tos-declined-screen" class="tos-declined-screen hidden">
+    <div class="tos-declined-card">
+      <div class="tos-declined-icon">🚫</div>
+      <h2>Access Denied</h2>
+      <p>You must accept the Terms of Service to use Coterie.</p>
+      <button id="tos-review-btn" class="btn btn-secondary">Review Terms Again</button>
+    </div>
+  </div>
+
+  <!-- ========== USERNAME SCREEN (shown first) ========== -->
+  <div id="username-screen">
+    <div class="username-card">
+
+      <div class="username-logo">
+        <img src="logo.svg" class="username-logo-icon" alt="Coterie logo" />
+        <span>Coterie</span>
+      </div>
+
+      <div class="username-heading">Pick your screen name</div>
+      <p class="username-desc">
+        This is how everyone in your rooms will know you.
+      </p>
+
+      <div class="username-input-wrapper">
+        <input
+          type="text"
+          id="screen-name-input"
+          placeholder="e.g. CoolPanda42"
+          maxlength="20"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <span id="screen-name-counter" class="name-counter">0 / 20</span>
+      </div>
+
+      <button id="continue-btn" class="btn btn-primary username-continue-btn">
+        Continue →
+      </button>
+
+      <p id="username-error" class="username-error"></p>
+
+      <p class="username-note">
+        Letters, numbers, spaces, _ and - only. Keep it clean.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ========== LOBBY SCREEN ========== -->
+  <div id="room-browser-screen" class="hidden">
+
+    <!-- Nav bar -->
+    <nav class="lob-nav">
+      <div class="lob-nav-left">
+        <span class="lob-wordmark">Coterie</span>
+        <span class="lob-nav-sub">private rooms</span>
+      </div>
+      <div class="lob-nav-right">
+        <span class="lob-welcome" id="lob-username"></span>
+        <span class="lob-pill" id="lob-count-pill"></span>
+      </div>
+    </nav>
+
+    <!-- Creator bar -->
+    <div id="rb-creator-status" class="lob-creator-bar hidden">
+      <span>★ Creator mode active</span>
+      <div class="lob-creator-btns">
+        <button id="rb-dashboard-btn" class="btn btn-xs btn-secondary">Dashboard</button>
+        <button id="rb-uncreator-btn" class="btn btn-xs btn-danger">Remove</button>
+      </div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="lob-body">
+      <div class="lob-section-head">
+        <span class="lob-section-title">Active Rooms</span>
+        <label class="lob-hide-pw">
+          <input type="checkbox" id="rb-hide-passworded" />
+          <span>Hide Passworded</span>
+        </label>
+      </div>
+      <div class="lob-thead">
+        <span>Room Name</span>
+        <span># People</span>
+        <span></span>
+      </div>
+      <div id="rb-room-list" class="lob-rooms">
+        <p class="lob-empty">Loading rooms…</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="lob-foot">
+      <div class="lob-id-row">
+        <input type="text" id="rb-join-input" placeholder="Paste a Room ID to join privately…" autocomplete="off" />
+        <button id="rb-join-btn" class="lob-id-join">Join →</button>
+      </div>
+      <p id="rb-status" class="lob-status"></p>
+      <div class="lob-action-row">
+        <button id="rb-create-btn" class="lob-btn-create">＋ Create Room</button>
+        <button id="rb-refresh-btn" class="lob-btn-refresh">↺ Refresh</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== HOME SCREEN ========== -->
+  <div id="home-screen" class="hidden">
+    <div class="home-hero">
+
+      <div class="home-logo">Coterie</div>
+      <p class="home-tagline">
+        Create private rooms and video call the people you actually want to talk to. No account needed.
+      </p>
+
+      <div class="home-mode-grid home-mode-grid--single">
+
+        <button id="select-rooms-btn" class="home-mode-card">
+          <div class="home-mode-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+          </div>
+          <div class="home-mode-name">Rooms</div>
+          <p class="home-mode-desc">
+            Create a private room and invite friends with a shareable code.
+            Chat, collaborate on code, or video call together.
+          </p>
+          <span class="home-mode-cta">Create a Room →</span>
+        </button>
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ROOMS LOBBY SCREEN ========== -->
+  <div id="lobby-screen" class="hidden">
+    <div class="lobby-card">
+
+      <div class="lobby-logo">
+        Coterie
+      </div>
+      <p class="lobby-subtitle">Create a video room and share the code, or paste one to join.</p>
+
+      <!-- Shown only while the creator badge is active -->
+      <div id="creator-status" class="creator-status hidden">
+        <span class="creator-status-label">★ Creator mode active</span>
+        <div class="creator-status-actions">
+          <button id="creator-monitor-btn" class="btn btn-xs btn-secondary">Dashboard</button>
+          <button id="creator-remove-btn"  class="btn btn-xs btn-danger">Remove</button>
+        </div>
+      </div>
+
+      <div class="lobby-actions">
+        <button id="create-room-btn" class="btn btn-primary">Create Room</button>
+        <div class="lobby-divider">or join existing room</div>
+        <div class="join-row">
+          <input type="text" id="room-id-input" placeholder="Paste Room ID" autocomplete="off" />
+          <button id="join-room-btn" class="btn btn-secondary">Join</button>
+        </div>
+      </div>
+
+      <!-- ─── Recent rooms ─────────────────────────────────────── -->
+      <div id="recent-rooms-section" class="recent-rooms-section hidden">
+        <div class="recent-rooms-header">
+          <span class="recent-rooms-label">Recent Rooms</span>
+          <div class="recent-rooms-actions">
+            <button id="export-recents-btn" class="btn btn-xs btn-secondary">Export</button>
+            <button id="clear-recents-btn"  class="btn btn-xs btn-danger">Clear All</button>
+          </div>
+        </div>
+        <div id="recent-rooms-list"></div>
+      </div>
+
+      <!-- ─── Import rooms from file or URL ────────────────────── -->
+      <div class="import-rooms-section">
+        <div class="import-rooms-divider">import rooms</div>
+        <div class="import-rooms-controls">
+          <label class="btn btn-xs btn-secondary import-file-label">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload .json
+            <input type="file" id="import-file-input" accept=".json" />
+          </label>
+          <div class="import-url-row">
+            <input type="text" id="import-url-input" placeholder="Paste JSON URL…" autocomplete="off" />
+            <button id="import-url-btn" class="btn btn-xs btn-secondary">Fetch</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="lobby-status"></p>
+      <button id="lobby-back-btn" class="btn btn-secondary btn-sm back-btn">← Back</button>
+
+    </div>
+  </div>
+
+  <!-- ========== ROOMS APP SCREEN ========== -->
+  <div id="app-screen" class="hidden">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="app-logo">
+          DropIn
+          <span class="toolbar-mode-tag">Rooms</span>
+        </span>
+      </div>
+
+      <div class="toolbar-center">
+        <span id="room-name-label" class="room-name-label hidden"></span>
+        <span id="room-lock-badge" class="room-lock-badge hidden" title="Password protected">🔒</span>
+        <span id="room-id-label" role="button" title="Click to show full code"></span>
+        <button id="copy-id-btn" class="btn btn-sm btn-secondary">Copy ID</button>
+      </div>
+
+      <div class="toolbar-right">
+        <div id="media-controls">
+          <button id="mute-btn"         class="btn btn-sm btn-secondary">Mute</button>
+          <button id="cam-btn"          class="btn btn-sm btn-secondary">Cam Off</button>
+          <button id="screen-share-btn" class="btn btn-sm btn-secondary">Share Screen</button>
+          <button id="raise-hand-btn"   class="btn btn-sm btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+            </svg>
+            Hand
+          </button>
+        </div>
+        <button id="users-count-btn" class="btn btn-sm btn-secondary">
+          <span id="users-count">0</span> participants
+        </button>
+        <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
+      </div>
+    </div>
+
+    <!-- Video grid on the left, chat on the right -->
+    <div class="workspace">
+      <div class="video-grid-panel">
+        <div id="video-grid"></div>
+        <div id="participants-panel" class="participants-panel hidden">
+          <div class="participants-header">
+            <span class="participants-title">Participants</span>
+            <button id="close-panel-btn" class="btn btn-sm btn-secondary">X</button>
+          </div>
+          <div class="participants-list"></div>
+        </div>
+      </div>
+      <div class="chat-pane">
+        <div class="chat-header">Chat</div>
+        <div id="chat-log"></div>
+        <div class="chat-footer">
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button id="send-btn" class="btn btn-primary btn-sm">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <!-- ========== ROOM CODE FULLSCREEN OVERLAY ========== -->
+  <div id="room-code-overlay" class="hidden">
+    <p class="room-code-overlay-label">Room Code</p>
+    <div id="room-code-overlay-text"></div>
+    <p class="room-code-overlay-dismiss">tap anywhere to close</p>
+  </div>
+
+  <!-- ========== HOST ACTION CONTEXT MENU ========== -->
+  <!-- Small popup the room owner gets when clicking a participant name -->
+  <div id="host-action-menu" class="host-action-menu hidden">
+    <div class="host-action-menu-header">
+      <span class="host-action-menu-name"></span>
+    </div>
+    <button class="host-action-btn host-action-mute-btn">Mute</button>
+    <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
+    <button class="host-action-btn host-action-move-btn">Move to Room…</button>
+    <div class="host-action-divider"></div>
+    <button class="host-action-btn host-action-kick-btn">Kick</button>
+    <button class="host-action-btn host-action-ban-btn">Ban</button>
+  </div>
+
+  <!-- ========== CREATOR VERIFICATION MODAL ========== -->
+  <div id="creator-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Creator Verification</div>
+      <p class="creator-modal-desc">
+        Enter the creator password to activate your badge.<br/>
+        It will be shown to everyone in any room you join.
+      </p>
+      <input
+        type="password"
+        id="creator-password-input"
+        class="creator-password-input"
+        placeholder="Password"
+        autocomplete="off"
+      />
+      <p id="creator-password-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="creator-password-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="creator-password-submit" class="btn btn-primary btn-sm">Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CREATOR: ACTIVE SERVERS MODAL ========== -->
+  <!-- Opened when a verified creator types "creator" into the Join field -->
+  <div id="server-list-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Active Servers</div>
+      <p class="creator-modal-desc">
+        Every live room right now. Click Join to drop into any call.
+      </p>
+      <div id="server-list-container" class="server-list-container"></div>
+      <div class="creator-modal-actions">
+        <button id="server-list-refresh" class="btn btn-secondary btn-sm">Refresh</button>
+        <button id="server-list-close"   class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MOVE PARTICIPANT MODAL (host + creator) ========== -->
+  <div id="move-user-modal" class="creator-modal hidden">
+    <div class="creator-modal-card server-list-card">
+      <div class="creator-modal-title">Move <span id="move-user-name"></span></div>
+      <p class="creator-modal-desc">
+        Pick a live room to send them to, or paste a Room ID below.
+      </p>
+      <div id="move-server-list" class="server-list-container"></div>
+      <div class="join-row">
+        <input type="text" id="move-room-input" placeholder="Room ID" autocomplete="off" />
+      </div>
+      <div class="creator-modal-actions">
+        <button id="move-cancel-btn"  class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="move-confirm-btn" class="btn btn-primary btn-sm">Move</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========== DEV DASHBOARD (creator only — ` to open, ` or Esc to close) ========== -->
+  <div id="dev-dashboard" class="dev-dashboard hidden">
+    <div class="dev-dashboard-inner">
+
+      <div class="dev-dashboard-header">
+
+        <!-- ── Row 1: title + action buttons ─────────────────── -->
+        <div class="dev-dashboard-header-top">
+          <div class="dev-dashboard-title-group">
+            <span class="dev-dashboard-title">Dev Dashboard</span>
+            <span class="dev-dashboard-badge">CREATOR ONLY</span>
+          </div>
+          <div class="dev-dashboard-header-actions">
+            <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">↺ Refresh</button>
+            <button id="dev-reload-all-btn"    class="btn btn-sm btn-secondary" title="Force every connected client to reload">⟳ Reload All</button>
+            <button id="dev-popout-btn"        class="btn btn-sm btn-secondary" title="Open dashboard in its own window">↗ Pop Out</button>
+            <button id="dev-dashboard-close"   class="btn btn-sm btn-danger">✕ Close</button>
+          </div>
+        </div>
+
+        <!-- ── Row 2: live stats + historical stats + last refresh ─ -->
+        <div class="dev-dashboard-stats">
+          <span class="dev-stat-chip">Rooms <strong id="dev-stat-rooms-count">—</strong></span>
+          <div class="dev-stat-divider"></div>
+          <span class="dev-stat-chip dev-stat-chip--accent">Rooms Today <strong id="dev-stat-rooms-today">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Peak Users <strong id="dev-stat-peak-concurrent">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Total Bans <strong id="dev-stat-total-bans">—</strong></span>
+          <span id="dev-last-refresh" class="dev-last-refresh">—</span>
+        </div>
+
+      </div>
+
+      <!-- Tab bar: hidden on desktop, shown on mobile via CSS -->
+      <div class="dev-tab-bar">
+        <button class="dev-tab" data-target="rooms">Rooms</button>
+        <button class="dev-tab" data-target="broadcast">Broadcast</button>
+      </div>
+
+      <div class="dev-dashboard-body">
+
+        <div class="dev-panel dev-panel--active" data-tab="rooms">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Active Rooms</span>
+            <div class="dev-panel-controls">
+              <input
+                type="text"
+                id="dev-rooms-filter"
+                class="dev-panel-filter-input"
+                placeholder="Search by name or #ID…"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <div id="dev-rooms-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load.</p>
+          </div>
+        </div>
+
+
+        <!-- ─── Broadcast panel (spans full width) ──────────────── -->
+        <div class="dev-panel dev-panel--broadcast" data-tab="broadcast">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Broadcast</span>
+          </div>
+          <div class="dev-broadcast-body">
+
+            <!-- Message textarea -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label" for="dev-broadcast-input">Message</label>
+              <textarea
+                id="dev-broadcast-input"
+                class="dev-broadcast-textarea"
+                placeholder="Type a message to broadcast to rooms…"
+                maxlength="400"
+                rows="3"
+                autocomplete="off"
+              ></textarea>
+            </div>
+
+            <div class="dev-broadcast-options">
+
+              <!-- Minimum view time -->
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label" for="dev-broadcast-duration">Minimum view time</label>
+                <div class="dev-broadcast-duration-row">
+                  <input
+                    type="number"
+                    id="dev-broadcast-duration"
+                    class="dev-broadcast-duration-input"
+                    value="0"
+                    min="0"
+                    max="300"
+                  />
+                  <span class="dev-broadcast-hint">seconds &nbsp;·&nbsp; 0 = dismiss anytime</span>
+                </div>
+              </div>
+
+              <!-- Broadcast target -->
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label">Target</label>
+                <div class="dev-broadcast-target">
+                  <label class="dev-broadcast-radio">
+                    <input type="radio" name="broadcast-target" id="broadcast-target-all" value="all" checked />
+                    All rooms
+                  </label>
+                  <label class="dev-broadcast-radio">
+                    <input type="radio" name="broadcast-target" id="broadcast-target-room" value="room" />
+                    Specific room
+                  </label>
+                  <input
+                    type="text"
+                    id="dev-broadcast-room-id"
+                    class="dev-broadcast-room-input"
+                    placeholder="Paste Room ID…"
+                    autocomplete="off"
+                    disabled
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Send + status -->
+            <div class="dev-broadcast-actions">
+              <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send Broadcast</button>
+              <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <!-- ─── Admin Pranks ───────────────────────────────── -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Admin Pranks</label>
+              <div class="dev-broadcast-options">
+                <div class="dev-broadcast-field">
+                  <label class="dev-broadcast-label">Target</label>
+                  <div class="dev-broadcast-target">
+                    <label class="dev-broadcast-radio">
+                      <input type="radio" name="prank-target" id="prank-target-all" value="all" checked />
+                      All rooms
+                    </label>
+                    <label class="dev-broadcast-radio">
+                      <input type="radio" name="prank-target" id="prank-target-room" value="room" />
+                      Specific room
+                    </label>
+                    <input
+                      type="text"
+                      id="dev-prank-room-id"
+                      class="dev-broadcast-room-input"
+                      placeholder="Paste Room ID…"
+                      autocomplete="off"
+                      disabled
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="dev-broadcast-actions">
+                <button id="dev-airhorn-btn" class="btn btn-sm btn-secondary" title="Blast a very loud air horn in the selected room(s)">📢 Air Horn</button>
+                <p id="dev-prank-status" class="dev-broadcast-status"></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+
+  <!-- ========== GHOST OBSERVER PANEL (creator only) ========== -->
+  <!-- Shown when the creator silently observes a room.           -->
+  <!-- Participants cannot see this peer in their UI.             -->
+  <div id="ghost-observer-panel" class="ghost-observer-panel hidden">
+    <div class="ghost-observer-header">
+      <div class="ghost-observer-title-group">
+        <span class="ghost-observer-eyecon"></span>
+        <span class="ghost-observer-title">Observer Mode</span>
+        <span class="ghost-observer-badge">INVISIBLE</span>
+        <span class="ghost-observer-room-label">
+          Room&nbsp;<strong id="ghost-observer-room-id"></strong>
+        </span>
+      </div>
+      <!-- ── Ghost observer panel header ── -->
+      <div class="ghost-observer-header-actions">
+        <button id="ghost-observer-airhorn-btn"    class="btn btn-sm btn-secondary" title="Blast a loud air horn to everyone in this room">📢 Air Horn</button>
+        <button id="ghost-observer-whisper-all-btn" class="btn btn-sm btn-secondary" title="Send your mic audio to all participants — they cannot see who is speaking">🎤 Whisper All</button>
+        <button id="ghost-observer-mute-all-btn" class="btn btn-sm btn-secondary">Mute All</button>
+        <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">✕ Stop Observing</button>
+      </div>
+    </div>
+    <div id="ghost-observer-status" class="ghost-observer-status"></div>
+    <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+  </div>
+
+  <!-- ========== BROADCAST OVERLAY ========== -->
+  <!-- Shown to every user in a room when the admin sends a broadcast.
+       The Dismiss button is locked until the admin-set timer expires.   -->
+  <div id="broadcast-overlay" class="broadcast-overlay hidden">
+    <div class="broadcast-card">
+      <div class="broadcast-header">
+        <span class="broadcast-label">Platform Notice</span>
+        <span id="broadcast-timer-badge" class="broadcast-timer-badge"></span>
+      </div>
+      <p id="broadcast-message-text" class="broadcast-message-text"></p>
+      <button id="broadcast-dismiss-btn" class="btn btn-primary broadcast-dismiss-btn" disabled>
+        Dismiss
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== CREATE ROOM SETTINGS MODAL ========== -->
+  <div id="create-room-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Create Room</div>
+      <p class="creator-modal-desc">
+        Give your room a name and set a participant limit — or leave both blank for a quick open room.
+      </p>
+
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-name-input">
+          Room Name <span class="create-room-optional">(optional)</span>
+        </label>
+        <div class="create-room-input-wrapper">
+          <input
+            type="text"
+            id="room-name-input"
+            class="creator-password-input"
+            placeholder="e.g. Game Night, Study Group…"
+            maxlength="30"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+          />
+          <span id="room-name-counter" class="create-room-counter">0 / 30</span>
+        </div>
+      </div>
+
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-max-size-select">Max Participants</label>
+        <select id="room-max-size-select" class="create-room-select">
+          <option value="0">Unlimited</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <div class="create-room-field">
+        <label class="create-room-label" for="room-password-input">
+          Password <span class="create-room-optional">(optional)</span>
+        </label>
+        <div class="create-room-input-wrapper create-room-pw-wrapper">
+          <input
+            type="password"
+            id="room-password-input"
+            class="creator-password-input"
+            placeholder="Leave blank for an open room"
+            maxlength="40"
+            autocomplete="new-password"
+          />
+          <button type="button" id="room-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide" aria-label="Show password">
+            <svg class="pw-eye-icon pw-eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="pw-eye-icon pw-eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <p id="create-room-error" class="creator-password-error"></p>
+
+      <div class="creator-modal-actions">
+        <button id="create-room-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="create-room-confirm-btn" class="btn btn-primary btn-sm">Create Room →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== GUEST PASSWORD MODAL (shown when joining a password-protected room) ========== -->
+  <div id="guest-password-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">🔒 Password Required</div>
+      <p id="guest-password-modal-desc" class="creator-modal-desc">
+        This room requires a password to join.
+      </p>
+      <div class="create-room-input-wrapper create-room-pw-wrapper">
+        <input
+          type="password"
+          id="guest-password-entry"
+          class="creator-password-input"
+          placeholder="Enter room password"
+          autocomplete="off"
+          maxlength="40"
+        />
+        <button type="button" id="guest-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide">👁</button>
+      </div>
+      <p id="guest-password-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="guest-password-cancel-btn" class="btn btn-secondary btn-sm">Leave Room</button>
+        <button id="guest-password-submit-btn" class="btn btn-primary btn-sm">Join →</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
