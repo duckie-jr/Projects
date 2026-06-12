@@ -1,0 +1,3863 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ *  COTERIE — RESPONSIVE STYLESHEET
+ *
+ *  This stylesheet is designed for BOTH mobile and desktop browsers.
+ *
+ *  Breakpoints:
+ *    • Base (mobile-first) ........... 320px and up  — all phones
+ *    • Tablet ........................ 641px and up  — tablets / landscape phones
+ *    • Desktop ....................... 1024px and up — laptops and monitors
+ *
+ *  Approach:
+ *    • Fluid layouts using flexbox and CSS grid throughout
+ *    • Touch targets ≥ 44px on any coarse-pointer (touch) device
+ *    • Font sizes use clamp() or viewport-aware values where helpful
+ *    • Inputs use font-size: 16px on mobile to prevent iOS auto-zoom
+ *    • All interactive elements have :focus-visible outlines for keyboard users
+ *    • Overflow is hidden on fixed-height screens; scrollable lists use
+ *      -webkit-overflow-scrolling: touch for smooth iOS momentum scrolling
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ─── Reset ──────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #090909;
+  color: #c8d4e0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ─── USERNAME SCREEN ────────────────────────────────────────────────────────── */
+
+#username-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 25%, #0a0a0a 0%, #090909 65%);
+}
+
+.username-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Logo row: icon + wordmark */
+
+.username-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #4a9eff;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.username-logo-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.username-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e4eef8;
+  letter-spacing: -0.3px;
+  margin-top: 4px;
+}
+
+.username-desc {
+  font-size: 0.88rem;
+  color: #607888;
+  line-height: 1.65;
+  margin-top: -6px;
+}
+
+/* Input + live counter */
+
+.username-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.username-input-wrapper input {
+  font-size: 1.05rem;
+  padding: 13px 54px 13px 16px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.username-input-wrapper input:focus {
+  border-color: #4a9eff;
+}
+
+.name-counter {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #2a3a4a;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.name-counter.near-limit {
+  color: #c0392b;
+}
+
+/* Continue button */
+
+.username-continue-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Error message */
+
+.username-error {
+  min-height: 20px;
+  font-size: 0.82rem;
+  color: #f87171;
+  font-weight: 500;
+}
+
+/* Fine-print note */
+
+.username-note {
+  font-size: 0.75rem;
+  color: #2a3a4a;
+  line-height: 1.55;
+}
+
+/* ─── Shared inputs ──────────────────────────────────────────────────────────── */
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #c8d4e0;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: #4a9eff;
+}
+
+select {
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #c8d4e0;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ─── Shared buttons ─────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s, transform 0.1s;
+}
+
+.btn:hover    { filter: brightness(1.15); }
+.btn:active   { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary   { background: #2a72cc; color: #fff; }
+.btn-secondary { background: #252525; color: #c8d4e0; }
+.btn-danger    { background: #7f1d1d; color: #fff; }
+.btn-warn      { background: #1a5a9a; color: #fff; }
+.btn-random    { background: #8b1a1a; color: #fff; }
+.btn-sm        { padding: 5px 12px; font-size: 0.78rem; }
+.btn-xs        { padding: 2px 8px;  font-size: 0.7rem; }
+
+.btn-muted {
+  background: #7f1d1d !important;
+  color: #fff !important;
+}
+
+.btn-hand-active {
+  background: #1a5a9a !important;
+  color: #fff !important;
+}
+
+/* Back link shared by lobby screens */
+.back-btn {
+  align-self: center;
+  color: #2a3a4a !important;
+}
+
+/* ─── HOME SCREEN ────────────────────────────────────────────────────────────── */
+
+#home-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 30%, #111111 0%, #090909 65%);
+  overflow-y: auto;
+}
+
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.home-logo {
+  font-size: 3.2rem;
+  font-weight: 800;
+  color: #4a9eff;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.home-tagline {
+  color: #607888;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+/* Mode card grid — single column now that rooms is the only mode */
+
+.home-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.home-mode-grid--single {
+  max-width: 420px;
+}
+
+.home-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 28px 32px;
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+}
+
+.home-mode-card:hover {
+  border-color: #4a9eff;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 36px rgba(74, 158, 255, 0.13);
+}
+
+.home-mode-card--random:hover {
+  border-color: #c0392b;
+  box-shadow: 0 10px 36px rgba(192, 57, 43, 0.13);
+}
+
+/* Icon circle */
+
+.home-mode-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(74, 158, 255, 0.14);
+  border: 1px solid rgba(74, 158, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a9eff;
+  flex-shrink: 0;
+}
+
+.home-mode-icon--random {
+  background: rgba(192, 57, 43, 0.14);
+  border-color: rgba(192, 57, 43, 0.28);
+  color: #c0392b;
+}
+
+.home-mode-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Card text */
+
+.home-mode-name {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #e4eef8;
+  letter-spacing: -0.4px;
+}
+
+.home-mode-name--random {
+  color: #e4eef8;
+}
+
+.home-mode-desc {
+  font-size: 0.875rem;
+  color: #607888;
+  line-height: 1.65;
+  max-width: 260px;
+}
+
+.home-mode-cta {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #4a9eff;
+  margin-top: 6px;
+}
+
+.home-mode-cta--random {
+  color: #c0392b;
+}
+
+/* ─── LOBBY SCREENS (Rooms + Random share these) ─────────────────────────────── */
+
+#lobby-screen,
+#random-lobby-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 40%, #111111 0%, #090909 70%);
+  overflow-y: auto;
+}
+
+.lobby-card {
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 14px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Logo row inside the card */
+
+.lobby-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4a9eff;
+  letter-spacing: -0.5px;
+}
+
+.lobby-subtitle {
+  text-align: center;
+  color: #607888;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+/* Mode badges (Rooms / Random pill next to logo) */
+
+.mode-badge {
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-badge--rooms {
+  background: rgba(74, 158, 255, 0.15);
+  color: #7bbfff;
+  border: 1px solid rgba(74, 158, 255, 0.35);
+}
+
+.mode-badge--random {
+  background: rgba(192, 57, 43, 0.15);
+  color: #e05a4a;
+  border: 1px solid rgba(192, 57, 43, 0.35);
+}
+
+/* ─── Room type selector (inside Rooms lobby) ────────────────────────────────── */
+
+#room-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.room-type-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.room-type-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.room-type-option {
+  cursor: pointer;
+}
+
+.room-type-option input[type="radio"] {
+  display: none;
+}
+
+.room-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 8px;
+  color: #607888;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.room-type-card svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.room-type-option input[type="radio"]:checked + .room-type-card {
+  border-color: #4a9eff;
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.09);
+}
+
+.room-type-option:hover .room-type-card {
+  border-color: #2a3a4a;
+  color: #c8d4e0;
+}
+
+.room-type-note {
+  font-size: 0.75rem;
+  color: #2a3a4a;
+  text-align: center;
+}
+
+/* Lobby action buttons + join row */
+
+.lobby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lobby-actions .btn-primary {
+  width: 100%;
+  padding: 11px;
+}
+
+.lobby-actions .btn-random {
+  width: 100%;
+  padding: 11px;
+  font-size: 0.95rem;
+}
+
+.lobby-divider {
+  text-align: center;
+  color: #2a3a4a;
+  font-size: 0.8rem;
+  position: relative;
+}
+
+.lobby-divider::before,
+.lobby-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: #252525;
+}
+
+.lobby-divider::before { left: 0; }
+.lobby-divider::after  { right: 0; }
+
+.join-row {
+  display: flex;
+  gap: 8px;
+}
+
+.join-row input {
+  flex: 1;
+}
+
+/* Status lines */
+
+#lobby-status,
+#random-lobby-status {
+  min-height: 18px;
+  font-size: 0.82rem;
+  color: #607888;
+  text-align: center;
+}
+
+#lobby-status.error,
+#random-lobby-status.error {
+  color: #f87171;
+}
+
+/* ─── SHARED TOOLBAR ─────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  height: 48px;
+  background: #111111;
+  border-bottom: 1px solid #252525;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.toolbar-left,
+.toolbar-center,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-left   { flex: 1; }
+.toolbar-center { flex: 0 0 auto; }
+.toolbar-right  { flex: 1; justify-content: flex-end; }
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #4a9eff;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* Rooms / Random pill inside the toolbar */
+
+.toolbar-mode-tag {
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(74, 158, 255, 0.15);
+  color: #7bbfff;
+  border: 1px solid rgba(74, 158, 255, 0.35);
+}
+
+.toolbar-mode-tag--random {
+  background: rgba(192, 57, 43, 0.15);
+  color: #e05a4a;
+  border-color: rgba(192, 57, 43, 0.35);
+}
+
+#room-id-label {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #607888;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: underline dotted #2a3a4a;
+}
+
+#room-id-label:hover {
+  color: #c8d4e0;
+}
+
+/* ─── ROOMS APP SCREEN ───────────────────────────────────────────────────────── */
+
+#app-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Media controls (mute / cam) — always visible in Rooms */
+
+#media-controls {
+  display: flex;
+  gap: 6px;
+}
+
+/* Users bar */
+
+#users-count-btn {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Host kick / ban controls inside participant rows */
+
+.kick-btn,
+.ban-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: filter 0.15s;
+}
+
+.kick-btn { background: #1a5a9a; color: #fff; }
+.ban-btn  { background: #7f1d1d; color: #fff; }
+
+.kick-btn:hover,
+.ban-btn:hover {
+  filter: brightness(1.2);
+}
+
+/* Workspace — video grid left, chat right */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left panel: fills remaining width, dark background */
+
+.video-grid-panel {
+  flex: 1;
+  background: #030303;
+  overflow: hidden;
+  position: relative;
+}
+
+/* JS sets grid-template-columns and grid-template-rows on each tile add/remove */
+
+#video-grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* Video tile — stretches to fill its grid cell */
+
+.video-tile {
+  position: relative;
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.video-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #090909;
+}
+
+.video-tile-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.78));
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e4eef8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Audio-only tile — centres avatar within its grid cell */
+
+.audio-tile {
+  position: relative;
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 0;
+}
+
+.audio-tile .audio-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(74, 158, 255, 0.27);
+  border: 2px solid #4a9eff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #7bbfff;
+}
+
+.audio-tile .audio-name {
+  font-size: 0.85rem;
+  color: #607888;
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-tile.speaking {
+  border-color: #2a72cc;
+}
+
+.audio-tile.speaking .audio-avatar {
+  border-color: #4a9eff;
+  background: rgba(56, 130, 220, 0.13);
+}
+
+/* ─── SHARED CHAT PANE ───────────────────────────────────────────────────────── */
+
+.chat-pane {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #090909;
+}
+
+.chat-header {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+/* Both #chat-log (Rooms) and .chat-log (Random) share these */
+
+#chat-log,
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#chat-log::-webkit-scrollbar,
+.chat-log::-webkit-scrollbar       { width: 4px; }
+#chat-log::-webkit-scrollbar-track,
+.chat-log::-webkit-scrollbar-track { background: transparent; }
+#chat-log::-webkit-scrollbar-thumb,
+.chat-log::-webkit-scrollbar-thumb { background: #252525; border-radius: 4px; }
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chat-sender {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7bbfff;
+}
+
+.chat-time {
+  font-size: 0.7rem;
+  color: #2a3a4a;
+}
+
+.chat-text {
+  font-size: 0.85rem;
+  color: #c8d4e0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.system-message {
+  font-size: 0.78rem;
+  color: #2a3a4a;
+  text-align: center;
+  font-style: italic;
+}
+
+.chat-footer {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+.chat-footer input {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+}
+
+/* ─── RANDOM CALL SCREEN ─────────────────────────────────────────────────────── */
+
+#random-call-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Body: videos left, chat right */
+
+.random-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left: video area fills remaining height */
+
+.random-videos-area {
+  flex: 1;
+  position: relative;
+  background: #030303;
+  overflow: hidden;
+}
+
+/* Stranger's video fills the whole area */
+
+.random-remote-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.random-remote-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Your camera — picture-in-picture corner */
+
+.random-local-wrapper {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #252525;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.random-local-wrapper video {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+  background: #090909;
+}
+
+/* Name labels overlaid on each video */
+
+.random-video-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.72));
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #e4eef8;
+}
+
+.random-video-label--local {
+  font-size: 0.7rem;
+}
+
+/* Waiting overlay (searching / connecting) */
+
+.random-waiting-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #090909;
+  z-index: 5;
+}
+
+.random-waiting-overlay p {
+  color: #607888;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+/* Spinner */
+
+.random-spinner {
+  width: 46px;
+  height: 46px;
+  border: 4px solid #1e1e1e;
+  border-top-color: #c0392b;
+  border-radius: 50%;
+  animation: coterie-spin 0.75s linear infinite;
+}
+
+@keyframes coterie-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Random chat sidebar — same as .chat-pane but border on left */
+
+.random-chat-pane {
+  border-left: 1px solid #252525;
+}
+
+/* ── Room code fullscreen overlay ── */
+
+#room-code-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 9999;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+#room-code-overlay.hidden {
+  display: none;
+}
+
+#room-code-overlay-text {
+  font-family: monospace;
+  font-size: clamp(1.6rem, 6vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ddeeff;
+  word-break: break-all;
+  text-align: center;
+  padding: 0 32px;
+  line-height: 1.3;
+}
+
+.room-code-overlay-label {
+  font-size: 0.7rem;
+  color: #2a3a4a;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin: 0;
+}
+
+.room-code-overlay-dismiss {
+  font-size: 0.65rem;
+  color: #18283a;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+/* ── Participants floating panel ── */
+
+.participants-panel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 220px;
+  max-height: calc(100% - 16px);
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 10px;
+  overflow-y: auto;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.participants-panel.hidden {
+  display: none;
+}
+
+.participants-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+.participants-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #111111;
+}
+
+.participant-row:last-child {
+  border-bottom: none;
+}
+
+.participant-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #c8d4e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.participant-you-tag {
+  font-size: 0.65rem;
+  color: #2a3a4a;
+  margin-left: 4px;
+}
+
+/* ── Host action context menu ── */
+
+.host-action-menu {
+  position: fixed;
+  background: #131313;
+  border: 1px solid #252525;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+  z-index: 1000;
+  min-width: 172px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.host-action-menu.hidden {
+  display: none;
+}
+
+.host-action-menu-header {
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid #252525;
+  margin-bottom: 2px;
+}
+
+.host-action-menu-name {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #607888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 144px;
+}
+
+.host-action-btn {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.82rem;
+  color: #c8d4e0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+
+.host-action-btn:hover:not(:disabled) {
+  background: #252525;
+}
+
+.host-action-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.host-action-kick-btn {
+  color: #c0392b;
+}
+
+.host-action-ban-btn {
+  color: #f87171;
+}
+
+.host-action-divider {
+  height: 1px;
+  background: #252525;
+  margin: 4px 0;
+}
+
+/* Clickable participant name (host view only) */
+
+.participant-name--clickable {
+  cursor: pointer;
+  text-decoration: underline dotted #2a3a4a;
+}
+
+.participant-name--clickable:hover {
+  color: #e4eef8;
+  text-decoration-color: #607888;
+}
+
+/* Status icons shown next to force-muted / force-cam-off participants */
+
+.participant-status-icon {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.65;
+  flex-shrink: 0;
+  color: #c8d4e0;
+}
+
+.participant-status-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Gold "Host" badge shown next to the room owner's name */
+
+.participant-host-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(74, 158, 255, 0.15);
+  color: #4a9eff;
+  border: 1px solid rgba(74, 158, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Video tile speaking border (mirrors the existing audio-tile.speaking rules) ── */
+
+.video-tile.speaking {
+  border-color: #2a72cc;
+  box-shadow: 0 0 0 2px rgba(56, 130, 220, 0.45);
+}
+
+.video-tile.speaking .video-tile-label {
+  background: linear-gradient(transparent, rgba(56, 130, 220, 0.55));
+}
+
+/* ── Recent rooms panel ── */
+
+.recent-rooms-section {
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.recent-rooms-section.hidden {
+  display: none;
+}
+
+.recent-rooms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #111111;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.recent-rooms-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recent-rooms-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.recent-room-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #1e1e1e;
+  background: #090909;
+  transition: background 0.1s;
+}
+
+.recent-room-row:last-child {
+  border-bottom: none;
+}
+
+.recent-room-row:hover {
+  background: #111111;
+}
+
+.recent-room-id {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #4a9eff;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.recent-room-id:hover {
+  text-decoration: underline;
+}
+
+.recent-room-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(74, 158, 255, 0.12);
+  color: #7bbfff;
+  border: 1px solid rgba(74, 158, 255, 0.25);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.recent-room-time {
+  font-size: 0.7rem;
+  color: #2a3a4a;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.recent-room-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2a3a4a;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.recent-room-delete:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Monitor button — creator-only, purple accent to match the creator badge theme */
+.recent-room-monitor {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2a3a4a;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.recent-room-monitor:hover {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.12);
+}
+
+/* ── Import rooms section ── */
+
+.import-rooms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-rooms-divider {
+  text-align: center;
+  color: #2a3a4a;
+  font-size: 0.75rem;
+  position: relative;
+}
+
+.import-rooms-divider::before,
+.import-rooms-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 36%;
+  height: 1px;
+  background: #1e1e1e;
+}
+
+.import-rooms-divider::before { left: 0; }
+.import-rooms-divider::after  { right: 0; }
+
+.import-rooms-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.import-file-label input[type="file"] {
+  display: none;
+}
+
+.import-url-row {
+  display: flex;
+  gap: 6px;
+}
+
+.import-url-row input {
+  flex: 1;
+  font-size: 0.82rem;
+  padding: 5px 10px;
+}
+
+/* ── Creator badge (shown next to verified creator's name) ── */
+
+.participant-creator-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(74, 158, 255, 0.15);
+  color: #4a9eff;
+  border: 1px solid rgba(74, 158, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Creator verification modal ── */
+
+.creator-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.creator-modal.hidden {
+  display: none;
+}
+
+.creator-modal-card {
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 12px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.creator-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #4a9eff;
+  letter-spacing: -0.2px;
+}
+
+.creator-modal-desc {
+  font-size: 0.82rem;
+  color: #607888;
+  line-height: 1.6;
+  margin-top: -4px;
+}
+
+.creator-password-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #c8d4e0;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.creator-password-input:focus {
+  border-color: #4a9eff;
+}
+
+.creator-password-error {
+  font-size: 0.78rem;
+  color: #f87171;
+  min-height: 18px;
+  margin-top: -6px;
+}
+
+.creator-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* ── Creator status row (lobby) ── */
+
+.creator-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(74, 158, 255, 0.12);
+  border: 1px solid rgba(74, 158, 255, 0.4);
+  border-radius: 8px;
+}
+
+.creator-status.hidden {
+  display: none;
+}
+
+.creator-status-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a9eff;
+}
+
+.creator-status-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Creator: active servers list ── */
+
+.server-list-card {
+  max-width: 440px;
+}
+
+.server-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.server-list-empty {
+  font-size: 0.82rem;
+  color: #607888;
+  text-align: center;
+  padding: 18px 0;
+}
+
+.server-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 8px;
+}
+
+.server-list-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.server-list-host {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e4eef8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-list-meta {
+  font-size: 0.72rem;
+  color: #607888;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* ── Creator: Random moderation modal ── */
+
+.random-mod-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.random-mod-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* The "★ Moderate" toolbar button uses the creator purple accent */
+#random-mod-btn {
+  background: rgba(74, 158, 255, 0.18);
+  color: #7bbfff;
+  border: 1px solid rgba(74, 158, 255, 0.45);
+}
+
+/* Ban-length picker row inside the moderation modal */
+.random-mod-duration-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 8px;
+}
+
+.random-mod-duration-row label {
+  font-size: 0.8rem;
+  color: #607888;
+  font-weight: 600;
+}
+
+.random-mod-duration-row select {
+  flex: 0 0 auto;
+}
+
+/* "Your number" line on the Random lobby */
+.random-your-id {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #607888;
+}
+
+.random-your-id strong {
+  font-family: monospace;
+  color: #7bbfff;
+  letter-spacing: 0.04em;
+}
+
+/* ─── DEV DASHBOARD ─────────────────────────────────────────────────────────── */
+
+.dev-dashboard {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #090909;
+  display: flex;
+  flex-direction: column;
+}
+
+.dev-dashboard-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Header — two rows ───────────────────────────── */
+
+.dev-dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 18px 10px;
+  background: #080808;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+/* Row 1: title + badge on the left, action buttons on the right */
+.dev-dashboard-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dev-dashboard-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dev-dashboard-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e4eef8;
+  letter-spacing: -0.2px;
+}
+
+.dev-dashboard-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+/* Row 2: all stat chips in a wrappable row */
+.dev-dashboard-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dev-stat-chip {
+  font-size: 0.75rem;
+  color: #607888;
+  background: #111111;
+  border: 1px solid #1e1e1e;
+  border-radius: 20px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.dev-stat-chip strong {
+  color: #4a9eff;
+  margin-left: 3px;
+}
+
+/* Accent variant for accumulated/historical stats */
+.dev-stat-chip--accent {
+  border-color: rgba(74, 158, 255, 0.25);
+  background: rgba(74, 158, 255, 0.06);
+}
+
+.dev-stat-chip--accent strong {
+  color: #7bbfff;
+}
+
+/* Thin vertical rule separating live stats from accumulated stats */
+.dev-stat-divider {
+  width: 1px;
+  height: 16px;
+  background: #252525;
+  flex-shrink: 0;
+}
+
+.dev-last-refresh {
+  font-size: 0.7rem;
+  color: #2a3a4a;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.dev-dashboard-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Tab-based body — one panel visible at a time ── */
+
+.dev-dashboard-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  overflow: hidden;
+  background: #090909;
+}
+
+/* ── Individual panel ── */
+
+.dev-panel {
+  display: flex;
+  flex-direction: column;
+  background: #090909;
+  min-height: 0;
+}
+
+/* Hidden by default; only the active tab's panel is shown */
+.dev-panel[data-tab]               { display: none; }
+.dev-panel[data-tab].dev-panel--active {
+  display: flex;
+  overflow: hidden;
+}
+
+.dev-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #1e1e1e;
+  background: #080808;
+  flex-shrink: 0;
+}
+
+.dev-panel-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #607888;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.dev-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dev-control-label {
+  font-size: 0.72rem;
+  color: #2a3a4a;
+}
+
+/* Scrollable list inside each panel */
+
+.dev-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* ── Row ── */
+
+.dev-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #111111;
+  transition: background 0.1s;
+}
+
+.dev-row:hover { background: #111621; }
+
+.dev-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dev-row-name {
+  font-size: 0.84rem;
+  color: #e4eef8;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dev-row-meta {
+  font-size: 0.72rem;
+  color: #2a3a4a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dev-row-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* ── Pills ── */
+
+.dev-pill {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.dev-pill--monitor {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.12);
+  border: 1px solid rgba(74, 158, 255, 0.25);
+}
+
+/* ── Empty state ── */
+
+.dev-empty {
+  font-size: 0.78rem;
+  color: #2a3a4a;
+  text-align: center;
+  padding: 24px 14px;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════
+   TERMS OF SERVICE MODAL
+═══════════════════════════════════════════════════ */
+
+.tos-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #090909);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  z-index: 9999;
+  padding: 2rem 1rem;
+}
+
+.tos-card {
+  background: var(--surface, #111111);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  padding: 2rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.tos-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.tos-logo-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.tos-logo-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent, #4a9eff);
+}
+
+.tos-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text, #e4eef8);
+}
+
+.tos-intro {
+  margin: 0;
+  color: var(--text-muted, #607888);
+  font-size: .9rem;
+}
+
+.tos-body {
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  max-height: 45vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: .875rem;
+  color: var(--text, #e4eef8);
+  line-height: 1.6;
+}
+
+.tos-body h3 {
+  margin: 0 0 .4rem;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--accent, #4a9eff);
+}
+
+.tos-body p {
+  margin: 0;
+}
+
+.tos-body ul {
+  margin: .4rem 0 .4rem 1.2rem;
+  padding: 0;
+}
+
+.tos-body li {
+  margin-bottom: .3rem;
+}
+
+.tos-section {
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  padding-bottom: .8rem;
+}
+
+.tos-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tos-actions {
+  display: flex;
+  gap: .75rem;
+  justify-content: flex-end;
+  margin-top: .5rem;
+}
+
+.tos-note {
+  margin: 0;
+  font-size: .78rem;
+  color: var(--text-muted, #607888);
+  text-align: center;
+}
+
+/* ─── Declined screen ──────────────────────────── */
+
+.tos-declined-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #090909);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.tos-declined-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.tos-declined-icon {
+  font-size: 3rem;
+}
+
+.tos-declined-card h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--text, #e4eef8);
+}
+
+.tos-declined-card p {
+  margin: 0;
+  color: var(--text-muted, #607888);
+}
+
+
+/* ═══════════════════════════════════════════════════
+   GHOST OBSERVER PANEL
+═══════════════════════════════════════════════════ */
+
+.ghost-observer-panel {
+  position: fixed;
+  inset: 0;
+  background: #050505;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: .75rem;
+  overflow: hidden;
+}
+
+.ghost-observer-panel.hidden {
+  display: none;
+}
+
+.ghost-observer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 1rem;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ghost-observer-title-group {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+/* Buttons on the right side of the observer header */
+.ghost-observer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ghost-observer-eyecon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ghost-observer-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #e4eef8;
+}
+
+.ghost-observer-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: .18rem .5rem;
+  border-radius: 4px;
+  background: rgba(74, 158, 255, .22);
+  color: #7bbfff;
+  border: 1px solid rgba(74, 158, 255, .35);
+}
+
+.ghost-observer-room-label {
+  font-size: .8rem;
+  color: #607888;
+}
+
+.ghost-observer-status {
+  font-size: .82rem;
+  color: #607888;
+  text-align: center;
+  min-height: 1.2em;
+  flex-shrink: 0;
+}
+
+.ghost-observer-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: .75rem;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.ghost-observer-tile {
+  position: relative;
+  background: #0d0d0d;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-observer-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ghost-observer-tile .ghost-observer-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #181818;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #e4eef8;
+}
+
+.ghost-observer-label {
+  position: absolute;
+  bottom: .45rem;
+  left: .45rem;
+  font-size: .78rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  padding: .2rem .45rem;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.ghost-observer-tile-waiting {
+  font-size: .82rem;
+  color: #607888;
+}
+
+/* Actions bar overlaid at the bottom of each observer tile */
+.ghost-observer-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 4px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(3px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.ghost-observer-tile:hover .ghost-observer-actions,
+.ghost-observer-tile:focus-within .ghost-observer-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tab bar — always visible in the dashboard */
+.dev-tab-bar {
+  display: flex;
+  flex-shrink: 0;
+  background: #080808;
+  border-bottom: 1px solid #1e1e1e;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dev-tab {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #607888;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.dev-tab:hover { color: #c8d4e0; }
+
+.dev-tab--active {
+  color: #e4eef8;
+  border-bottom-color: #4a9eff;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEV DASHBOARD — BROADCAST PANEL
+═══════════════════════════════════════════════════ */
+
+.dev-panel--broadcast {
+  grid-column: auto;
+  min-height: unset;
+}
+
+.dev-broadcast-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Field label ── */
+
+.dev-broadcast-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dev-broadcast-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #607888;
+}
+
+/* ── Message textarea ── */
+
+.dev-broadcast-textarea {
+  width: 100%;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #e4eef8;
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 8px 10px;
+  outline: none;
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+
+.dev-broadcast-textarea:focus { border-color: #4a9eff; }
+
+/* ── Options row: duration + target side-by-side on desktop ── */
+
+.dev-broadcast-options {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Duration ── */
+
+.dev-broadcast-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dev-broadcast-duration-input {
+  width: 66px;
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #e4eef8;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+
+.dev-broadcast-duration-input::-webkit-outer-spin-button,
+.dev-broadcast-duration-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.dev-broadcast-duration-input:focus { border-color: #4a9eff; }
+
+.dev-broadcast-hint {
+  font-size: 0.72rem;
+  color: #2a3a4a;
+  white-space: nowrap;
+}
+
+/* ── Target radio group ── */
+
+.dev-broadcast-target {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dev-broadcast-radio {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: #c8d4e0;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.dev-broadcast-radio input[type="radio"] {
+  accent-color: #4a9eff;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.dev-broadcast-room-input {
+  background: #090909;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #e4eef8;
+  font-size: 0.82rem;
+  font-family: monospace;
+  padding: 4px 8px;
+  outline: none;
+  width: 220px;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.dev-broadcast-room-input:focus  { border-color: #4a9eff; }
+.dev-broadcast-room-input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Actions row ── */
+
+.dev-broadcast-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dev-broadcast-status {
+  font-size: 0.78rem;
+  color: #607888;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   BROADCAST OVERLAY
+   Shown to all room users when admin sends a broadcast.
+   Dismiss button is locked until the countdown expires.
+═══════════════════════════════════════════════════ */
+
+.broadcast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.broadcast-overlay.hidden { display: none; }
+
+.broadcast-card {
+  background: #111111;
+  border: 1px solid #252525;
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  animation: broadcastIn 0.22s ease;
+}
+
+@keyframes broadcastIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1); }
+}
+
+.broadcast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.broadcast-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.broadcast-timer-badge {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  color: #607888;
+  min-width: 36px;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+.broadcast-message-text {
+  font-size: 1rem;
+  color: #e4eef8;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.broadcast-dismiss-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: filter 0.15s, transform 0.1s, opacity 0.15s !important;
+}
+
+.broadcast-dismiss-btn:disabled {
+  opacity: 0.38 !important;
+  cursor: not-allowed;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ≤ 640px  → phone portrait
+   641–900px → tablet / landscape phone
+═══════════════════════════════════════════════════ */
+
+/* ── Global: kill 300ms tap delay on all buttons ─── */
+.btn { touch-action: manipulation; }
+
+/* ── Larger tap targets on any touch device ─────── */
+@media (hover: none) and (pointer: coarse) {
+  .btn    { min-height: 44px; padding: 10px 18px; }
+  .btn-sm { min-height: 40px; padding: 8px  14px; }
+  .btn-xs { min-height: 34px; padding: 6px  10px; font-size: 0.75rem; }
+}
+
+/* ══════════════════════════════════════════════════
+   PHONE PORTRAIT  ≤ 640px
+══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Prevent iOS Safari auto-zoom when focusing inputs */
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* ── Home screen ──────────────────────────────── */
+  .home-hero    { padding: 1.5rem 1rem; }
+  .home-tagline { font-size: 0.9rem; }
+
+  .home-mode-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ── Username / Lobby / Random lobby: full-screen cards */
+  #username-screen,
+  #lobby-screen,
+  #random-lobby-screen {
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .username-card,
+  .lobby-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    min-height: 100svh;
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 1.25rem;
+    justify-content: center;
+  }
+
+  .username-heading { font-size: 1.3rem; }
+
+  /* ── Room toolbar: wrap into two rows ─────────── */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .toolbar-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toolbar-right {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  /* Room ID moves to its own second row */
+  .toolbar-center {
+    order: 9;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    font-size: 0.78rem;
+    gap: 6px;
+  }
+
+  #room-id-label {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+  }
+
+  /* Hide lower-priority toolbar buttons on phones */
+  #screen-share-btn,
+  #raise-hand-btn { display: none; }
+
+  #media-controls {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Full-height screens respect the dynamic viewport */
+  #app-screen,
+  #random-call-screen {
+    height: 100svh;
+    max-height: 100svh;
+    overflow: hidden;
+  }
+
+  /* ── Workspace: video on top, chat strip on bottom */
+  .workspace {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .video-grid-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .chat-pane {
+    width: 100%;
+    height: 200px;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 1px solid #252525;
+  }
+
+  /* ── Random call screen ────────────────────────── */
+  .random-body {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .random-videos-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .random-chat-pane {
+    width: 100%;
+    height: 150px;
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 1px solid #252525;
+  }
+
+  /* Smaller picture-in-picture */
+  .random-local-wrapper {
+    width: 80px;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  .random-local-wrapper video {
+    height: 62px;
+  }
+
+  /* ── Participants panel: bottom sheet ──────────── */
+  .participants-panel {
+    position: fixed !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto !important;
+    width: 100%;
+    max-height: 60svh;
+    border-radius: 14px 14px 0 0;
+    overflow-y: auto;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    z-index: 500;
+  }
+
+  .participants-header {
+    position: sticky;
+    top: 0;
+    background: inherit;
+    z-index: 1;
+  }
+
+  /* ── Modals: slide up from bottom ──────────────── */
+  .creator-modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .creator-modal-card,
+  .server-list-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 88svh;
+    overflow-y: auto;
+  }
+
+  /* ── ToS overlay ───────────────────────────────── */
+  .tos-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .tos-card {
+    border-radius: 16px 16px 0 0;
+    min-height: 88svh;
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .tos-body { max-height: 42svh; }
+
+  .tos-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .tos-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── Host action context menu: centre on screen ── */
+  .host-action-menu {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    bottom: 90px !important;
+    top: auto !important;
+    width: 200px;
+  }
+
+  /* ── Ghost observer panel ──────────────────────── */
+  .ghost-observer-panel {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .ghost-observer-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .ghost-observer-title-group {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .ghost-observer-header-actions {
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: flex-end;
+  }
+
+  /* On mobile the ghost observer header shrinks to one compact row */
+  .ghost-observer-badge,
+  .ghost-observer-room-label { display: none; }
+
+  .ghost-observer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Always show action buttons — no hover state on touch */
+  .ghost-observer-actions { opacity: 1; }
+
+  /* ── Recent rooms: truncate long IDs ──────────── */
+  .recent-room-id {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Random mod modal ──────────────────────────── */
+  .random-mod-duration-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .dev-panel-controls { flex-wrap: wrap; gap: 5px; }
+  .dev-panel-filter-input { width: 130px; }
+
+  /* Broadcast overlay: near-full screen card from bottom */
+  .broadcast-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .broadcast-card {
+    border-radius: 16px 16px 0 0;
+    max-width: 100%;
+    padding: 24px 20px 20px;
+    gap: 14px;
+  }
+
+  /* Dev broadcast panel: stack options vertically */
+  .dev-broadcast-options {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dev-broadcast-room-input { width: 100%; }
+
+  .dev-broadcast-target {
+    flex-direction: column;
+  .toolbar { padding: 8px 12px; }
+
+  /* Smaller PiP than desktop, bigger than phone */
+  .random-local-wrapper       { width: 110px; }
+  .random-local-wrapper video { height: 88px; }
+
+  /* Modals don't need to go full-screen on tablet */
+  .creator-modal-card,
+  .server-list-card { max-width: 520px; }
+
+  /* Compact single-row header — strip excess padding */
+  .dev-dashboard-header {
+    padding: 6px 14px;
+    gap: 10px;
+  }
+
+  /* Hide pop-out (window.open on mobile = same tab) and reload-all */
+  #dev-popout-btn,
+  #dev-reload-all-btn  { display: none; }
+
+  /* Drop historical accent stats to keep header short */
+  .dev-stat-chip--accent,
+  .dev-stat-divider    { display: none; }
+
+  /* Touch-friendly buttons in rows */
+  .dev-row-actions .btn-xs {
+    min-height: 32px;
+    padding: 5px 9px;
+  }
+
+
+/* ══════════════════════════════════════════════════
+   LANDSCAPE SHORT VIEWPORT (any width, height ≤ 480px)
+   Phones in landscape — maximise vertical space.
+══════════════════════════════════════════════════ */
+@media (orientation: landscape) and (max-height: 480px) {
+
+  /* Tab bar: ultra-compact in landscape — reclaim vertical space */
+  .dev-tab-bar { flex-shrink: 0; }
+  .dev-tab { padding: 6px 10px; font-size: 0.72rem; }
+
+  /* Ultra-compact header: single tight row */
+  .dev-dashboard-header {
+    padding: 4px 12px;
+    gap: 8px;
+    min-height: 0;
+  }
+
+  /* Shrink the badge so the title fits in one line */
+  .dev-dashboard-badge { display: none; }
+
+  /* Keep only live stat chips; hide refresh timestamp */
+  .dev-stat-chip--accent,
+  .dev-stat-divider,
+  #dev-last-refresh { display: none; }
+
+  /* Smaller panel headers to give list area maximum height */
+  .dev-panel-header { padding: 4px 10px; }
+  .dev-panel-title  { font-size: 0.68rem; }
+
+  /* Tighter rows */
+  .dev-row { padding: 6px 10px; }
+
+  /* Compact overlay in landscape — side-by-side header + shorter card */
+  .broadcast-card {
+    max-width: 520px;
+    padding: 16px 20px 14px;
+    gap: 10px;
+  }
+
+/* ═══════════════════════════════════════════════════
+   CREATE ROOM MODAL — form fields
+   ═══════════════════════════════════════════════════ */
+
+.create-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.create-room-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a0a0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.create-room-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Wrapper that lets the char counter sit inside the input */
+.create-room-input-wrapper {
+  position: relative;
+}
+
+.create-room-input-wrapper .creator-password-input {
+  width: 100%;
+  padding-right: 52px;
+  box-sizing: border-box;
+}
+
+.create-room-counter {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: #555;
+  pointer-events: none;
+  user-select: none;
+}
+
+.create-room-select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #111;
+  color: #e4eef8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+
+.create-room-select:focus {
+  border-color: #b8973e;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════
+   TOOLBAR — room name badge
+   ═══════════════════════════════════════════════════ */
+
+.room-name-label {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e4eef8;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 9px;
+  background: rgba(74, 158, 255, 0.14);
+  border: 1px solid rgba(74, 158, 255, 0.35);
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
+.room-name-label.hidden {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   PARTICIPANT PANEL — permanent user ID badge
+   ═══════════════════════════════════════════════════ */
+
+.participant-user-number {
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: #666;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   GHOST OBSERVER — user number on tile label
+   ═══════════════════════════════════════════════════ */
+
+.ghost-observer-user-number {
+  font-size: 0.7rem;
+  font-family: monospace;
+  opacity: 0.65;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEV DASHBOARD — Pull to Room section
+   ═══════════════════════════════════════════════════ */
+
+.dev-pull-section {
+  padding: 0 0 6px;
+}
+
+.dev-pull-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.dev-pull-row input[type="text"] {
+  flex: 1;
+  min-width: 110px;
+  font-size: 0.82rem;
+  padding: 5px 8px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #e4eef8;
+  outline: none;
+}
+
+.dev-pull-row input[type="text"]:focus {
+  border-color: #b8973e;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEV DASHBOARD — Rooms panel: room card + participant list
+   ═══════════════════════════════════════════════════ */
+
+/* ── Room card ─────────────────────────────────────────── */
+.dev-room-wrap {
+  background: #090909;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+/* Room header row — slightly elevated from the card background */
+.dev-room-wrap > .dev-row {
+  background: #111111;
+  padding: 9px 12px;
+  border-bottom: 1px solid #1c1c1c;
+  margin: 0;
+}
+
+/* ── Participant sub-list ───────────────────────────────── */
+.dev-room-participants {
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Each participant chip row */
+.dev-room-participant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.dev-room-participant-row:hover {
+  background: #141414;
+  border-color: #282828;
+}
+
+/* Avatar circle with initial letter */
+.dev-room-participant-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(74, 158, 255, 0.18);
+  border: 1px solid rgba(74, 158, 255, 0.35);
+  color: #7bbfff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Participant name */
+.dev-room-participant-name {
+  font-size: 0.83rem;
+  color: #d4d4e8;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right-side actions (ID chip + Copy button) */
+.dev-room-participant-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+/* Permanent ID chip */
+.dev-room-participant-number {
+  font-size: 0.67rem;
+  font-family: monospace;
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.13);
+  border: 1px solid rgba(74, 158, 255, 0.28);
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── Search results view ──────────────────────────────────── */
+
+/* Room name heading in search results */
+.dev-room-find-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #4a9eff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 2px 5px;
+  border-top: 1px solid #1e1e1e;
+  margin-top: 2px;
+}
+
+.dev-room-find-header:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 4px;
+}
+
+/* Participant result rows in search view */
+.dev-row--participant {
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  border-radius: 7px;
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  transition: background 0.12s;
+}
+
+.dev-row--participant:hover {
+  background: #141414;
+  border-color: #282828;
+}
+
+/* ═══════════════════════════════════════════════════
+   ROOM PASSWORD — toolbar lock badge
+   ═══════════════════════════════════════════════════ */
+
+.room-lock-badge {
+  font-size: 0.8rem;
+  padding: 3px 7px;
+  background: rgba(74, 158, 255, 0.12);
+  border: 1px solid rgba(74, 158, 255, 0.35);
+  border-radius: 6px;
+  color: #7bbfff;
+  user-select: none;
+  vertical-align: middle;
+  cursor: default;
+}
+
+.room-lock-badge.hidden { display: none; }
+
+/* ═══════════════════════════════════════════════════
+   CREATE ROOM MODAL — password field show/hide button
+   ═══════════════════════════════════════════════════ */
+
+/* Wrapper that positions the toggle button inside the input */
+.create-room-pw-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.create-room-pw-wrapper .creator-password-input {
+  width: 100%;
+  padding-right: 40px;
+  box-sizing: border-box;
+}
+
+.create-room-pw-toggle {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 2px;
+  color: #888;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.create-room-pw-toggle:hover { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════
+   CHAT HISTORY — divider shown between restored and live messages
+   ═══════════════════════════════════════════════════ */
+
+.chat-history-divider {
+  text-align: center;
+  font-size: 0.68rem;
+  color: #555;
+  padding: 6px 0;
+  position: relative;
+  user-select: none;
+}
+
+.chat-history-divider::before,
+.chat-history-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: #2a2a2a;
+}
+
+.chat-history-divider::before { left: 4px; }
+.chat-history-divider::after  { right: 4px; }
+
+
+
+
+
+/* ═══════════════════════════════════════════════════
+   LOBBY — mirrors the #lobby-screen pattern that works
+═══════════════════════════════════════════════════ */
+
+#room-browser-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  background: #060606;
+  overflow-y: auto;
+}
+
+/* Card — same technique as .lobby-card but styled for the room list */
+.lob-card {
+  width: 100%;
+  max-width: 540px;
+  background: #111111;
+  border: 1px solid #252525;
+  border-top: 3px solid #4a9eff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.lob-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 18px;
+  background: #111111;
+  border-bottom: 1px solid #1e1e1e;
+  gap: 12px;
+}
+
+.lob-brand { display: flex; flex-direction: column; gap: 4px; }
+
+.lob-wordmark {
+  font-family: Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4a9eff;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.lob-sub {
+  font-size: 0.58rem;
+  color: #283848;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.lob-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.lob-who {
+  font-size: 0.78rem;
+  color: #6b6050;
+  font-style: italic;
+}
+
+.lob-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(74,158,255,0.1);
+  border: 1px solid rgba(74,158,255,0.22);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #4a9eff;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ── Creator bar ── */
+.lob-creator-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 24px;
+  background: rgba(74,158,255,0.07);
+  border-bottom: 1px solid rgba(74,158,255,0.18);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7bbfff;
+  gap: 10px;
+}
+.lob-creator-bar.hidden { display: none !important; }
+
+/* ── Filter row ── */
+.lob-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #0e0e0e;
+}
+
+.lob-list-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #283848;
+}
+
+.lob-hide-pw {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #6b6050;
+  cursor: pointer;
+  user-select: none;
+}
+.lob-hide-pw input { accent-color: #4a9eff; cursor: pointer; }
+
+/* ── Col labels ── */
+.lob-col-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 26px;
+  align-items: center;
+  background: #0a0a0a;
+  border-bottom: 1px solid #141414;
+}
+.lob-col-labels span {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #18283a;
+}
+
+/* ── Room list (scrollable, max 4 rows visible) ── */
+.lob-rooms {
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #0e0e0e;
+}
+.lob-rooms::-webkit-scrollbar { width: 3px; }
+.lob-rooms::-webkit-scrollbar-thumb { background: rgba(74,158,255,0.2); border-radius: 4px; }
+
+/* Empty state */
+.lob-empty {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 0.84rem;
+  color: #283848;
+  font-style: italic;
+  line-height: 1.8;
+}
+
+/* Room row */
+.lob-row {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  min-height: 64px;
+  background: #111111;
+  border-bottom: 1px solid #161616;
+  border-left: 3px solid transparent;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.1s, border-left-color 0.12s;
+}
+.lob-row:hover { background: #161616; border-left-color: #4a9eff; }
+.lob-row:last-child { border-bottom: none; }
+
+.lob-row-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lob-lock-icon { color: #4a9eff; opacity: 0.8; flex-shrink: 0; display: flex; }
+
+.lob-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.lob-rname {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #c8d4e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lob-row:hover .lob-rname { color: #e4eef8; }
+
+.lob-rhost { font-size: 0.68rem; color: #283848; }
+
+.lob-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.lob-rcount {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4a5a6a;
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lob-row:hover .lob-rcount { color: #4a9eff; }
+
+.lob-join-btn {
+  padding: 5px 13px;
+  background: transparent;
+  border: 1px solid rgba(74,158,255,0.4);
+  border-radius: 5px;
+  color: #4a9eff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.lob-join-btn:hover { background: rgba(74,158,255,0.12); border-color: #4a9eff; }
+
+/* ── Footer ── */
+.lob-foot {
+  padding: 16px 24px 20px;
+  background: #111111;
+  border-top: 1px solid #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lob-id-row { display: flex; gap: 8px; }
+
+.lob-id-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  background: #0d0d0d;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #c8d4e0;
+  font-size: 0.83rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.lob-id-row input:focus { border-color: #4a9eff; box-shadow: 0 0 0 3px rgba(74,158,255,0.1); }
+.lob-id-row input::placeholder { color: #18283a; }
+
+.lob-btn-sec {
+  padding: 9px 14px;
+  background: #181818;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  color: #c8d4e0;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.lob-btn-sec:hover { background: #1e1e1e; }
+
+.lob-status-text {
+  min-height: 14px;
+  font-size: 0.75rem;
+  color: #6b6050;
+  text-align: center;
+  margin: 0;
+}
+.lob-status-text.error { color: #f87171; }
+
+.lob-main-btns { display: flex; gap: 10px; }
+
+.lob-btn-create {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #4a9eff 0%, #1e6bcc 100%);
+  border: none;
+  border-radius: 7px;
+  color: #111111;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.lob-btn-create:hover  { filter: brightness(1.1); }
+.lob-btn-create:active { transform: scale(0.98); }
+.lob-btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lob-btn-refresh {
+  padding: 12px 18px;
+  background: #181818;
+  border: 1px solid #252525;
+  border-radius: 7px;
+  color: #c8d4e0;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+.lob-btn-refresh:hover    { background: #1e1e1e; }
+.lob-btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Mobile tweaks */
+@media (max-width: 520px) {
+  #room-browser-screen { padding: 0; align-items: stretch; }
+  .lob-card { border-radius: 0; border-left: none; border-right: none; border-top: none; box-shadow: none; max-width: 100%; min-height: 100vh; }
+  .lob-head { padding: 16px 18px 14px; }
+  .lob-list-head, .lob-col-labels, .lob-row, .lob-foot { padding-left: 18px; padding-right: 18px; }
+  .lob-rooms { max-height: none; flex: 1; }
+  .lob-card  { display: flex; flex-direction: column; }
+}
+/* ═══════════════════════════════════════════════════
+   NOIR + OBSIDIAN GOLD — DESIGN SYSTEM OVERRIDES
+   Applied on top of the base stylesheet to enforce
+   the combined theme.
+═══════════════════════════════════════════════════ */
+
+/* ── Body base ── */
+body {
+  background: #090909;
+  color: #c8d4e0;
+}
+
+/* ── Primary button: gold bg + dark text ── */
+.btn-primary {
+  background: linear-gradient(135deg, #4a9eff 0%, #2a72cc 100%);
+  color: #111111 !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.btn-primary:hover { filter: brightness(1.12); }
+
+/* ── Secondary button: dark charcoal ── */
+.btn-secondary {
+  background: #181818;
+  color: #c8d4e0;
+  border: 1px solid #2a2a2a;
+}
+.btn-secondary:hover { background: #1e1e1e; border-color: #3a3428; }
+
+/* ── Danger button: deep crimson ── */
+.btn-danger {
+  background: #6b1111;
+  color: #fca5a5;
+}
+.btn-danger:hover { filter: brightness(1.15); }
+
+/* ── Muted/active states ── */
+.btn-muted {
+  background: #5a1010 !important;
+  color: #fca5a5 !important;
+  border-color: #7a1515 !important;
+}
+
+/* ── Hand-raise active ── */
+.btn-hand-active {
+  background: #6b4a10 !important;
+  color: #7bbfff !important;
+}
+
+/* ── Inputs: dark charcoal + gold focus ── */
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  background: #0d0d0d;
+  border-color: #252525;
+  color: #c8d4e0;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.12);
+}
+select:focus { border-color: #4a9eff; }
+
+/* ── Logo: serif wordmark ── */
+.rb-logo,
+.home-logo,
+.app-logo,
+.lobby-logo,
+.username-logo span,
+.tos-logo-name {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  letter-spacing: 0.04em;
+  color: #4a9eff;
+}
+
+/* ── Gold underline decoration on logo ── */
+.rb-logo::after,
+.home-logo::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #4a9eff, transparent);
+  margin-top: 3px;
+  opacity: 0.5;
+}
+
+/* ── Room browser: gold row hover ── */
+.rb-room-row:hover {
+  background: #111111;
+  border-left: 2px solid #4a9eff;
+  padding-left: 18px;
+}
+.rb-room-row {
+  border-left: 2px solid transparent;
+  transition: background 0.12s, border-color 0.12s, padding-left 0.12s;
+}
+
+/* ── Toolbar: gold accent on logo ── */
+.toolbar {
+  background: #0d0d0d;
+  border-bottom-color: #1e1e1e;
+}
+
+/* ── Card panels: very subtle gold border ── */
+.lobby-card,
+.username-card,
+.creator-modal-card {
+  border-color: #1e1e1e;
+  background: #111111;
+}
+.lobby-card:hover,
+.creator-modal-card:hover {
+  border-color: rgba(74, 158, 255, 0.18);
+}
+
+/* ── Home mode card: gold hover glow ── */
+.home-mode-card:hover {
+  border-color: rgba(74, 158, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(74, 158, 255, 0.08);
+}
+
+/* ── Participants panel: gold host badge ── */
+.participant-host-badge {
+  background: rgba(74, 158, 255, 0.12);
+  color: #7bbfff;
+  border-color: rgba(74, 158, 255, 0.35);
+}
+
+/* ── Creator badge: gold ── */
+.participant-creator-badge,
+.creator-status,
+.rb-creator-bar {
+  background: rgba(74, 158, 255, 0.08);
+  border-color: rgba(74, 158, 255, 0.3);
+  color: #7bbfff;
+}
+.creator-status-label,
+.rb-creator-bar span { color: #7bbfff; }
+
+/* ── Chat sender name: gold ── */
+.chat-sender { color: #4a9eff; }
+
+/* ── Room name label in toolbar ── */
+.room-name-label {
+  background: rgba(74, 158, 255, 0.1);
+  border-color: rgba(74, 158, 255, 0.3);
+  color: #7bbfff;
+}
+
+/* ── Room lock badge ── */
+.room-lock-badge {
+  background: rgba(74, 158, 255, 0.1);
+  border-color: rgba(74, 158, 255, 0.3);
+  color: #7bbfff;
+}
+
+/* ── Room browser lock icon: gold ── */
+.rb-lock-icon { color: #4a9eff; }
+
+/* ── Speaking indicator: gold instead of green ── */
+.video-tile.speaking {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.35);
+}
+.audio-tile.speaking {
+  border-color: #4a9eff;
+}
+.audio-tile.speaking .audio-avatar {
+  border-color: #7bbfff;
+  background: rgba(74, 158, 255, 0.1);
+}
+
+/* ── Audio avatar ── */
+.audio-tile .audio-avatar {
+  background: rgba(74, 158, 255, 0.15);
+  border-color: #4a9eff;
+  color: #7bbfff;
+}
+
+/* ── Dev dashboard gold accent ── */
+.dev-stat-chip strong { color: #4a9eff; }
+.dev-tab--active { border-bottom-color: #4a9eff; color: #e4eef8; }
+
+/* ── Scrollbar: dark + gold thumb ── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e2e3e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #4a9eff; }
+
+/* ── ToS accent color ── */
+.tos-body h3,
+.creator-modal-title { color: #4a9eff; }
+
+/* ── Ghost observer badge ── */
+.ghost-observer-badge {
+  background: rgba(74, 158, 255, 0.15);
+  color: #7bbfff;
+  border-color: rgba(74, 158, 255, 0.3);
+}
+
+/* ── Recent room tag ── */
+.recent-room-tag {
+  background: rgba(74, 158, 255, 0.1);
+  color: #4a9eff;
+  border-color: rgba(74, 158, 255, 0.2);
+}
+.recent-room-id { color: #4a9eff; }
+
+/* ── Mode badge ── */
+.mode-badge--rooms {
+  background: rgba(74, 158, 255, 0.1);
+  color: #4a9eff;
+  border-color: rgba(74, 158, 255, 0.3);
+}
+
+/* ── Broadcast overlay label ── */
+.broadcast-label {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.08);
+  border-color: rgba(74, 158, 255, 0.25);
+}
+
+/* ── Participant number badge ── */
+.dev-room-participant-number {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+  border-color: rgba(74, 158, 255, 0.2);
+}
+.dev-room-participant-avatar {
+  background: rgba(74, 158, 255, 0.12);
+  border-color: rgba(74, 158, 255, 0.3);
+  color: #7bbfff;
+}
+
+/* ── Dev panel filter ── */
+.dev-panel-filter-input {
+  background: #0d0d0d;
+  border: 1px solid #252525;
+  border-radius: 5px;
+  color: #c8d4e0;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  outline: none;
+}
+.dev-panel-filter-input:focus { border-color: #4a9eff; }
+
+/* ── Thin gold line at very top of the page ── */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #4a9eff 30%, #7bbfff 50%, #4a9eff 70%, transparent 100%);
+  z-index: 99999;
+  pointer-events: none;
+}
