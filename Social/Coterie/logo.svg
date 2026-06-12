@@ -1,19 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="gold" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%"  stop-color="#b8d8ff"/>
+      <stop offset="50%" stop-color="#4a9eff"/>
+      <stop offset="100%" stop-color="#1a4a90"/>
+    </linearGradient>
+  </defs>
 
   <!-- Dark background -->
-  <rect width="100" height="100" rx="22" fill="#0f172a"/>
+  <rect width="100" height="100" rx="20" fill="#0d0d0d"/>
 
-  <!-- 1. Back half of portal ring (top arc — far side) -->
-  <path d="M 24 62 A 26 10 0 0 1 76 62"
-        stroke="#3b82f6" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <!-- Subtle border -->
+  <rect x="4" y="4" width="92" height="92" rx="17" fill="none"
+        stroke="#4a9eff" stroke-width="0.8" stroke-opacity="0.35"/>
 
-  <!-- 2. Arrow shaft + solid arrowhead (between the two ring halves) -->
-  <line x1="50" y1="12" x2="50" y2="59"
-        stroke="#f97316" stroke-width="8" stroke-linecap="round"/>
-  <polygon points="50,76 37,53 63,53" fill="#f97316"/>
+  <!--
+    Three interlocked rings: A (left) in front of B (middle), B in front of C (right).
+    Rings: A cx=30, B cx=50, C cx=70 — all cy=50, r=16.
+    A–B intersect at x=40, y=±12.5 from cy  →  (40, 37.5) and (40, 62.5)
+    B–C intersect at x=60, y=±12.5 from cy  →  (60, 37.5) and (60, 62.5)
 
-  <!-- 3. Front half of portal ring (bottom arc — near side, on top of arrow) -->
-  <path d="M 24 62 A 26 10 0 0 0 76 62"
-        stroke="#3b82f6" stroke-width="11" fill="none" stroke-linecap="round"/>
+    Each ring only draws its visible arc (the portion not hidden behind the ring in front):
+      C: large clockwise arc from (60,37.5) → right side of C → (60,62.5)
+      B: large clockwise arc from (40,37.5) → right side of B → (40,62.5)
+      A: full circle (frontmost, nothing hides it)
+  -->
 
+  <!-- Ring C — rightmost, drawn first (backmost layer) -->
+  <path d="M 60 37.5 A 16 16 0 1 1 60 62.5"
+        fill="none" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="butt"/>
+
+  <!-- Ring B — middle layer; right arc visible, left arc hidden behind A -->
+  <path d="M 40 37.5 A 16 16 0 1 1 40 62.5"
+        fill="none" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="butt"/>
+
+  <!-- Ring A — leftmost, drawn last (frontmost layer), full circle -->
+  <circle cx="30" cy="50" r="16"
+          fill="none" stroke="url(#gold)" stroke-width="3.5"/>
 </svg>
