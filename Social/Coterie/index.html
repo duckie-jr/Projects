@@ -9,14 +9,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
   <link rel="stylesheet" href="./style.css" />
-  <!-- main.js runs first; dev.js (creator/developer-only UI) runs right after and shares its global scope. -->
   <script src="./main.js" defer></script>
-  <script src="./dev.js" defer></script>
+  <script src="./rooms.js" defer></script>
+  <script src="./dev/dev.js" defer></script>
 
   <style id="lobby-inline-styles">
   /* ─── LOBBY SCREEN ─────────────────────────────── */
   #room-browser-screen {
     display: flex; flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     height: 100vh;
     background: #080808;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -28,6 +30,7 @@
     display: flex; align-items: center;
     justify-content: space-between;
     padding: 0 28px; height: 58px;
+    width: 100%;
     background: #0f0f0f;
     border-bottom: 2px solid #4a9eff;
     flex-shrink: 0; gap: 16px;
@@ -39,11 +42,11 @@
     color: #4a9eff; letter-spacing: .06em;
   }
   .lob-nav-sub {
-    font-size: .62rem; color: #283848;
+    font-size: .68rem; color: #4a6278;
     text-transform: uppercase; letter-spacing: .18em;
   }
   .lob-nav-right { display: flex; align-items: center; gap: 10px; }
-  .lob-welcome { font-size: .82rem; color: #4a5a6a; font-style: italic; }
+  .lob-welcome { font-size: .82rem; color: #7a8a9a; font-style: italic; }
   .lob-pill {
     padding: 2px 11px; border-radius: 20px;
     background: rgba(74,158,255,.1);
@@ -79,12 +82,12 @@
     margin-bottom: 12px;
   }
   .lob-section-title {
-    font-size: .65rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .16em; color: #283848;
+    font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .14em; color: #4a6278;
   }
   .lob-hide-pw {
     display: flex; align-items: center; gap: 6px;
-    font-size: .78rem; color: #4a5a6a; cursor: pointer; user-select: none;
+    font-size: .78rem; color: #7a8a9a; cursor: pointer; user-select: none;
   }
   .lob-hide-pw input { accent-color: #4a9eff; cursor: pointer; }
 
@@ -98,8 +101,8 @@
     margin-bottom: 4px;
   }
   .lob-thead span {
-    font-size: .6rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .1em; color: #1e2e3e;
+    font-size: .67rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .09em; color: #3a5568;
   }
   .lob-thead span:nth-child(2) { text-align: center; }
   .lob-thead span:nth-child(3) { text-align: right; }
@@ -112,7 +115,7 @@
   /* Empty state */
   .lob-empty {
     padding: 52px 16px; text-align: center;
-    font-size: .88rem; color: #1e2e3e;
+    font-size: .88rem; color: #4a6278;
     font-style: italic; line-height: 1.8;
   }
 
@@ -122,17 +125,18 @@
     grid-template-columns: 1fr 120px 100px;
     align-items: center;
     padding: 0 16px; min-height: 64px;
-    background: #111111;
-    border: 1px solid #1a1a1a;
+    background: #141414;
+    border: 1px solid #252525;
     border-left: 3px solid transparent;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background .12s, border-left-color .15s;
+    transition: background .12s, border-left-color .15s, box-shadow .15s;
     gap: 12px;
   }
   .lob-row:hover {
-    background: #161616; border-left-color: #4a9eff;
-    border-color: #242424; border-left-color: #4a9eff;
+    background: #1a1a1a;
+    border-color: #2e2e2e; border-left-color: #4a9eff;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
   }
 
   /* Name cell */
@@ -144,11 +148,11 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .lob-row:hover .lob-rname { color: #e4eef8; }
-  .lob-rhost { font-size: .67rem; color: #203040; }
+  .lob-rhost { font-size: .68rem; color: #3a5870; }
 
   /* Count cell */
   .lob-row-count {
-    font-size: .85rem; font-weight: 600; color: #3a4a5a;
+    font-size: .85rem; font-weight: 600; color: #5a7888;
     text-align: center; font-variant-numeric: tabular-nums;
   }
   .lob-row:hover .lob-row-count { color: #4a9eff; }
@@ -156,17 +160,18 @@
   /* Join cell */
   .lob-row-action { display: flex; justify-content: flex-end; }
   .lob-join-btn {
-    padding: 6px 14px; border: 1px solid rgba(74,158,255,.35);
-    border-radius: 5px; background: transparent;
-    color: #4a9eff; font-size: .74rem; font-weight: 600;
+    padding: 7px 16px; border: 1px solid rgba(74,158,255,.45);
+    border-radius: 6px; background: rgba(74,158,255,.06);
+    color: #4a9eff; font-size: .78rem; font-weight: 600;
     font-family: inherit; cursor: pointer; white-space: nowrap;
-    transition: background .1s, border-color .1s;
+    transition: background .15s, border-color .15s, box-shadow .15s;
   }
-  .lob-join-btn:hover { background: rgba(74,158,255,.12); border-color: #4a9eff; }
+  .lob-join-btn:hover { background: rgba(74,158,255,.15); border-color: #4a9eff; box-shadow: 0 0 0 3px rgba(74,158,255,.1); }
 
   /* FOOTER */
   .lob-foot {
     flex-shrink: 0; padding: 14px 28px 18px;
+    width: 100%;
     background: #0f0f0f; border-top: 1px solid #1e1e1e;
     display: flex; flex-direction: column; gap: 10px;
   }
@@ -181,7 +186,7 @@
   .lob-id-row input:focus {
     border-color: #4a9eff; box-shadow: 0 0 0 3px rgba(74,158,255,.1);
   }
-  .lob-id-row input::placeholder { color: #1e2e3e; }
+  .lob-id-row input::placeholder { color: #3a5060; }
   .lob-id-join {
     padding: 9px 16px; background: #181818;
     border: 1px solid #2a2a2a; border-radius: 6px;
@@ -190,7 +195,7 @@
   }
   .lob-id-join:hover { background: #1e1e1e; }
   .lob-status {
-    font-size: .75rem; color: #4a5a6a;
+    font-size: .75rem; color: #7a8a9a;
     text-align: center; margin: 0; min-height: 14px;
   }
   .lob-status.error { color: #f87171; }
@@ -217,10 +222,19 @@
 
   /* Desktop: center with max-width */
   @media (min-width: 700px) {
-    .lob-body { max-width: 860px; width: 100%; margin: 0 auto; padding: 32px 40px; }
-    .lob-nav  { padding: 0 40px; }
-    .lob-foot { padding: 14px 40px 20px; }
+    .lob-body { max-width: 860px; width: 100%; margin: 0 auto; padding: 28px 40px 36px; }
+    .lob-nav  { padding: 0 48px; }
+    .lob-foot { padding: 16px 48px 22px; }
     .lob-nav-sub { display: inline; }
+    .lob-row { border-radius: 10px; }
+    .lob-thead { padding: 0 20px; }
+    .lob-rooms { gap: 6px; }
+  }
+  @media (min-width: 1100px) {
+    .lob-body { max-width: 940px; }
+    .lob-nav  { padding: 0 60px; }
+    .lob-foot { padding: 16px 60px 22px; }
+    .lob-wordmark { font-size: 1.7rem; }
   }
   @media (max-width: 699px) {
     .lob-nav    { padding: 0 16px; }
@@ -322,7 +336,7 @@
   }
 
   .username-note {
-    font-size: .72rem; color: #1e2e3e; line-height: 1.55; margin-top: -8px;
+    font-size: .72rem; color: #3a5060; line-height: 1.55; margin-top: -8px;
   }
 
   /* ══════════════════════════════════════════════
@@ -407,7 +421,7 @@
     background: #181818; border: 1px solid #2a2a2a; color: #c8d4e0;
   }
 
-  .tos-note { margin: 0; font-size: .75rem; color: #1e2e3e; text-align: center; }
+  .tos-note { margin: 0; font-size: .75rem; color: #3a5060; text-align: center; }
 
   /* ── Declined screen ── */
 
@@ -903,6 +917,7 @@
       <div class="dev-tab-bar">
         <button class="dev-tab" data-target="rooms">Rooms</button>
         <button class="dev-tab" data-target="broadcast">Broadcast</button>
+        <button class="dev-tab" data-target="moderation">Moderation</button>
       </div>
 
       <div class="dev-dashboard-body">
@@ -1024,6 +1039,50 @@
               <div class="dev-broadcast-actions">
                 <button id="dev-airhorn-btn" class="btn btn-sm btn-secondary" title="Blast a very loud air horn in the selected room(s)">📢 Air Horn</button>
                 <p id="dev-prank-status" class="dev-broadcast-status"></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ─── Moderation panel ─────────────────────────────── -->
+        <div class="dev-panel" data-tab="moderation">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Moderation Tools</span>
+          </div>
+          <div class="dev-broadcast-body">
+
+            <!-- Pull to Room -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Pull User to Room</label>
+              <p class="dev-broadcast-hint" style="margin-bottom:8px">
+                Force a user (by permanent #ID) to join a specific room.
+              </p>
+              <div class="dev-pull-row">
+                <input
+                  type="text"
+                  id="dev-pull-number"
+                  class="dev-pull-input"
+                  placeholder="#UserID"
+                  autocomplete="off"
+                />
+                <input
+                  type="text"
+                  id="dev-pull-room"
+                  class="dev-pull-input"
+                  placeholder="Destination Room ID"
+                  autocomplete="off"
+                />
+                <button id="dev-pull-btn" class="btn btn-sm btn-primary">Pull</button>
+              </div>
+              <p id="dev-pull-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <!-- Danger zone -->
+            <div class="dev-broadcast-field" style="border-top:1px solid #1e1e1e;padding-top:16px;margin-top:4px">
+              <label class="dev-broadcast-label">Danger Zone</label>
+              <div class="dev-broadcast-actions">
+                <button id="dev-clear-all-bans" class="btn btn-sm btn-secondary" title="Lift all active bans across every room">🚫 Clear All Bans</button>
               </div>
             </div>
 
@@ -1171,7 +1230,10 @@
           autocomplete="off"
           maxlength="40"
         />
-        <button type="button" id="guest-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide">👁</button>
+        <button type="button" id="guest-password-toggle" class="create-room-pw-toggle" tabindex="-1" title="Show / hide" aria-label="Show password">
+            <svg class="pw-eye-icon pw-eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="pw-eye-icon pw-eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
       </div>
       <p id="guest-password-error" class="creator-password-error"></p>
       <div class="creator-modal-actions">
