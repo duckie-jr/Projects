@@ -36,6 +36,35 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Inline SVG icons ──────────────────────────────── */
+.icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: -0.1em;
+}
+
+.dashboard-logo {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.ghost-eye-icon {
+  width: 20px;
+  height: 14px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.creator-status-label .icon {
+  width: 13px;
+  height: 13px;
+  vertical-align: -0.15em;
+}
+
 /* ── Hidden utility ────────────────────────────────── */
 .hidden { display: none !important; }
 
