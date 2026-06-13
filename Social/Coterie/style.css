@@ -5,15 +5,14 @@
  *  This stylesheet is designed for BOTH mobile and desktop browsers.
  *
  *  Breakpoints:
- *    • Base (mobile-first) ........... 320px and up  — all phones
- *    • Tablet ........................ 641px and up  — tablets / landscape phones
+ *    • Base (mobile-first) ........... 320px and up  — all phones 
  *    • Desktop ....................... 1024px and up — laptops and monitors
  *
  *  Approach:
  *    • Fluid layouts using flexbox and CSS grid throughout
  *    • Touch targets ≥ 44px on any coarse-pointer (touch) device
  *    • Font sizes use clamp() or viewport-aware values where helpful
- *    • Inputs use font-size: 16px on mobile to prevent iOS auto-zoom
+ *    • Inputs use font-size: 16px on mob ile to prevent iOS auto-zoom
  *    • All interactive elements have :focus-visible outlines for keyboard users
  *    • Overflow is hidden on fixed-height screens; scrollable lists use
  *      -webkit-overflow-scrolling: touch for smooth iOS momentum scrolling
@@ -93,7 +92,7 @@ body {
 
 .username-desc {
   font-size: 0.88rem;
-  color: #607888;
+  color: #7a8a9a;
   line-height: 1.65;
   margin-top: -6px;
 }
@@ -122,7 +121,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.7rem;
-  color: #2a3a4a;
+  color: #3a5060;
   pointer-events: none;
   white-space: nowrap;
 }
@@ -153,7 +152,7 @@ body {
 
 .username-note {
   font-size: 0.75rem;
-  color: #2a3a4a;
+  color: #3a5060;
   line-height: 1.55;
 }
 
@@ -262,7 +261,7 @@ select {
 }
 
 .home-tagline {
-  color: #607888;
+  color: #7a8a9a;
   font-size: 1rem;
   line-height: 1.65;
 }
@@ -349,7 +348,7 @@ select {
 
 .home-mode-desc {
   font-size: 0.875rem;
-  color: #607888;
+  color: #7a8a9a;
   line-height: 1.65;
   max-width: 260px;
 }
@@ -405,8 +404,8 @@ select {
 
 .lobby-subtitle {
   text-align: center;
-  color: #607888;
-  font-size: 0.88rem;
+  color: #7a8a9a;
+  font-size: 0.9rem;
   line-height: 1.6;
 }
 
@@ -522,7 +521,7 @@ select {
 
 .lobby-divider {
   text-align: center;
-  color: #2a3a4a;
+  color: #4a6070;
   font-size: 0.8rem;
   position: relative;
 }
@@ -555,7 +554,7 @@ select {
 #random-lobby-status {
   min-height: 18px;
   font-size: 0.82rem;
-  color: #607888;
+  color: #7a8a9a;
   text-align: center;
 }
 
@@ -736,7 +735,7 @@ select {
   left: 0;
   right: 0;
   padding: 6px 10px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.78));
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
   font-size: 0.8rem;
   font-weight: 500;
   color: #e4eef8;
@@ -777,7 +776,7 @@ select {
 
 .audio-tile .audio-name {
   font-size: 0.85rem;
-  color: #607888;
+  color: #8a9aaa;
   text-align: center;
   max-width: 90%;
   overflow: hidden;
@@ -808,10 +807,10 @@ select {
   padding: 10px 14px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #607888;
+  color: #8a9aaa;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid #222222;
   flex-shrink: 0;
 }
 
@@ -854,7 +853,7 @@ select {
 
 .chat-time {
   font-size: 0.7rem;
-  color: #2a3a4a;
+  color: #4a6070;
 }
 
 .chat-text {
@@ -866,7 +865,7 @@ select {
 
 .system-message {
   font-size: 0.78rem;
-  color: #2a3a4a;
+  color: #4a6278;
   text-align: center;
   font-style: italic;
 }
@@ -1040,7 +1039,7 @@ select {
 
 .room-code-overlay-label {
   font-size: 0.7rem;
-  color: #2a3a4a;
+  color: #4a6070;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   margin: 0;
@@ -1048,7 +1047,7 @@ select {
 
 .room-code-overlay-dismiss {
   font-size: 0.65rem;
-  color: #18283a;
+  color: #3a5060;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   margin: 0;
@@ -1088,7 +1087,7 @@ select {
 .participants-title {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #607888;
+  color: #8a9aaa;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1334,7 +1333,7 @@ select {
 
 .recent-room-time {
   font-size: 0.7rem;
-  color: #2a3a4a;
+  color: #4a6070;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -1451,50 +1450,6 @@ select {
   white-space: nowrap;
 }
 
-/* ── Creator verification modal ── */
-
-.creator-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(8, 10, 18, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9998;
-  backdrop-filter: blur(4px);
-  padding: 20px;
-}
-
-.creator-modal.hidden {
-  display: none;
-}
-
-.creator-modal-card {
-  background: #111111;
-  border: 1px solid #252525;
-  border-radius: 12px;
-  padding: 28px 28px 24px;
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
-}
-
-.creator-modal-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #4a9eff;
-  letter-spacing: -0.2px;
-}
-
-.creator-modal-desc {
-  font-size: 0.82rem;
-  color: #607888;
-  line-height: 1.6;
-  margin-top: -4px;
-}
 
 .creator-password-input {
   width: 100%;
@@ -1512,19 +1467,6 @@ select {
   border-color: #4a9eff;
 }
 
-.creator-password-error {
-  font-size: 0.78rem;
-  color: #f87171;
-  min-height: 18px;
-  margin-top: -6px;
-}
-
-.creator-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 2px;
-}
 
 /* ── Creator status row (lobby) ── */
 
@@ -1555,61 +1497,6 @@ select {
   flex-shrink: 0;
 }
 
-/* ── Creator: active servers list ── */
-
-.server-list-card {
-  max-width: 440px;
-}
-
-.server-list-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.server-list-empty {
-  font-size: 0.82rem;
-  color: #607888;
-  text-align: center;
-  padding: 18px 0;
-}
-
-.server-list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #090909;
-  border: 1px solid #252525;
-  border-radius: 8px;
-}
-
-.server-list-info {
-  min-width: 0;
-  flex: 1;
-}
-
-.server-list-host {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #e4eef8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.server-list-meta {
-  font-size: 0.72rem;
-  color: #607888;
-  font-family: monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
-}
 
 /* ── Creator: Random moderation modal ── */
 
@@ -1668,264 +1555,6 @@ select {
   font-family: monospace;
   color: #7bbfff;
   letter-spacing: 0.04em;
-}
-
-/* ─── DEV DASHBOARD ─────────────────────────────────────────────────────────── */
-
-.dev-dashboard {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: #090909;
-  display: flex;
-  flex-direction: column;
-}
-
-.dev-dashboard-inner {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-}
-
-/* ── Header — two rows ───────────────────────────── */
-
-.dev-dashboard-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 18px 10px;
-  background: #080808;
-  border-bottom: 1px solid #1e1e1e;
-  flex-shrink: 0;
-}
-
-/* Row 1: title + badge on the left, action buttons on the right */
-.dev-dashboard-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dev-dashboard-title-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.dev-dashboard-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #e4eef8;
-  letter-spacing: -0.2px;
-}
-
-.dev-dashboard-badge {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #4a9eff;
-  background: rgba(74, 158, 255, 0.1);
-  border: 1px solid rgba(74, 158, 255, 0.3);
-  border-radius: 4px;
-  padding: 2px 6px;
-  text-transform: uppercase;
-}
-
-/* Row 2: all stat chips in a wrappable row */
-.dev-dashboard-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.dev-stat-chip {
-  font-size: 0.75rem;
-  color: #607888;
-  background: #111111;
-  border: 1px solid #1e1e1e;
-  border-radius: 20px;
-  padding: 2px 10px;
-  white-space: nowrap;
-}
-
-.dev-stat-chip strong {
-  color: #4a9eff;
-  margin-left: 3px;
-}
-
-/* Accent variant for accumulated/historical stats */
-.dev-stat-chip--accent {
-  border-color: rgba(74, 158, 255, 0.25);
-  background: rgba(74, 158, 255, 0.06);
-}
-
-.dev-stat-chip--accent strong {
-  color: #7bbfff;
-}
-
-/* Thin vertical rule separating live stats from accumulated stats */
-.dev-stat-divider {
-  width: 1px;
-  height: 16px;
-  background: #252525;
-  flex-shrink: 0;
-}
-
-.dev-last-refresh {
-  font-size: 0.7rem;
-  color: #2a3a4a;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.dev-dashboard-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ── Tab-based body — one panel visible at a time ── */
-
-.dev-dashboard-body {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-  flex: 1;
-  min-height: 0;
-  gap: 0;
-  overflow: hidden;
-  background: #090909;
-}
-
-/* ── Individual panel ── */
-
-.dev-panel {
-  display: flex;
-  flex-direction: column;
-  background: #090909;
-  min-height: 0;
-}
-
-/* Hidden by default; only the active tab's panel is shown */
-.dev-panel[data-tab]               { display: none; }
-.dev-panel[data-tab].dev-panel--active {
-  display: flex;
-  overflow: hidden;
-}
-
-.dev-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #1e1e1e;
-  background: #080808;
-  flex-shrink: 0;
-}
-
-.dev-panel-title {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #607888;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.dev-panel-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dev-control-label {
-  font-size: 0.72rem;
-  color: #2a3a4a;
-}
-
-/* Scrollable list inside each panel */
-
-.dev-panel-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-/* ── Row ── */
-
-.dev-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #111111;
-  transition: background 0.1s;
-}
-
-.dev-row:hover { background: #111621; }
-
-.dev-row-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dev-row-name {
-  font-size: 0.84rem;
-  color: #e4eef8;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dev-row-meta {
-  font-size: 0.72rem;
-  color: #2a3a4a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dev-row-actions {
-  display: flex;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-/* ── Pills ── */
-
-.dev-pill {
-  display: inline-block;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  padding: 1px 6px;
-  border-radius: 10px;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.dev-pill--monitor {
-  color: #4a9eff;
-  background: rgba(74, 158, 255, 0.12);
-  border: 1px solid rgba(74, 158, 255, 0.25);
-}
-
-/* ── Empty state ── */
-
-.dev-empty {
-  font-size: 0.78rem;
-  color: #2a3a4a;
-  text-align: center;
-  padding: 24px 14px;
-  font-style: italic;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2078,363 +1707,6 @@ select {
 .tos-declined-card p {
   margin: 0;
   color: var(--text-muted, #607888);
-}
-
-
-/* ═══════════════════════════════════════════════════
-   GHOST OBSERVER PANEL
-═══════════════════════════════════════════════════ */
-
-.ghost-observer-panel {
-  position: fixed;
-  inset: 0;
-  background: #050505;
-  z-index: 8000;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-  gap: .75rem;
-  overflow: hidden;
-}
-
-.ghost-observer-panel.hidden {
-  display: none;
-}
-
-.ghost-observer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: .65rem 1rem;
-  background: rgba(255, 255, 255, .04);
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.ghost-observer-title-group {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-}
-
-/* Buttons on the right side of the observer header */
-.ghost-observer-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.ghost-observer-eyecon {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.ghost-observer-title {
-  font-size: .95rem;
-  font-weight: 700;
-  color: #e4eef8;
-}
-
-.ghost-observer-badge {
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  padding: .18rem .5rem;
-  border-radius: 4px;
-  background: rgba(74, 158, 255, .22);
-  color: #7bbfff;
-  border: 1px solid rgba(74, 158, 255, .35);
-}
-
-.ghost-observer-room-label {
-  font-size: .8rem;
-  color: #607888;
-}
-
-.ghost-observer-status {
-  font-size: .82rem;
-  color: #607888;
-  text-align: center;
-  min-height: 1.2em;
-  flex-shrink: 0;
-}
-
-.ghost-observer-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: .75rem;
-  overflow-y: auto;
-  align-content: start;
-}
-
-.ghost-observer-tile {
-  position: relative;
-  background: #0d0d0d;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, .06);
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ghost-observer-tile video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.ghost-observer-tile .ghost-observer-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #181818;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #e4eef8;
-}
-
-.ghost-observer-label {
-  position: absolute;
-  bottom: .45rem;
-  left: .45rem;
-  font-size: .78rem;
-  font-weight: 600;
-  background: rgba(0, 0, 0, .65);
-  color: #fff;
-  padding: .2rem .45rem;
-  border-radius: 4px;
-  backdrop-filter: blur(4px);
-}
-
-.ghost-observer-tile-waiting {
-  font-size: .82rem;
-  color: #607888;
-}
-
-/* Actions bar overlaid at the bottom of each observer tile */
-.ghost-observer-actions {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 5px 4px;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(3px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s;
-  pointer-events: none;
-}
-
-.ghost-observer-tile:hover .ghost-observer-actions,
-.ghost-observer-tile:focus-within .ghost-observer-actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Tab bar — always visible in the dashboard */
-.dev-tab-bar {
-  display: flex;
-  flex-shrink: 0;
-  background: #080808;
-  border-bottom: 1px solid #1e1e1e;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.dev-tab {
-  flex: 1;
-  min-width: 60px;
-  padding: 10px 14px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #607888;
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  letter-spacing: 0.03em;
-  transition: color 0.15s, border-color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.dev-tab:hover { color: #c8d4e0; }
-
-.dev-tab--active {
-  color: #e4eef8;
-  border-bottom-color: #4a9eff;
-}
-
-/* ═══════════════════════════════════════════════════
-   DEV DASHBOARD — BROADCAST PANEL
-═══════════════════════════════════════════════════ */
-
-.dev-panel--broadcast {
-  grid-column: auto;
-  min-height: unset;
-}
-
-.dev-broadcast-body {
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
-
-/* ── Field label ── */
-
-.dev-broadcast-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.dev-broadcast-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #607888;
-}
-
-/* ── Message textarea ── */
-
-.dev-broadcast-textarea {
-  width: 100%;
-  background: #090909;
-  border: 1px solid #252525;
-  border-radius: 6px;
-  color: #e4eef8;
-  font-size: 0.85rem;
-  font-family: inherit;
-  padding: 8px 10px;
-  outline: none;
-  resize: vertical;
-  min-height: 56px;
-  line-height: 1.5;
-  transition: border-color 0.15s;
-}
-
-.dev-broadcast-textarea:focus { border-color: #4a9eff; }
-
-/* ── Options row: duration + target side-by-side on desktop ── */
-
-.dev-broadcast-options {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-/* ── Duration ── */
-
-.dev-broadcast-duration-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.dev-broadcast-duration-input {
-  width: 66px;
-  background: #090909;
-  border: 1px solid #252525;
-  border-radius: 6px;
-  color: #e4eef8;
-  font-size: 0.85rem;
-  padding: 5px 8px;
-  outline: none;
-  transition: border-color 0.15s;
-  -moz-appearance: textfield;
-}
-
-.dev-broadcast-duration-input::-webkit-outer-spin-button,
-.dev-broadcast-duration-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-.dev-broadcast-duration-input:focus { border-color: #4a9eff; }
-
-.dev-broadcast-hint {
-  font-size: 0.72rem;
-  color: #2a3a4a;
-  white-space: nowrap;
-}
-
-/* ── Target radio group ── */
-
-.dev-broadcast-target {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.dev-broadcast-radio {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.82rem;
-  color: #c8d4e0;
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-}
-
-.dev-broadcast-radio input[type="radio"] {
-  accent-color: #4a9eff;
-  cursor: pointer;
-  width: 14px;
-  height: 14px;
-}
-
-.dev-broadcast-room-input {
-  background: #090909;
-  border: 1px solid #252525;
-  border-radius: 6px;
-  color: #e4eef8;
-  font-size: 0.82rem;
-  font-family: monospace;
-  padding: 4px 8px;
-  outline: none;
-  width: 220px;
-  transition: border-color 0.15s, opacity 0.15s;
-}
-
-.dev-broadcast-room-input:focus  { border-color: #4a9eff; }
-.dev-broadcast-room-input:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-/* ── Actions row ── */
-
-.dev-broadcast-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.dev-broadcast-status {
-  font-size: 0.78rem;
-  color: #607888;
-  margin: 0;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2717,20 +1989,6 @@ select {
     z-index: 1;
   }
 
-  /* ── Modals: slide up from bottom ──────────────── */
-  .creator-modal {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .creator-modal-card,
-  .server-list-card {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 16px 16px 0 0;
-    max-height: 88svh;
-    overflow-y: auto;
-  }
 
   /* ── ToS overlay ───────────────────────────────── */
   .tos-overlay {
@@ -2766,38 +2024,6 @@ select {
     width: 200px;
   }
 
-  /* ── Ghost observer panel ──────────────────────── */
-  .ghost-observer-panel {
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .ghost-observer-header {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .ghost-observer-title-group {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .ghost-observer-header-actions {
-    flex-wrap: wrap;
-    gap: 5px;
-    justify-content: flex-end;
-  }
-
-  /* On mobile the ghost observer header shrinks to one compact row */
-  .ghost-observer-badge,
-  .ghost-observer-room-label { display: none; }
-
-  .ghost-observer-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Always show action buttons — no hover state on touch */
-  .ghost-observer-actions { opacity: 1; }
 
   /* ── Recent rooms: truncate long IDs ──────────── */
   .recent-room-id {
@@ -2814,8 +2040,6 @@ select {
     gap: 4px;
   }
 
-  .dev-panel-controls { flex-wrap: wrap; gap: 5px; }
-  .dev-panel-filter-input { width: 130px; }
 
   /* Broadcast overlay: near-full screen card from bottom */
   .broadcast-overlay {
@@ -2830,46 +2054,20 @@ select {
     gap: 14px;
   }
 
-  /* Dev broadcast panel: stack options vertically */
-  .dev-broadcast-options {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
 
-  .dev-broadcast-room-input { width: 100%; }
+} /* ── end @media (max-width: 640px) ── */
 
-  .dev-broadcast-target {
-    flex-direction: column;
+/* ══════════════════════════════════════════════════
+   TABLET  641px – 900px
+══════════════════════════════════════════════════ */
+@media (min-width: 641px) and (max-width: 900px) {
   .toolbar { padding: 8px 12px; }
 
   /* Smaller PiP than desktop, bigger than phone */
   .random-local-wrapper       { width: 110px; }
   .random-local-wrapper video { height: 88px; }
 
-  /* Modals don't need to go full-screen on tablet */
-  .creator-modal-card,
-  .server-list-card { max-width: 520px; }
-
-  /* Compact single-row header — strip excess padding */
-  .dev-dashboard-header {
-    padding: 6px 14px;
-    gap: 10px;
-  }
-
-  /* Hide pop-out (window.open on mobile = same tab) and reload-all */
-  #dev-popout-btn,
-  #dev-reload-all-btn  { display: none; }
-
-  /* Drop historical accent stats to keep header short */
-  .dev-stat-chip--accent,
-  .dev-stat-divider    { display: none; }
-
-  /* Touch-friendly buttons in rows */
-  .dev-row-actions .btn-xs {
-    min-height: 32px;
-    padding: 5px 9px;
-  }
-
+}
 
 /* ══════════════════════════════════════════════════
    LANDSCAPE SHORT VIEWPORT (any width, height ≤ 480px)
@@ -2877,31 +2075,6 @@ select {
 ══════════════════════════════════════════════════ */
 @media (orientation: landscape) and (max-height: 480px) {
 
-  /* Tab bar: ultra-compact in landscape — reclaim vertical space */
-  .dev-tab-bar { flex-shrink: 0; }
-  .dev-tab { padding: 6px 10px; font-size: 0.72rem; }
-
-  /* Ultra-compact header: single tight row */
-  .dev-dashboard-header {
-    padding: 4px 12px;
-    gap: 8px;
-    min-height: 0;
-  }
-
-  /* Shrink the badge so the title fits in one line */
-  .dev-dashboard-badge { display: none; }
-
-  /* Keep only live stat chips; hide refresh timestamp */
-  .dev-stat-chip--accent,
-  .dev-stat-divider,
-  #dev-last-refresh { display: none; }
-
-  /* Smaller panel headers to give list area maximum height */
-  .dev-panel-header { padding: 4px 10px; }
-  .dev-panel-title  { font-size: 0.68rem; }
-
-  /* Tighter rows */
-  .dev-row { padding: 6px 10px; }
 
   /* Compact overlay in landscape — side-by-side header + shorter card */
   .broadcast-card {
@@ -2909,6 +2082,7 @@ select {
     padding: 16px 20px 14px;
     gap: 10px;
   }
+}
 
 /* ═══════════════════════════════════════════════════
    CREATE ROOM MODAL — form fields
@@ -3015,178 +2189,8 @@ select {
   margin-left: 4px;
 }
 
-/* ═══════════════════════════════════════════════════
-   GHOST OBSERVER — user number on tile label
-   ═══════════════════════════════════════════════════ */
 
-.ghost-observer-user-number {
-  font-size: 0.7rem;
-  font-family: monospace;
-  opacity: 0.65;
-}
 
-/* ═══════════════════════════════════════════════════
-   DEV DASHBOARD — Pull to Room section
-   ═══════════════════════════════════════════════════ */
-
-.dev-pull-section {
-  padding: 0 0 6px;
-}
-
-.dev-pull-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.dev-pull-row input[type="text"] {
-  flex: 1;
-  min-width: 110px;
-  font-size: 0.82rem;
-  padding: 5px 8px;
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #e4eef8;
-  outline: none;
-}
-
-.dev-pull-row input[type="text"]:focus {
-  border-color: #b8973e;
-}
-
-/* ═══════════════════════════════════════════════════
-   DEV DASHBOARD — Rooms panel: room card + participant list
-   ═══════════════════════════════════════════════════ */
-
-/* ── Room card ─────────────────────────────────────────── */
-.dev-room-wrap {
-  background: #090909;
-  border: 1px solid #1e1e1e;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-
-/* Room header row — slightly elevated from the card background */
-.dev-room-wrap > .dev-row {
-  background: #111111;
-  padding: 9px 12px;
-  border-bottom: 1px solid #1c1c1c;
-  margin: 0;
-}
-
-/* ── Participant sub-list ───────────────────────────────── */
-.dev-room-participants {
-  padding: 8px 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Each participant chip row */
-.dev-room-participant-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  border-radius: 7px;
-  background: #0d0d0d;
-  border: 1px solid #1e1e1e;
-  transition: background 0.12s, border-color 0.12s;
-}
-
-.dev-room-participant-row:hover {
-  background: #141414;
-  border-color: #282828;
-}
-
-/* Avatar circle with initial letter */
-.dev-room-participant-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(74, 158, 255, 0.18);
-  border: 1px solid rgba(74, 158, 255, 0.35);
-  color: #7bbfff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-/* Participant name */
-.dev-room-participant-name {
-  font-size: 0.83rem;
-  color: #d4d4e8;
-  font-weight: 500;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Right-side actions (ID chip + Copy button) */
-.dev-room-participant-actions {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-/* Permanent ID chip */
-.dev-room-participant-number {
-  font-size: 0.67rem;
-  font-family: monospace;
-  color: #4a9eff;
-  background: rgba(74, 158, 255, 0.13);
-  border: 1px solid rgba(74, 158, 255, 0.28);
-  padding: 2px 7px;
-  border-radius: 5px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-/* ── Search results view ──────────────────────────────────── */
-
-/* Room name heading in search results */
-.dev-room-find-header {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #4a9eff;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 12px 2px 5px;
-  border-top: 1px solid #1e1e1e;
-  margin-top: 2px;
-}
-
-.dev-room-find-header:first-child {
-  border-top: none;
-  margin-top: 0;
-  padding-top: 4px;
-}
-
-/* Participant result rows in search view */
-.dev-row--participant {
-  background: #0d0d0d;
-  border: 1px solid #1e1e1e;
-  border-radius: 7px;
-  margin-bottom: 4px;
-  padding: 4px 8px;
-  transition: background 0.12s;
-}
-
-.dev-row--participant:hover {
-  background: #141414;
-  border-color: #282828;
-}
 
 /* ═══════════════════════════════════════════════════
    ROOM PASSWORD — toolbar lock badge
@@ -3242,6 +2246,20 @@ select {
 
 .create-room-pw-toggle:hover { opacity: 1; }
 
+/* ── Password show/hide toggle — SVG eye icons ── */
+.pw-eye-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+/* Default: password hidden → "eye open" visible */
+.pw-eye-hide { display: none; }
+/* When .is-showing: swap to "eye crossed" icon */
+.create-room-pw-toggle.is-showing .pw-eye-show { display: none; }
+.create-room-pw-toggle.is-showing .pw-eye-hide { display: block; }
+
 /* ═══════════════════════════════════════════════════
    CHAT HISTORY — divider shown between restored and live messages
    ═══════════════════════════════════════════════════ */
@@ -3278,12 +2296,12 @@ select {
 
 #room-browser-screen {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 24px 16px;
-  background: #060606;
-  overflow-y: auto;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100vh;
+  background: #080808;
+  overflow: hidden;
 }
 
 /* Card — same technique as .lobby-card but styled for the room list */
@@ -3710,13 +2728,11 @@ select:focus { border-color: #4a9eff; }
 
 /* ── Card panels: very subtle gold border ── */
 .lobby-card,
-.username-card,
-.creator-modal-card {
+.username-card {
   border-color: #1e1e1e;
   background: #111111;
 }
-.lobby-card:hover,
-.creator-modal-card:hover {
+.lobby-card:hover {
   border-color: rgba(74, 158, 255, 0.18);
 }
 
@@ -3784,9 +2800,6 @@ select:focus { border-color: #4a9eff; }
   color: #7bbfff;
 }
 
-/* ── Dev dashboard gold accent ── */
-.dev-stat-chip strong { color: #4a9eff; }
-.dev-tab--active { border-bottom-color: #4a9eff; color: #e4eef8; }
 
 /* ── Scrollbar: dark + gold thumb ── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
@@ -3795,15 +2808,8 @@ select:focus { border-color: #4a9eff; }
 ::-webkit-scrollbar-thumb:hover { background: #4a9eff; }
 
 /* ── ToS accent color ── */
-.tos-body h3,
-.creator-modal-title { color: #4a9eff; }
+.tos-body h3 { color: #4a9eff; }
 
-/* ── Ghost observer badge ── */
-.ghost-observer-badge {
-  background: rgba(74, 158, 255, 0.15);
-  color: #7bbfff;
-  border-color: rgba(74, 158, 255, 0.3);
-}
 
 /* ── Recent room tag ── */
 .recent-room-tag {
@@ -3827,29 +2833,7 @@ select:focus { border-color: #4a9eff; }
   border-color: rgba(74, 158, 255, 0.25);
 }
 
-/* ── Participant number badge ── */
-.dev-room-participant-number {
-  color: #4a9eff;
-  background: rgba(74, 158, 255, 0.1);
-  border-color: rgba(74, 158, 255, 0.2);
-}
-.dev-room-participant-avatar {
-  background: rgba(74, 158, 255, 0.12);
-  border-color: rgba(74, 158, 255, 0.3);
-  color: #7bbfff;
-}
 
-/* ── Dev panel filter ── */
-.dev-panel-filter-input {
-  background: #0d0d0d;
-  border: 1px solid #252525;
-  border-radius: 5px;
-  color: #c8d4e0;
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  outline: none;
-}
-.dev-panel-filter-input:focus { border-color: #4a9eff; }
 
 /* ── Thin gold line at very top of the page ── */
 body::before {
@@ -3860,4 +2844,32 @@ body::before {
   background: linear-gradient(90deg, transparent 0%, #4a9eff 30%, #7bbfff 50%, #4a9eff 70%, transparent 100%);
   z-index: 99999;
   pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════
+   DESKTOP  ≥ 1024px
+   Larger chat pane, slightly more spacious toolbar.
+══════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+  /* Wider chat sidebar so conversations feel less cramped */
+  .chat-pane { width: 340px; }
+
+  /* Slightly taller toolbar gives action buttons more breathing room */
+  .toolbar { height: 52px; padding: 0 20px; }
+
+  /* Video tile labels are more legible with a slightly stronger gradient */
+  .video-tile-label { font-size: 0.84rem; }
+
+
+  /* Lobby card: a bit more padding at desktop widths */
+  .lobby-card { padding: 40px 36px; }
+}
+
+/* ══════════════════════════════════════════════════
+   LARGE DESKTOP  ≥ 1440px
+   Slightly wider modal cards, more comfortable spacing.
+══════════════════════════════════════════════════ */
+@media (min-width: 1440px) {
+  .chat-pane { width: 380px; }
+  .home-mode-grid--single { max-width: 480px; }
 }
