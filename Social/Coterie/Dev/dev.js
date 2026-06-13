@@ -1,21 +1,37 @@
 // ═══════════════════════════════════════════════════
 //  dev.js — CREATOR / DEVELOPER-ONLY UI
 //
-//  Split out of main.js. Loaded as a classic (non-module) <script defer>
-//  immediately AFTER main.js, so it shares main.js's global scope: every
-//  top-level let/const/function in main.js is visible here, and the
-//  functions defined here (showCreatorModal, openServerListModal,
-//  openMoveUserModal, …) are visible to main.js.
+//  Loaded as a classic (non-module) <script defer> after rooms.js in
+//  index.html.  For the future standalone dev control panel (dev/index.html),
+//  load these files first so every symbol this file needs is available:
 //
-//  All cross-file references happen at call time (inside event handlers and
-//  functions), never at the top level, so the load order is safe.
+//    1. PeerJS CDN  (window.Peer)
+//    2. main.js     → createPeer, PEER_OPTIONS,
+//                     REGISTRY_PEER_ID, REGISTRY_QUERY_TIMEOUT,
+//                     registryHolderPeer, isCreator, STORAGE_KEY_CREATOR,
+//                     currentRoomId
+//    3. rooms.js    → fetchActiveServers, createHelperPeer,
+//                     handleRegistryMessage
 //
-//  Shared state still owned by main.js: isCreator, CREATOR_PASSWORD,
-//  STORAGE_KEY_CREATOR, the active-server registry.
+//  All cross-file references are resolved at call time (inside event
+//  handlers and functions), so load order is safe as long as the three
+//  files above are deferred before this one.
+//
+//  Sections:
+//    • Creator badge modal (password prompt)
+//    • Active-servers list modal
+//    • Move participant modal
+//    • Creator badge state helpers (activateCreator / deactivateCreator)
+//    • Dev dashboard (open/close, refresh, rooms panel)
+//    • Ghost observer (invisible join, whisper mode, moderation)
+//    • Force-close room
+//    • Broadcast to all rooms / single room
+//    • Prank audio — air horn (local + network)
+//    • Ghost observer in-panel moderation
+//    • Pull-to-room, force-reload
+//    • Pop-out window
 // ═══════════════════════════════════════════════════
 
-
-// ═══════════════════════════════════════════════════
 //  CREATOR BADGE — MODAL
 // ═══════════════════════════════════════════════════
 
@@ -226,10 +242,9 @@ hostActionMenuEl.querySelector(".host-action-move-btn").addEventListener("click"
 // ═══════════════════════════════════════════════════
 //  CREATOR BADGE — STATE HELPERS
 //
-//  The shared `isCreator` flag and STORAGE_KEY_CREATOR stay in main.js
-//  (core features read them); these creator-only helpers + the password
-//  live here. The final renderCreatorStatus() call reflects saved state on
-//  load — dev.js runs right after main.js, with the DOM already parsed.
+//  The shared `isCreator` flag and STORAGE_KEY_CREATOR are defined earlier
+//  in this file. The final renderCreatorStatus() call reflects saved state
+//  on load.
 // ═══════════════════════════════════════════════════
 
 const CREATOR_PASSWORD = "229300";
