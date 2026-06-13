@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coterie — Dev Control Panel</title>
+  <link rel="icon" href="../logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./dev.css" />
+</head>
+<body>
+
+  <header class="dp-nav">
+    <div class="dp-nav-left">
+      <span class="dp-wordmark">Coterie</span>
+      <span class="dp-nav-label">Dev Control Panel</span>
+    </div>
+    <div class="dp-nav-right">
+      <button id="dp-verify-btn" class="btn btn-sm btn-primary">Verify Creator</button>
+      <div id="creator-status" class="creator-status hidden">
+        <span class="creator-status-label">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 10,6 15,6.5 11.5,9.8 12.5,14.5 8,12 3.5,14.5 4.5,9.8 1,6.5 6,6"/></svg>
+          Creator mode active
+        </span>
+        <div class="creator-status-actions">
+          <button id="creator-monitor-btn" class="btn btn-sm btn-secondary">Open Dashboard</button>
+          <button id="creator-remove-btn"  class="btn btn-sm btn-danger">Remove</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Creator Verification Modal -->
+  <div id="creator-modal" class="dp-overlay hidden">
+    <div class="dp-card">
+      <div class="dp-card-title">Creator Verification</div>
+      <p class="dp-card-desc">Enter the creator password to activate your badge.</p>
+      <input type="password" id="creator-password-input" class="dp-input" placeholder="Password" autocomplete="off" />
+      <p id="creator-password-error" class="dp-error"></p>
+      <div class="dp-card-actions">
+        <button id="creator-password-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="creator-password-submit" class="btn btn-primary btn-sm">Verify</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Servers Modal -->
+  <div id="server-list-modal" class="dp-overlay hidden">
+    <div class="dp-card dp-card--wide">
+      <div class="dp-card-title">Active Servers</div>
+      <p class="dp-card-desc">Every live room right now. Click Join to open in the main app.</p>
+      <div id="server-list-container" class="dp-scroll-list"></div>
+      <div class="dp-card-actions">
+        <button id="server-list-refresh" class="btn btn-secondary btn-sm">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a6 6 0 1 0 1.5-4"/><polyline points="2 2 2 7 7 7"/></svg>
+          Refresh
+        </button>
+        <button id="server-list-close" class="btn btn-primary btn-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move Participant Modal -->
+  <div id="move-user-modal" class="dp-overlay hidden">
+    <div class="dp-card dp-card--wide">
+      <div class="dp-card-title">Move <span id="move-user-name"></span></div>
+      <p class="dp-card-desc">Pick a live room or type a Room ID below.</p>
+      <div id="move-server-list" class="dp-scroll-list"></div>
+      <input type="text" id="move-room-input" class="dp-input" placeholder="Room ID" autocomplete="off" />
+      <div class="dp-card-actions">
+        <button id="move-cancel-btn"  class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="move-confirm-btn" class="btn btn-primary btn-sm">Move</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ghost Observer Panel -->
+  <div id="ghost-observer-panel" class="ghost-observer-panel hidden">
+    <div class="ghost-observer-header">
+      <div class="ghost-observer-title-group">
+        <svg class="ghost-eye-icon" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 7S5 1 11 1s10 6 10 6-4 6-10 6S1 7 1 7z"/>
+          <circle cx="11" cy="7" r="2.5"/>
+        </svg>
+        <span class="ghost-observer-title">Observer Mode</span>
+        <span class="ghost-observer-badge">INVISIBLE</span>
+        <span class="ghost-observer-room-label">Room&nbsp;<strong id="ghost-observer-room-id"></strong></span>
+      </div>
+      <div class="ghost-observer-header-actions">
+        <button id="ghost-observer-airhorn-btn" class="btn btn-sm btn-secondary" title="Blast air horn to everyone in this room">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v12L5 10H3a1 1 0 01-1-1V7a1 1 0 011-1h2z"/><path d="M14.5 5a4.5 4.5 0 010 6"/></svg>
+          Air Horn
+        </button>
+        <button id="ghost-observer-whisper-all-btn" class="btn btn-sm btn-secondary" title="Send your mic to all participants">Whisper All</button>
+        <button id="ghost-observer-mute-all-btn" class="btn btn-sm btn-secondary">Mute All</button>
+        <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+          Stop Observing
+        </button>
+      </div>
+    </div>
+    <p id="ghost-observer-status" class="ghost-observer-status"></p>
+    <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+  </div>
+
+  <!-- Main Dev Dashboard -->
+  <div id="dev-dashboard" class="dev-dashboard dev-dashboard--page">
+    <div class="dev-dashboard-inner">
+
+      <div class="dev-dashboard-header">
+        <div class="dev-dashboard-header-top">
+          <div class="dev-dashboard-title-group">
+            <svg class="dashboard-logo" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="6" height="6" rx="1.5"/>
+              <rect x="12" y="2" width="6" height="6" rx="1.5"/>
+              <rect x="2" y="12" width="6" height="6" rx="1.5"/>
+              <rect x="12" y="12" width="6" height="6" rx="1.5"/>
+            </svg>
+            <span class="dev-dashboard-title">Dev Dashboard</span>
+            <span class="dev-dashboard-badge">CREATOR ONLY</span>
+          </div>
+          <div class="dev-dashboard-header-actions">
+            <button id="dev-dashboard-refresh" class="btn btn-sm btn-secondary">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a6 6 0 1 0 1.5-4"/><polyline points="2 2 2 7 7 7"/></svg>
+              Refresh
+            </button>
+            <button id="dev-reload-all-btn" class="btn btn-sm btn-secondary" title="Force every connected client to reload">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-1.5-4"/><polyline points="14 2 14 7 9 7"/></svg>
+              Reload All
+            </button>
+            <button id="dev-clear-all-bans" class="btn btn-sm btn-secondary" title="Remove all active bans from every room">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/></svg>
+              Clear Bans
+            </button>
+            <button id="dev-popout-btn" class="btn btn-sm btn-secondary" title="Open dashboard in its own window" style="display:none">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h5v5"/><line x1="7" y1="9" x2="14" y2="2"/><path d="M13 9v5H2V4h5"/></svg>
+              Pop Out
+            </button>
+            <button id="dev-dashboard-close" class="btn btn-sm btn-danger" style="display:none">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div class="dev-dashboard-stats">
+          <span class="dev-stat-chip">Rooms <strong id="dev-stat-rooms-count">—</strong></span>
+          <div class="dev-stat-divider"></div>
+          <span class="dev-stat-chip dev-stat-chip--accent">Today <strong id="dev-stat-rooms-today">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Peak <strong id="dev-stat-peak-concurrent">—</strong></span>
+          <span class="dev-stat-chip dev-stat-chip--accent">Bans <strong id="dev-stat-total-bans">—</strong></span>
+          <span id="dev-last-refresh" class="dev-last-refresh">not yet refreshed</span>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="dev-tab-bar">
+        <button class="dev-tab dev-tab--active" data-target="rooms">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7L8 1l7 6v8H2z"/><path d="M5 15V9h6v6"/></svg>
+          Rooms
+        </button>
+        <button class="dev-tab" data-target="broadcast">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v12L5 10H3a1 1 0 01-1-1V7a1 1 0 011-1h2z"/><path d="M14.5 5a4.5 4.5 0 010 6"/></svg>
+          Broadcast
+        </button>
+        <button class="dev-tab" data-target="moderation">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l5.5 2v4.5C13.5 11 11 13.5 8 15 5 13.5 2.5 11 2.5 7.5V3z"/></svg>
+          Moderation
+        </button>
+      </div>
+
+      <div class="dev-dashboard-body">
+
+        <!-- Rooms panel -->
+        <div class="dev-panel dev-panel--active" data-tab="rooms">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Active Rooms</span>
+            <div class="dev-panel-controls">
+              <input type="text" id="dev-rooms-filter" class="dev-panel-filter-input" placeholder="Search by name or #ID…" autocomplete="off" />
+            </div>
+          </div>
+          <div id="dev-rooms-list" class="dev-panel-list">
+            <p class="dev-empty">Press Refresh to load active rooms.</p>
+          </div>
+        </div>
+
+        <!-- Broadcast panel -->
+        <div class="dev-panel" data-tab="broadcast">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Broadcast to Rooms</span>
+          </div>
+          <div class="dev-broadcast-body">
+
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label" for="dev-broadcast-input">Message</label>
+              <textarea id="dev-broadcast-input" class="dev-broadcast-textarea" placeholder="Type a message to broadcast to all rooms…" maxlength="400" rows="4" autocomplete="off"></textarea>
+            </div>
+
+            <div class="dev-broadcast-options">
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label" for="dev-broadcast-duration">Minimum view time</label>
+                <div class="dev-broadcast-duration-row">
+                  <input type="number" id="dev-broadcast-duration" class="dev-broadcast-duration-input" value="0" min="0" max="300" />
+                  <span class="dev-broadcast-hint">seconds &nbsp;·&nbsp; 0 = dismiss anytime</span>
+                </div>
+              </div>
+              <div class="dev-broadcast-field">
+                <label class="dev-broadcast-label">Target</label>
+                <div class="dev-broadcast-target">
+                  <label class="dev-broadcast-radio"><input type="radio" name="broadcast-target" id="broadcast-target-all" value="all" checked /> All rooms</label>
+                  <label class="dev-broadcast-radio"><input type="radio" name="broadcast-target" id="broadcast-target-room" value="room" /> Specific room</label>
+                  <input type="text" id="dev-broadcast-room-id" class="dev-broadcast-room-input" placeholder="Paste Room ID…" autocomplete="off" disabled />
+                </div>
+              </div>
+            </div>
+
+            <div class="dev-broadcast-actions">
+              <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send Broadcast</button>
+              <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <div class="dev-broadcast-field dev-broadcast-field--prank">
+              <label class="dev-broadcast-label">Pranks</label>
+              <div class="dev-broadcast-target">
+                <label class="dev-broadcast-radio"><input type="radio" name="prank-target" id="prank-target-all" value="all" checked /> All rooms</label>
+                <label class="dev-broadcast-radio"><input type="radio" name="prank-target" id="prank-target-room" value="room" /> Specific room</label>
+                <input type="text" id="dev-prank-room-id" class="dev-broadcast-room-input" placeholder="Paste Room ID…" autocomplete="off" disabled />
+              </div>
+              <div class="dev-broadcast-actions">
+                <button id="dev-airhorn-btn" class="btn btn-sm btn-secondary" title="Blast a very loud air horn">
+                  <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v12L5 10H3a1 1 0 01-1-1V7a1 1 0 011-1h2z"/><path d="M14.5 5a4.5 4.5 0 010 6"/></svg>
+                  Air Horn
+                </button>
+                <p id="dev-prank-status" class="dev-broadcast-status"></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Moderation panel -->
+        <div class="dev-panel" data-tab="moderation">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Moderation Tools</span>
+          </div>
+          <div class="dev-broadcast-body">
+
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Pull User to Room</label>
+              <p class="dev-broadcast-hint" style="margin-bottom:8px">Force a user (by permanent #ID) to join a specific room.</p>
+              <div class="dev-pull-row">
+                <input type="text" id="dev-pull-number" class="dp-input dp-input--inline" placeholder="#UserID" autocomplete="off" />
+                <input type="text" id="dev-pull-room"   class="dp-input dp-input--inline" placeholder="Destination Room ID" autocomplete="off" />
+                <button id="dev-pull-btn" class="btn btn-sm btn-primary">Pull</button>
+              </div>
+              <p id="dev-pull-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <div class="dev-broadcast-field dev-broadcast-field--danger">
+              <label class="dev-broadcast-label">Danger Zone</label>
+              <div class="dev-broadcast-actions">
+                <button id="dev-clear-all-bans-mod" class="btn btn-sm btn-secondary" title="Lift all active bans across every room">
+                  <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/></svg>
+                  Clear All Bans
+                </button>
+                <button id="dev-reload-all-mod" class="btn btn-sm btn-secondary" title="Force every connected client to reload">
+                  <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-1.5-4"/><polyline points="14 2 14 7 9 7"/></svg>
+                  Force Reload All
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="./dev-bootstrap.js" defer></script>
+  <script src="./dev.js"           defer></script>
+
+  <script defer>
+    document.getElementById("dp-verify-btn")?.addEventListener("click", () => { showCreatorModal(); });
+    document.getElementById("creator-remove-btn")?.addEventListener("click", () => { deactivateCreator(); });
+    document.getElementById("dev-clear-all-bans-mod")?.addEventListener("click", () => { document.getElementById("dev-clear-all-bans")?.click(); });
+    document.getElementById("dev-reload-all-mod")?.addEventListener("click", () => { document.getElementById("dev-reload-all-btn")?.click(); });
+    window.addEventListener("DOMContentLoaded", () => {
+      if (isCreator) {
+        document.getElementById("dp-verify-btn")?.classList.add("hidden");
+        openDevDashboard();
+      }
+    });
+  </script>
+
+</body>
+</html>
