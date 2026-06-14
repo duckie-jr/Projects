@@ -481,9 +481,13 @@ html, body {
 }
 
 .dev-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 9px 20px;
   font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1;
   color: var(--text-muted);
   background: transparent;
   border: none;
@@ -943,6 +947,149 @@ html, body {
 .ghost-whisper-btn { flex-shrink: 0; }
 
 
+
+/* ─── Broadcast history ──────────────────────────────────── */
+
+.dev-broadcast-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dev-broadcast-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.dev-broadcast-history-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dev-broadcast-history-meta {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+/* ─── Event log panel ───────────────────────────────── */
+
+.dev-log-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 0.76rem;
+}
+
+.dev-log-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  border-left: 2px solid var(--border-2);
+  line-height: 1.5;
+  transition: background 0.08s;
+}
+.dev-log-row:hover { background: var(--bg-3); }
+
+.dev-log-row--room-created  { border-left-color: #22c55e; }
+.dev-log-row--room-closed   { border-left-color: #ef4444; }
+.dev-log-row--broadcast     { border-left-color: var(--accent); }
+.dev-log-row--mod-ban       { border-left-color: #f97316; }
+.dev-log-row--mod-kick      { border-left-color: #f59e0b; }
+.dev-log-row--mod-mute      { border-left-color: #8b5cf6; }
+.dev-log-row--mod-unban     { border-left-color: #6b7280; }
+.dev-log-row--room-renamed  { border-left-color: #06b6d4; }
+.dev-log-row--observer      { border-left-color: #a855f7; }
+
+.dev-log-time {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dev-log-message {
+  color: var(--text-2);
+  word-break: break-all;
+  flex: 1;
+}
+
+/* ─── Ban list ───────────────────────────────────────── */
+
+.dev-ban-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dev-ban-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 6px;
+}
+
+.dev-ban-userid {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--danger);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.dev-ban-meta {
+  flex: 1;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dev-ban-expiry {
+  font-size: 0.7rem;
+  color: #f97316;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Inline room rename ─────────────────────────────── */
+
+.dev-rename-input {
+  flex: 1;
+  padding: 2px 7px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  outline: none;
+  min-width: 0;
+}
+
 /* ═══════════════════════════════════════════════════
    RESPONSIVE  ≤ 640px
 ═══════════════════════════════════════════════════ */
@@ -967,4 +1114,204 @@ html, body {
   .ghost-observer-badge,
   .ghost-observer-room-label { display: none; }
   .ghost-observer-actions { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════
+   LOGIN MODAL — labelled input groups
+═══════════════════════════════════════════════════ */
+
+.dp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dp-input-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+/* Signed-in email shown next to "Creator mode active" in the nav */
+.dev-signed-in-email {
+  font-size: 0.76rem;
+  color: var(--accent);
+  opacity: 0.8;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.dev-signed-in-email.hidden { display: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   ROOMS PANEL — auto-refresh controls
+═══════════════════════════════════════════════════ */
+
+.dev-autorefresh-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.dev-autorefresh-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.dev-autorefresh-select {
+  padding: 4px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  color: var(--text-2);
+  font-size: 0.76rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.dev-autorefresh-select:focus { border-color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════
+   WATCHLIST
+═══════════════════════════════════════════════════ */
+
+.dev-watchlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.dev-watchlist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.dev-watchlist-badge {
+  flex: 1;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════
+   MESSAGE TEMPLATES
+═══════════════════════════════════════════════════ */
+
+.dev-templates-field {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+}
+
+.dev-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+
+.dev-template-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+.dev-template-row:hover { background: var(--bg-4); }
+
+.dev-template-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   SCHEDULE AT TIME row in Broadcast panel
+═══════════════════════════════════════════════════ */
+
+.dev-schedule-at-row {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.dev-schedule-time-input {
+  padding: 5px 9px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+}
+.dev-schedule-time-input:focus { border-color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════
+   LOG FILTER CHIPS
+═══════════════════════════════════════════════════ */
+
+.dev-log-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.dev-log-chip {
+  padding: 3px 10px;
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  letter-spacing: 0.03em;
+}
+.dev-log-chip:hover {
+  background: var(--bg-3);
+  color: var(--text-2);
+}
+.dev-log-chip--active {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* Watchlist chip accent — orange/amber to stand out */
+.dev-log-chip[data-filter="watchlist"].dev-log-chip--active {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.35);
+  color: #ca8a04;
 }
