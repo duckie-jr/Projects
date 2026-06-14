@@ -6,12 +6,10 @@
   <title>Coterie</title>
   <link rel="icon" href="./logo.svg" type="image/svg+xml" />
   <link rel="manifest" href="./manifest.json" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
   <link rel="stylesheet" href="./style.css" />
   <script src="./main.js" defer></script>
   <script src="./rooms.js" defer></script>
-  <script src="./dev/dev.js" defer></script>
+  <script src="./Dev/dev.js" defer></script>
 
   <style id="lobby-inline-styles">
   /* ─── LOBBY SCREEN ─────────────────────────────── */
@@ -592,6 +590,7 @@
       </div>
       <div class="lob-nav-right">
         <span class="lob-welcome" id="lob-username"></span>
+        <span class="lob-pill" id="lob-my-id" title="Your permanent ID — used for moderation"></span>
         <span class="lob-pill" id="lob-count-pill"></span>
       </div>
     </nav>
@@ -745,13 +744,18 @@
           Coterie
           <span class="toolbar-mode-tag">Rooms</span>
         </span>
+        <span id="conn-status-dot" class="conn-status-dot" data-status="connecting" title="Connecting…">Connecting</span>
       </div>
 
       <div class="toolbar-center">
         <span id="room-name-label" class="room-name-label hidden"></span>
         <span id="room-lock-badge" class="room-lock-badge hidden" title="Password protected">🔒</span>
+        <span id="room-locked-indicator" class="room-locked-indicator hidden" title="Room is locked — new participants cannot join">🔒 Locked</span>
         <span id="room-id-label" role="button" title="Click to show full code"></span>
         <button id="copy-id-btn" class="btn btn-sm btn-secondary">Copy ID</button>
+        <div id="room-timer-display" class="room-timer-display hidden">
+          <span id="room-timer-text">00:00</span>
+        </div>
       </div>
 
       <div class="toolbar-right">
@@ -769,11 +773,35 @@
             Hand
           </button>
         </div>
+
+        <!-- Host-only feature controls -->
+        <!-- Host-only: lock stays in toolbar -->
+        <div id="host-controls" class="host-controls hidden">
+          <button id="room-lock-btn" class="btn btn-sm btn-secondary" title="Lock room to prevent new joiners">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="8" width="10" height="7" rx="1.5"/>
+              <path d="M5 8V6a3 3 0 0 1 6 0"/>
+            </svg>
+          </button>
+        </div>
+
+        <button id="focus-mode-btn" class="btn btn-sm btn-secondary" title="Focus mode — hide chat (F)">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 6V2h4M10 2h4v4M15 10v4h-4M6 14H2v-4"/>
+          </svg>
+        </button>
         <button id="users-count-btn" class="btn btn-sm btn-secondary">
           <span id="users-count">0</span> participants
         </button>
         <button id="leave-btn" class="btn btn-sm btn-danger">Leave</button>
       </div>
+    </div>
+
+    <!-- Break-out return bar (shown when guest is in a sub-room) -->
+    <div id="breakout-return-bar" class="breakout-return-bar hidden">
+      <span class="breakout-return-label">📦 You're in a break-out room</span>
+      <span id="breakout-countdown-display" class="breakout-countdown-display"></span>
+      <button id="breakout-return-btn" class="btn btn-sm btn-primary">Return to Main Room</button>
     </div>
 
     <!-- Video grid on the left, chat on the right -->
@@ -789,7 +817,52 @@
         </div>
       </div>
       <div class="chat-pane">
-        <div class="chat-header">Chat</div>
+        <div class="chat-header">
+          <span class="chat-header-title">Chat</span>
+          <div class="chat-header-actions">
+            <!-- Sound toggle — visible to all users -->
+            <button id="sound-toggle-btn" class="chat-icon-btn" title="Sound notifications on">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2.5a4 4 0 0 0-4 4C4 9.5 2.5 11 2.5 11h11s-1.5-1.5-1.5-4.5a4 4 0 0 0-4-4z"/>
+                <line x1="6.5" y1="13.5" x2="9.5" y2="13.5"/>
+              </svg>
+            </button>
+            <!-- Host-only: timer, poll, breakout -->
+            <div id="chat-host-controls" class="chat-host-controls hidden">
+              <button id="timer-btn" class="chat-icon-btn" title="Room timer / stopwatch">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="8" cy="9.5" r="5.5"/>
+                  <line x1="6" y1="2" x2="10" y2="2"/>
+                  <line x1="8" y1="2" x2="8" y2="4"/>
+                  <line x1="8" y1="9.5" x2="8" y2="7"/>
+                  <line x1="8" y1="9.5" x2="10.5" y2="9.5"/>
+                </svg>
+              </button>
+              <button id="poll-btn" class="chat-icon-btn" title="Create a quick poll">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                  <line x1="1" y1="15" x2="15" y2="15"/>
+                  <line x1="3.5" y1="15" x2="3.5" y2="10"/>
+                  <line x1="8"   y1="15" x2="8"   y2="5"/>
+                  <line x1="12.5" y1="15" x2="12.5" y2="8"/>
+                </svg>
+              </button>
+              <button id="breakout-btn" class="chat-icon-btn" title="Start break-out rooms">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="1" width="6" height="6" rx="1"/>
+                  <rect x="9" y="1" width="6" height="6" rx="1"/>
+                  <rect x="1" y="9" width="6" height="6" rx="1"/>
+                  <rect x="9" y="9" width="6" height="6" rx="1"/>
+                </svg>
+              </button>
+              <button id="watch-together-btn" class="chat-icon-btn" title="Watch a YouTube video together">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+                  <polygon points="6,6 11,8 6,10" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <div id="chat-log"></div>
         <div class="chat-footer">
           <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
@@ -800,7 +873,86 @@
 
   </div>
 
+  <!-- ========== TIMER CONTROL PANEL ========== -->
+  <div id="timer-panel" class="timer-panel hidden">
+    <div class="timer-panel-title">Room Timer</div>
+    <div class="timer-panel-mode-row">
+      <label class="timer-radio-label">
+        <input type="radio" name="timer-mode" id="timer-mode-stopwatch" value="stopwatch" checked />
+        Stopwatch
+      </label>
+      <label class="timer-radio-label">
+        <input type="radio" name="timer-mode" id="timer-mode-countdown" value="countdown" />
+        Countdown
+      </label>
+    </div>
+    <div id="timer-duration-row" class="timer-duration-row hidden">
+      <input type="number" id="timer-minutes-input" class="timer-minutes-input" value="5" min="1" max="999" />
+      <span class="timer-panel-unit">min</span>
+    </div>
+    <div class="timer-panel-actions">
+      <button id="timer-start-btn"  class="btn btn-sm btn-primary">Start</button>
+      <button id="timer-stop-btn"   class="btn btn-sm btn-secondary">Pause</button>
+      <button id="timer-reset-btn"  class="btn btn-sm btn-secondary">Reset</button>
+      <button id="timer-close-btn"  class="btn btn-sm btn-secondary">✕</button>
+    </div>
+  </div>
 
+  <!-- ========== POLL CREATE MODAL ========== -->
+  <div id="poll-create-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Create Poll</div>
+      <input type="text" id="poll-question-input" class="creator-password-input" placeholder="Your question…" maxlength="200" autocomplete="off" />
+      <div class="poll-option-list">
+        <input type="text" class="poll-option-input creator-password-input" placeholder="Option 1" maxlength="80" />
+        <input type="text" class="poll-option-input creator-password-input" placeholder="Option 2" maxlength="80" />
+        <input type="text" class="poll-option-input creator-password-input" placeholder="Option 3 (optional)" maxlength="80" />
+        <input type="text" class="poll-option-input creator-password-input" placeholder="Option 4 (optional)" maxlength="80" />
+      </div>
+      <p id="poll-create-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="poll-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="poll-launch-btn" class="btn btn-primary btn-sm">Launch Poll →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== POLL LIVE OVERLAY ========== -->
+  <div id="poll-overlay" class="poll-overlay hidden">
+    <div class="poll-card">
+      <div class="poll-card-header">
+        <span class="poll-card-label">📊 POLL</span>
+        <button id="poll-end-btn" class="btn btn-xs btn-danger hidden">End Poll</button>
+      </div>
+      <p id="poll-question-text" class="poll-question-text"></p>
+      <div id="poll-options-list" class="poll-options-list"></div>
+      <div id="poll-results-list" class="poll-results-list hidden"></div>
+      <p id="poll-vote-count" class="poll-vote-count"></p>
+    </div>
+  </div>
+
+  <!-- ========== BREAK-OUT PANEL ========== -->
+  <div id="breakout-panel" class="breakout-panel hidden">
+    <div class="breakout-panel-title">⊞ Break-out Rooms</div>
+    <div class="breakout-config-row">
+      <label class="breakout-config-label">Groups
+        <select id="breakout-groups-select" class="breakout-select">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <label class="breakout-config-label">Duration (min)
+        <input type="number" id="breakout-duration-input" class="breakout-duration-input" value="5" min="0" max="60" />
+        <span class="breakout-hint">0 = no limit</span>
+      </label>
+    </div>
+    <div id="breakout-assignments" class="breakout-assignments"></div>
+    <div class="breakout-panel-actions">
+      <button id="breakout-start-btn"  class="btn btn-sm btn-primary">Start Break-out</button>
+      <button id="breakout-cancel-btn" class="btn btn-sm btn-secondary">Cancel</button>
+    </div>
+  </div>
 
   <!-- ========== ROOM CODE FULLSCREEN OVERLAY ========== -->
   <div id="room-code-overlay" class="hidden">
@@ -818,6 +970,7 @@
     <button class="host-action-btn host-action-mute-btn">Mute</button>
     <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
     <button class="host-action-btn host-action-move-btn">Move to Room…</button>
+    <button class="host-action-btn host-action-transfer-btn">Make Host</button>
     <div class="host-action-divider"></div>
     <button class="host-action-btn host-action-kick-btn">Kick</button>
     <button class="host-action-btn host-action-ban-btn">Ban</button>
@@ -1078,6 +1231,28 @@
               <p id="dev-pull-status" class="dev-broadcast-status"></p>
             </div>
 
+            <!-- Platform block list -->
+            <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Platform Block List</label>
+              <p class="dev-broadcast-hint" style="margin-bottom:8px">
+                Permanently ban a user by #ID from joining <em>any</em> room on the platform.
+              </p>
+              <div class="dev-pull-row">
+                <input
+                  type="text"
+                  id="dev-platform-ban-number"
+                  class="dev-pull-input"
+                  placeholder="#UserID"
+                  autocomplete="off"
+                />
+                <button id="dev-platform-ban-btn" class="btn btn-sm btn-danger">🚫 Platform Ban</button>
+              </div>
+              <p id="dev-platform-ban-status" class="dev-broadcast-status"></p>
+              <div class="dev-broadcast-actions" style="margin-top:8px">
+                <button id="dev-clear-platform-bans" class="btn btn-sm btn-secondary">Clear All Platform Bans</button>
+              </div>
+            </div>
+
             <!-- Danger zone -->
             <div class="dev-broadcast-field" style="border-top:1px solid #1e1e1e;padding-top:16px;margin-top:4px">
               <label class="dev-broadcast-label">Danger Zone</label>
@@ -1093,16 +1268,38 @@
     </div>
   </div>
 
-  <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <!-- ========== WATCH-TOGETHER PANEL ========== -->
+  <div id="watch-together-panel" class="watch-together-panel hidden">
+    <div class="watch-together-header">
+      <span class="watch-together-title">📺 Watch Together</span>
+      <div class="watch-together-header-actions">
+        <button id="yt-change-btn" class="btn btn-xs btn-secondary hidden">Change Video</button>
+        <button id="watch-together-close-btn" class="btn btn-xs btn-secondary">✕ Close</button>
+      </div>
+    </div>
+    <div id="yt-iframe-container"></div>
+    <div id="yt-host-controls" class="yt-host-controls hidden">
+      <button id="yt-play-btn"  class="btn btn-sm btn-primary">▶ Play</button>
+      <button id="yt-pause-btn" class="btn btn-sm btn-secondary">⏸ Pause</button>
+      <input  id="yt-seek-bar"  type="range" min="0" max="100" value="0" step="0.1" class="yt-seek-bar" />
+      <span   id="yt-time-label" class="yt-time-label">0:00</span>
+    </div>
+    <p id="yt-guest-note" class="yt-guest-note hidden">Host controls playback</p>
+  </div>
 
+  <!-- ========== WATCH-TOGETHER URL MODAL ========== -->
+  <div id="yt-modal" class="creator-modal hidden">
+    <div class="creator-modal-card">
+      <div class="creator-modal-title">Watch Together</div>
+      <p class="creator-modal-desc">Paste a YouTube URL and everyone in the room will watch in sync.</p>
+      <input type="text" id="yt-url-input" class="creator-password-input" placeholder="https://youtube.com/watch?v=…" autocomplete="off" />
+      <p id="yt-url-error" class="creator-password-error"></p>
+      <div class="creator-modal-actions">
+        <button id="yt-modal-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="yt-modal-start-btn"  class="btn btn-primary btn-sm">Start →</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ========== GHOST OBSERVER PANEL (creator only) ========== -->
   <!-- Shown when the creator silently observes a room.           -->
@@ -1122,11 +1319,34 @@
         <button id="ghost-observer-airhorn-btn"    class="btn btn-sm btn-secondary" title="Blast a loud air horn to everyone in this room">📢 Air Horn</button>
         <button id="ghost-observer-whisper-all-btn" class="btn btn-sm btn-secondary" title="Send your mic audio to all participants — they cannot see who is speaking">🎤 Whisper All</button>
         <button id="ghost-observer-mute-all-btn" class="btn btn-sm btn-secondary">Mute All</button>
+        <button id="ghost-annotation-toggle-btn" class="btn btn-sm btn-secondary" title="Toggle annotation overlay (draw on top of streams)">✏️ Annotate</button>
         <button id="ghost-observer-close-btn" class="btn btn-sm btn-danger">✕ Stop Observing</button>
       </div>
     </div>
     <div id="ghost-observer-status" class="ghost-observer-status"></div>
-    <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+
+    <!-- Annotation toolbar (hidden until toggled) -->
+    <div id="ghost-annotation-toolbar" class="ghost-annotation-toolbar hidden">
+      <span class="ghost-annotation-label">Color:</span>
+      <button class="annot-color-btn active" data-color="#ff4444" style="background:#ff4444" title="Red"></button>
+      <button class="annot-color-btn" data-color="#44aaff" style="background:#44aaff" title="Blue"></button>
+      <button class="annot-color-btn" data-color="#44ff88" style="background:#44ff88" title="Green"></button>
+      <button class="annot-color-btn" data-color="#ffee44" style="background:#ffee44" title="Yellow"></button>
+      <button class="annot-color-btn" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+      <span class="ghost-annotation-label" style="margin-left:8px">Size:</span>
+      <select id="annot-size-select" class="annot-size-select">
+        <option value="3">Thin</option>
+        <option value="6" selected>Medium</option>
+        <option value="12">Thick</option>
+      </select>
+      <button id="annot-eraser-btn"  class="btn btn-xs btn-secondary" title="Eraser">⌫ Eraser</button>
+      <button id="annot-clear-btn"   class="btn btn-xs btn-danger"     title="Clear all annotations">Clear</button>
+    </div>
+
+    <div class="ghost-observer-grid-wrap">
+      <div id="ghost-observer-grid" class="ghost-observer-grid"></div>
+      <canvas id="ghost-annotation-canvas" class="ghost-annotation-canvas hidden"></canvas>
+    </div>
   </div>
 
   <!-- ========== BROADCAST OVERLAY ========== -->
@@ -1205,6 +1425,27 @@
         </div>
       </div>
 
+      <!-- Dev-only: persistent room ID — hidden for regular users, shown when isCreator -->
+      <div id="persistent-room-id-field" class="create-room-field hidden">
+        <label class="create-room-label" for="persistent-room-id-input">
+          Persistent Room ID
+          <span class="create-room-optional">(dev only)</span>
+        </label>
+        <input
+          type="text"
+          id="persistent-room-id-input"
+          class="creator-password-input"
+          placeholder="e.g. my-team-standup"
+          maxlength="40"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+        <p class="create-room-hint">
+          Participants can always rejoin via the same URL. Leave blank for a random ID.
+        </p>
+      </div>
+
       <p id="create-room-error" class="creator-password-error"></p>
 
       <div class="creator-modal-actions">
@@ -1242,6 +1483,12 @@
       </div>
     </div>
   </div>
+
+  <!-- ========== TOAST NOTIFICATION CONTAINER ========== -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- CDN scripts loaded sync so globals are ready before the deferred module runs -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
 </body>
 </html>
