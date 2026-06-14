@@ -2085,22 +2085,155 @@ select {
 }
 
 /* ═══════════════════════════════════════════════════
+   CREATOR MODAL — overlay + card
+   Shared by: Create Room, Creator Verification,
+   Guest Password, Active Servers, Move Participant.
+═══════════════════════════════════════════════════ */
+
+.creator-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 8000;
+  padding: 20px;
+}
+
+.creator-modal.hidden { display: none !important; }
+
+.creator-modal-card {
+  background: #0f0f0f;
+  border: 1px solid #1e1e1e;
+  border-top: 3px solid #4a9eff;
+  border-radius: 14px;
+  padding: 30px 28px 26px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 24px 64px rgba(0, 0, 0, 0.72),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+  animation: modal-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Wider card for server/move modals */
+.server-list-card { max-width: 540px; }
+
+@keyframes modal-slide-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.creator-modal-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #e4eef8;
+  letter-spacing: -0.25px;
+  line-height: 1.2;
+}
+
+.creator-modal-desc {
+  font-size: 0.86rem;
+  color: #5a7080;
+  line-height: 1.65;
+  margin-top: -8px;
+}
+
+.creator-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* Error text inside any creator modal */
+.creator-password-error {
+  font-size: 0.82rem;
+  color: #f87171;
+  font-weight: 500;
+  min-height: 16px;
+  margin-top: -10px;
+}
+
+/* Scrollable list inside server / move modals */
+.server-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.server-list-container::-webkit-scrollbar       { width: 3px; }
+.server-list-container::-webkit-scrollbar-thumb { background: #1e2e3e; border-radius: 3px; }
+
+/* Individual row inside server list */
+.server-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  transition: background 0.12s, border-color 0.12s;
+}
+.server-list-row:hover {
+  background: #111;
+  border-color: #262626;
+}
+.server-list-info { flex: 1; min-width: 0; }
+.server-list-host {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #c8d4e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.server-list-meta {
+  font-size: 0.72rem;
+  color: #3a5870;
+  font-family: monospace;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.server-list-empty {
+  font-size: 0.84rem;
+  color: #3a5870;
+  text-align: center;
+  padding: 18px 0;
+}
+
+/* ═══════════════════════════════════════════════════
    CREATE ROOM MODAL — form fields
    ═══════════════════════════════════════════════════ */
 
 .create-room-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 8px;
 }
+.create-room-field + .create-room-field { margin-top: 4px; }
 
 .create-room-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #a0a0b0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #6a7a8a;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
 }
 
 .create-room-optional {
@@ -2109,6 +2242,13 @@ select {
   letter-spacing: 0;
   color: #666;
   font-style: italic;
+}
+
+.create-room-hint {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: #4a6278;
+  line-height: 1.4;
 }
 
 /* Wrapper that lets the char counter sit inside the input */
@@ -2128,7 +2268,7 @@ select {
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.7rem;
-  color: #555;
+  color: #4a6278;
   pointer-events: none;
   user-select: none;
 }
@@ -2137,18 +2277,18 @@ select {
   width: 100%;
   padding: 9px 12px;
   border-radius: 8px;
-  border: 1px solid #333;
-  background: #111;
-  color: #e4eef8;
+  border: 1px solid #252525;
+  background: #090909;
+  color: #c8d4e0;
   font-size: 0.9rem;
+  font-family: inherit;
   cursor: pointer;
   outline: none;
-  appearance: auto;
 }
 
 .create-room-select:focus {
-  border-color: #b8973e;
-  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.15);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2452,6 +2592,22 @@ select {
   color: #283848;
   font-style: italic;
   line-height: 1.8;
+}
+
+/* Loading / transient empty state used by refreshRoomBrowser() */
+.rb-empty {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #283848;
+  line-height: 1.8;
+  animation: rb-loading-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rb-loading-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
 }
 
 /* Room row */
@@ -2872,4 +3028,886 @@ body::before {
 @media (min-width: 1440px) {
   .chat-pane { width: 380px; }
   .home-mode-grid--single { max-width: 480px; }
+}
+
+/* ═══════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+   Slide-in messages replacing bare alert() calls.
+   Stack from bottom-right; auto-dismiss after timeout.
+═══════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 99998;
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - 40px);
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #1a1a1a;
+  border: 1px solid #2e2e2e;
+  border-left: 3px solid #4a9eff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  pointer-events: all;
+  animation: toast-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast.toast--dismissing {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.toast--info  { border-left-color: #4a9eff; }
+.toast--success { border-left-color: #22c55e; }
+.toast--error { border-left-color: #ef4444; }
+.toast--warn  { border-left-color: #f59e0b; }
+
+.toast-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e4eef8;
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  font-size: 0.8rem;
+  color: #8a9aaa;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4a6070;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  align-self: flex-start;
+}
+
+.toast-close:hover { color: #c8d4e0; }
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0)   scale(1); }
+}
+
+@media (max-width: 640px) {
+  .toast-container {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   CONNECTION STATUS DOT
+   Small pill in the room toolbar: connecting (yellow
+   pulse) / connected (green) / disconnected (red).
+═══════════════════════════════════════════════════ */
+
+.conn-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  user-select: none;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.conn-status-dot::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* Connecting — yellow pulsing dot */
+.conn-status-dot[data-status="connecting"] {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: rgba(234, 179, 8, 0.3);
+  color: #ca8a04;
+}
+.conn-status-dot[data-status="connecting"]::before {
+  background: #eab308;
+  animation: conn-pulse 1.2s ease-in-out infinite;
+}
+
+/* Connected — solid green */
+.conn-status-dot[data-status="connected"] {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #16a34a;
+}
+.conn-status-dot[data-status="connected"]::before {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+/* Disconnected — red */
+.conn-status-dot[data-status="disconnected"] {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+.conn-status-dot[data-status="disconnected"]::before {
+  background: #ef4444;
+}
+
+@keyframes conn-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ═══════════════════════════════════════════════════
+   ROOM LOCK & TIMER TOOLBAR ELEMENTS
+═══════════════════════════════════════════════════ */
+
+.room-locked-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.room-timer-display {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  background: rgba(74, 158, 255, 0.12);
+  color: #4a9eff;
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST CONTROLS TOOLBAR STRIP
+═══════════════════════════════════════════════════ */
+
+.host-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════
+   TIMER PANEL  (floating card below ⏱ button)
+═══════════════════════════════════════════════════ */
+
+.timer-panel {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  z-index: 500;
+  background: #141c26;
+  border: 1px solid #2a3a4a;
+  border-radius: 12px;
+  padding: 16px;
+  width: 240px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timer-panel-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #8aabcc;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timer-panel-mode-row {
+  display: flex;
+  gap: 12px;
+}
+
+.timer-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #c8d4e0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.timer-radio-label input[type="radio"] {
+  accent-color: #4a9eff;
+  cursor: pointer;
+}
+
+.timer-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-minutes-input {
+  width: 64px;
+  padding: 6px 10px;
+  background: #0d1520;
+  border: 1px solid #2a3a4a;
+  border-radius: 8px;
+  color: #c8d4e0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.timer-minutes-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.timer-panel-unit {
+  font-size: 0.82rem;
+  color: #6a7a8a;
+}
+
+.timer-panel-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ═══════════════════════════════════════════════════
+   POLL OVERLAY  (full-width card pinned near bottom)
+═══════════════════════════════════════════════════ */
+
+.poll-overlay {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  width: min(400px, calc(100vw - 32px));
+}
+
+.poll-card {
+  background: #141c26;
+  border: 1px solid #2a3a4a;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.poll-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.poll-card-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4a9eff;
+}
+
+.poll-question-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e4eef8;
+  line-height: 1.45;
+}
+
+.poll-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poll-option-btn {
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.poll-option-btn.selected {
+  background: rgba(74, 158, 255, 0.2);
+  border-color: #4a9eff;
+  color: #4a9eff;
+}
+
+.poll-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.poll-result-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.poll-result-label {
+  font-size: 0.82rem;
+  color: #c8d4e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.poll-result-bar-wrap {
+  width: 90px;
+  height: 6px;
+  background: #1e2d3d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.poll-result-bar {
+  height: 100%;
+  background: #4a9eff;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.poll-result-pct {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4a9eff;
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.poll-vote-count {
+  font-size: 0.75rem;
+  color: #6a7a8a;
+  text-align: right;
+}
+
+/* Poll creation modal — reuses .creator-modal base */
+.poll-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   BREAKOUT PANEL  (floating card)
+═══════════════════════════════════════════════════ */
+
+.breakout-panel {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  z-index: 500;
+  background: #141c26;
+  border: 1px solid #2a3a4a;
+  border-radius: 12px;
+  padding: 18px;
+  width: 280px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.breakout-panel-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #8aabcc;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.breakout-config-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.breakout-config-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #8aabcc;
+}
+
+.breakout-select,
+.breakout-duration-input {
+  padding: 6px 10px;
+  background: #0d1520;
+  border: 1px solid #2a3a4a;
+  border-radius: 8px;
+  color: #c8d4e0;
+  font-size: 0.88rem;
+  min-width: 64px;
+}
+
+.breakout-select:focus,
+.breakout-duration-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.breakout-hint {
+  font-size: 0.72rem;
+  color: #6a7a8a;
+  margin-top: 2px;
+}
+
+.breakout-assignments {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.breakout-group {
+  background: #0d1520;
+  border: 1px solid #2a3a4a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.breakout-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4a9eff;
+}
+
+.breakout-group-empty {
+  font-size: 0.8rem;
+  color: #4a5a6a;
+  font-style: italic;
+}
+
+.breakout-member {
+  font-size: 0.82rem;
+  color: #c8d4e0;
+  padding: 2px 0;
+}
+
+.breakout-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════
+   BREAKOUT RETURN BAR  (sticky top strip in sub-rooms)
+═══════════════════════════════════════════════════ */
+
+.breakout-return-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(74, 158, 255, 0.1);
+  border-bottom: 1px solid rgba(74, 158, 255, 0.25);
+  flex-wrap: wrap;
+}
+
+.breakout-return-label {
+  font-size: 0.82rem;
+  color: #4a9eff;
+  font-weight: 600;
+  flex: 1;
+}
+
+.breakout-countdown-display {
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #4a9eff;
+  min-width: 40px;
+}
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE ADJUSTMENTS — new panels
+═══════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .timer-panel,
+  .breakout-panel {
+    right: 8px;
+    top: 56px;
+    width: calc(100vw - 16px);
+    max-width: 340px;
+  }
+
+  .poll-overlay {
+    bottom: 70px;
+  }
+
+  .breakout-return-bar {
+    padding: 6px 12px;
+  }
+
+  .poll-result-bar-wrap {
+    width: 60px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   CHAT HEADER — flex row with inline SVG icon buttons
+═══════════════════════════════════════════════════ */
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-header-title {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  flex-shrink: 0;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.chat-host-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Ghost-style icon button — no bg/border by default */
+.chat-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #6a7a8a;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.chat-icon-btn:hover {
+  color: #c8d4e0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.chat-icon-btn:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 1px;
+}
+
+/* Active state: used for sound-off and room-locked */
+.chat-icon-btn.active {
+  color: #4a9eff;
+  opacity: 0.55;
+}
+
+.chat-icon-btn.active:hover {
+  opacity: 0.85;
+  background: rgba(74, 158, 255, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════
+   WATCH TOGETHER — floating video panel
+   Overlays the app screen; sits above the workspace.
+═══════════════════════════════════════════════════ */
+
+.watch-together-panel {
+  position: fixed;
+  top: 58px;   /* below toolbar */
+  right: 0;
+  width: min(520px, 100vw);
+  max-height: calc(100vh - 58px);
+  background: #0d0d0d;
+  border-left: 1px solid #222;
+  border-bottom: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  z-index: 700;
+  box-shadow: -4px 8px 32px rgba(0,0,0,0.6);
+}
+
+.watch-together-panel.hidden { display: none !important; }
+
+.watch-together-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #111;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.watch-together-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #c8d4e0;
+  letter-spacing: 0.01em;
+}
+
+.watch-together-header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* The iframe container grows to fill remaining height */
+#yt-iframe-container {
+  flex: 1;
+  min-height: 0;
+  background: #000;
+  overflow: hidden;
+  position: relative;
+}
+
+/* YT player fills container */
+#yt-player-div,
+#yt-iframe-container iframe {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 260px;
+  display: block;
+  border: none;
+}
+
+.yt-host-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #111;
+  border-top: 1px solid #1e1e1e;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.yt-seek-bar {
+  flex: 1;
+  min-width: 80px;
+  accent-color: #4a9eff;
+  height: 4px;
+  cursor: pointer;
+}
+
+.yt-time-label {
+  font-size: 0.72rem;
+  font-family: ui-monospace, monospace;
+  color: #6a7a8a;
+  white-space: nowrap;
+  min-width: 72px;
+  text-align: right;
+}
+
+.yt-guest-note {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  color: #4a6070;
+  font-style: italic;
+  text-align: center;
+  background: #111;
+  border-top: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .watch-together-panel {
+    width: 100vw;
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    max-height: 55svh;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   FOCUS MODE  —  hides chat pane so video fills width
+═══════════════════════════════════════════════════ */
+
+#app-screen.focus-mode .chat-pane {
+  display: none !important;
+}
+
+#app-screen.focus-mode .video-grid-panel {
+  width: 100%;
+}
+
+/* Dim the focus-mode button when active so it signals state clearly */
+#focus-mode-btn.active {
+  background: rgba(74, 158, 255, 0.18) !important;
+  border-color: rgba(74, 158, 255, 0.5) !important;
+  color: #4a9eff !important;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   GHOST ANNOTATION — canvas + toolbar
+═══════════════════════════════════════════════════ */
+
+/* Wrap holds both the tile grid and the canvas stacked */
+.ghost-observer-grid-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Canvas absolutely fills the wrap so it overlays the tiles */
+.ghost-annotation-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: crosshair;
+  touch-action: none;
+  /* transparent background — draws on top of the tile grid below */
+}
+
+.ghost-annotation-canvas.hidden {
+  display: none;
+  pointer-events: none;
+}
+
+/* Annotation toolbar strip */
+.ghost-annotation-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #0e1520;
+  border-bottom: 1px solid #1e2a3a;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.ghost-annotation-label {
+  font-size: 0.72rem;
+  color: #6a7a8a;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Color swatch circle buttons */
+.annot-color-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, transform 0.1s;
+  padding: 0;
+}
+
+.annot-color-btn:hover { transform: scale(1.2); }
+
+.annot-color-btn.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.3);
+}
+
+/* Size dropdown */
+.annot-size-select {
+  padding: 3px 7px;
+  background: #0d1520;
+  border: 1px solid #2a3a4a;
+  border-radius: 6px;
+  color: #c8d4e0;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.annot-size-select:focus { outline: none; border-color: #4a9eff; }
+
+/* Eraser active state */
+#annot-eraser-btn.active {
+  background: rgba(74, 158, 255, 0.2) !important;
+  border-color: #4a9eff !important;
+  color: #4a9eff !important;
 }
