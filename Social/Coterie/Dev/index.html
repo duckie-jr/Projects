@@ -21,9 +21,9 @@
           <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,1 10,6 15,6.5 11.5,9.8 12.5,14.5 8,12 3.5,14.5 4.5,9.8 1,6.5 6,6"/></svg>
           Creator mode active
         </span>
+        <span id="dev-signed-in-email" class="dev-signed-in-email hidden"></span>
         <div class="creator-status-actions">
-          <button id="creator-monitor-btn" class="btn btn-sm btn-secondary">Open Dashboard</button>
-          <button id="creator-remove-btn"  class="btn btn-sm btn-danger">Remove</button>
+          <button id="creator-remove-btn" class="btn btn-sm btn-danger">Remove</button>
         </div>
       </div>
     </div>
@@ -32,13 +32,24 @@
   <!-- Creator Verification Modal -->
   <div id="creator-modal" class="dp-overlay hidden">
     <div class="dp-card">
-      <div class="dp-card-title">Creator Verification</div>
-      <p class="dp-card-desc">Enter the creator password to activate your badge.</p>
-      <input type="password" id="creator-password-input" class="dp-input" placeholder="Password" autocomplete="off" />
+      <div class="dp-card-title">Developer Sign In</div>
+      <p id="creator-modal-desc" class="dp-card-desc">Sign in with your dev credentials to access the control panel.</p>
+      <div class="dp-input-group">
+        <label class="dp-input-label" for="creator-email-input">Email</label>
+        <input type="email" id="creator-email-input" class="dp-input" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="dp-input-group">
+        <label class="dp-input-label" for="creator-password-input">Password</label>
+        <input type="password" id="creator-password-input" class="dp-input" placeholder="Dev password" autocomplete="current-password" />
+      </div>
+      <div class="dp-input-group">
+        <label class="dp-input-label" for="creator-confirm-input">Confirm password</label>
+        <input type="password" id="creator-confirm-input" class="dp-input" placeholder="Re-enter password to confirm" autocomplete="off" />
+      </div>
       <p id="creator-password-error" class="dp-error"></p>
       <div class="dp-card-actions">
         <button id="creator-password-cancel" class="btn btn-secondary btn-sm">Cancel</button>
-        <button id="creator-password-submit" class="btn btn-primary btn-sm">Verify</button>
+        <button id="creator-password-submit" class="btn btn-primary btn-sm">Sign In →</button>
       </div>
     </div>
   </div>
@@ -103,7 +114,7 @@
   </div>
 
   <!-- Main Dev Dashboard -->
-  <div id="dev-dashboard" class="dev-dashboard dev-dashboard--page">
+  <div id="dev-dashboard" class="dev-dashboard dev-dashboard--page hidden">
     <div class="dev-dashboard-inner">
 
       <div class="dev-dashboard-header">
@@ -130,6 +141,10 @@
             <button id="dev-clear-all-bans" class="btn btn-sm btn-secondary" title="Remove all active bans from every room">
               <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/></svg>
               Clear Bans
+            </button>
+            <button id="dev-shutdown-all-btn" class="btn btn-sm btn-danger" title="Force-close every active room right now">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v6"/><path d="M5 3.3A6 6 0 1 0 11 3.3"/></svg>
+              Shutdown All
             </button>
             <button id="dev-popout-btn" class="btn btn-sm btn-secondary" title="Open dashboard in its own window" style="display:none">
               <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h5v5"/><line x1="7" y1="9" x2="14" y2="2"/><path d="M13 9v5H2V4h5"/></svg>
@@ -166,6 +181,10 @@
           <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l5.5 2v4.5C13.5 11 11 13.5 8 15 5 13.5 2.5 11 2.5 7.5V3z"/></svg>
           Moderation
         </button>
+        <button class="dev-tab" data-target="log">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M3 8h7M3 12h5"/></svg>
+          Log
+        </button>
       </div>
 
       <div class="dev-dashboard-body">
@@ -176,6 +195,16 @@
             <span class="dev-panel-title">Active Rooms</span>
             <div class="dev-panel-controls">
               <input type="text" id="dev-rooms-filter" class="dev-panel-filter-input" placeholder="Search by name or #ID…" autocomplete="off" />
+              <label class="dev-autorefresh-label">
+                <input type="checkbox" id="dev-autorefresh-toggle" checked />
+                Auto-refresh
+              </label>
+              <select id="dev-autorefresh-interval" class="dev-autorefresh-select">
+                <option value="5">5 s</option>
+                <option value="10">10 s</option>
+                <option value="30">30 s</option>
+                <option value="60">60 s</option>
+              </select>
             </div>
           </div>
           <div id="dev-rooms-list" class="dev-panel-list">
@@ -189,6 +218,15 @@
             <span class="dev-panel-title">Broadcast to Rooms</span>
           </div>
           <div class="dev-broadcast-body">
+
+            <div class="dev-broadcast-field dev-templates-field">
+              <label class="dev-broadcast-label">Message Templates</label>
+              <div id="dev-template-list" class="dev-template-list"></div>
+              <div class="dev-pull-row" style="margin-top:8px">
+                <input type="text" id="dev-template-name-input" class="dp-input dp-input--inline" placeholder="Template name…" autocomplete="off" />
+                <button id="dev-save-template-btn" class="btn btn-xs btn-secondary">Save Current</button>
+              </div>
+            </div>
 
             <div class="dev-broadcast-field">
               <label class="dev-broadcast-label" for="dev-broadcast-input">Message</label>
@@ -215,7 +253,22 @@
 
             <div class="dev-broadcast-actions">
               <button id="dev-broadcast-btn" class="btn btn-sm btn-primary">Send Broadcast</button>
+              <span class="dev-broadcast-hint">delay:</span>
+              <input type="number" id="dev-broadcast-delay" class="dev-broadcast-duration-input" value="0" min="0" max="3600" title="Seconds before sending (0 = immediate)" />
+              <span class="dev-broadcast-hint">s</span>
+              <button id="dev-broadcast-cancel-btn" class="btn btn-sm btn-danger" style="display:none">Cancel</button>
               <p id="dev-broadcast-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <div class="dev-broadcast-actions dev-schedule-at-row">
+              <span class="dev-broadcast-hint">or send at:</span>
+              <input type="time" id="dev-schedule-time" class="dev-schedule-time-input" />
+              <button id="dev-schedule-time-btn" class="btn btn-xs btn-secondary">Schedule at Time</button>
+            </div>
+
+            <div id="dev-broadcast-history-section" class="dev-broadcast-field" style="display:none">
+              <label class="dev-broadcast-label">Recent Broadcasts</label>
+              <div id="dev-broadcast-history-list" class="dev-broadcast-history-list"></div>
             </div>
 
             <div class="dev-broadcast-field dev-broadcast-field--prank">
@@ -245,6 +298,36 @@
           <div class="dev-broadcast-body">
 
             <div class="dev-broadcast-field">
+              <label class="dev-broadcast-label">Direct User Action</label>
+              <p class="dev-broadcast-hint" style="margin-bottom:8px">Act on a specific user by #ID without joining their room.</p>
+              <div class="dev-pull-row">
+                <input type="text" id="dev-mod-user-id" class="dp-input dp-input--inline" placeholder="#UserID" autocomplete="off" />
+                <button id="dev-mod-mute-btn" class="btn btn-sm btn-secondary">Mute</button>
+                <button id="dev-mod-kick-btn" class="btn btn-sm btn-secondary">Kick</button>
+                <button id="dev-mod-ban-btn"  class="btn btn-sm btn-danger">Ban</button>
+                <span class="dev-broadcast-hint">for</span>
+                <input type="number" id="dev-mod-ban-duration" class="dev-broadcast-duration-input" value="0" min="0" max="1440" title="Ban duration in minutes (0 = permanent)" />
+                <span class="dev-broadcast-hint">min</span>
+              </div>
+              <p id="dev-mod-status" class="dev-broadcast-status"></p>
+            </div>
+
+            <div id="dev-ban-list-section" class="dev-broadcast-field" style="display:none">
+              <label class="dev-broadcast-label">Active Bans (this session)</label>
+              <div id="dev-ban-list" class="dev-ban-list"></div>
+            </div>
+
+            <div class="dev-broadcast-field" style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px">
+              <label class="dev-broadcast-label">Watchlist</label>
+              <p class="dev-broadcast-hint" style="margin-bottom:8px">Flag a user #ID — the event log alerts whenever they appear in any room.</p>
+              <div class="dev-pull-row">
+                <input type="text" id="dev-watchlist-input" class="dp-input dp-input--inline" placeholder="#UserID" autocomplete="off" />
+                <button id="dev-watchlist-add-btn" class="btn btn-sm btn-secondary">Watch</button>
+              </div>
+              <div id="dev-watchlist-list" class="dev-watchlist-list"></div>
+            </div>
+
+            <div class="dev-broadcast-field" style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px">
               <label class="dev-broadcast-label">Pull User to Room</label>
               <p class="dev-broadcast-hint" style="margin-bottom:8px">Force a user (by permanent #ID) to join a specific room.</p>
               <div class="dev-pull-row">
@@ -267,8 +350,33 @@
                   Force Reload All
                 </button>
               </div>
+              <div class="dev-pull-row" style="margin-top:10px">
+                <input type="text" id="dev-force-close-id" class="dp-input dp-input--inline" placeholder="Paste Room ID to force-close…" autocomplete="off" />
+                <button id="dev-force-close-by-id-btn" class="btn btn-sm btn-danger">Force Close</button>
+              </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Log panel -->
+        <div class="dev-panel" data-tab="log">
+          <div class="dev-panel-header">
+            <span class="dev-panel-title">Event Log</span>
+            <div class="dev-panel-controls">
+              <div class="dev-log-filter">
+                <button class="dev-log-chip dev-log-chip--active" data-filter="all">All</button>
+                <button class="dev-log-chip" data-filter="broadcast">Broadcast</button>
+                <button class="dev-log-chip" data-filter="mod">Mod</button>
+                <button class="dev-log-chip" data-filter="rooms">Rooms</button>
+                <button class="dev-log-chip" data-filter="watchlist">Watchlist</button>
+              </div>
+              <button id="dev-log-clear-btn" class="btn btn-xs btn-secondary">Clear</button>
+              <button id="dev-log-export-btn" class="btn btn-xs btn-secondary">Export</button>
+            </div>
+          </div>
+          <div id="dev-log-list" class="dev-log-list">
+            <p class="dev-empty">No events yet — waiting for registry activity…</p>
           </div>
         </div>
 
@@ -285,12 +393,6 @@
     document.getElementById("creator-remove-btn")?.addEventListener("click", () => { deactivateCreator(); });
     document.getElementById("dev-clear-all-bans-mod")?.addEventListener("click", () => { document.getElementById("dev-clear-all-bans")?.click(); });
     document.getElementById("dev-reload-all-mod")?.addEventListener("click", () => { document.getElementById("dev-reload-all-btn")?.click(); });
-    window.addEventListener("DOMContentLoaded", () => {
-      if (isCreator) {
-        document.getElementById("dp-verify-btn")?.classList.add("hidden");
-        openDevDashboard();
-      }
-    });
   </script>
 
 </body>
