@@ -71,6 +71,17 @@ const REGISTRY_QUERY_TIMEOUT = 4000;
 let   registryHolderPeer = null;
 const registeredServers  = new Map();
 
+// Admin-force-closed rooms are blocked from re-registering for 10 minutes.
+// Populated by dev.js; checked here every heartbeat.
+const blockedRoomIds = new Map();  // roomId → unblockAt (timestamp)
+
+function pruneBlockedRooms() {
+  const now = Date.now();
+  for (const [roomId, unblockAt] of blockedRoomIds) {
+    if (now >= unblockAt) blockedRoomIds.delete(roomId);
+  }
+}
+
 let registryStatsRoomsCreatedToday   = 0;
 let registryStatsPeakConcurrentUsers = 0;
 let registryStatsTotalBansIssued     = 0;
@@ -128,8 +139,16 @@ function handleRegistryMessage(conn, message) {
   switch (message.type) {
     case "register_room":
     case "heartbeat": {
+      pruneBlockedRooms();
+      if (blockedRoomIds.has(message.roomId)) break;  // admin force-closed — refuse re-registration
+
       if (message.type === "register_room" && !registeredServers.has(message.roomId)) {
         registryStatsRoomsCreatedToday++;
+        // Notify the event log if it exists (defined later in dev.js)
+        if (typeof appendEventLog === "function") {
+          const roomLabel = message.roomName || message.hostName || "Unnamed";
+          appendEventLog("room-created", `Room created: "${roomLabel}" (${message.roomId}) — hosted by ${message.hostName || "?"}`);
+        }
       }
       registeredServers.set(message.roomId, {
         hostName:         message.hostName,
@@ -144,6 +163,11 @@ function handleRegistryMessage(conn, message) {
       break;
     }
     case "unregister_room": {
+      if (registeredServers.has(message.roomId) && typeof appendEventLog === "function") {
+        const room = registeredServers.get(message.roomId);
+        const roomLabel = room.roomName || room.hostName || "Unnamed";
+        appendEventLog("room-closed", `Room closed: "${roomLabel}" (${message.roomId})`);
+      }
       registeredServers.delete(message.roomId);
       break;
     }
@@ -244,3 +268,15 @@ function appendSystemMessage(text) {
 function startJoinRoom(roomId) {
   window.open("../index.html?room=" + encodeURIComponent(roomId), "_blank");
 }
+
+
+// ─── Stubs for main.js / rooms.js symbols not needed on the dev page ──────────
+// dev.js references these at call-time; providing no-op / null stubs here
+// prevents runtime errors when those paths are reached on the standalone panel.
+
+function setLobbyStatus(message) { /* no lobby UI on the dev page */ }
+function clearAllRecentRooms()   { /* no recent-rooms list on the dev page */ }
+const roomIdInputEl              = null;    // checked with if() before use in dev.js
+const isHost                     = false;   // never a room host in the dev panel
+function moveGuestToRoom()       { /* no active room on the dev page */ }
+function requestCreatorModeration() { /* no active room on the dev page */ }
