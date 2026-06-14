@@ -517,6 +517,9 @@ const createRoomConfirmBtnEl = document.getElementById("create-room-confirm-btn"
 const roomPasswordInputEl    = document.getElementById("room-password-input");
 const roomPasswordToggleBtnEl = document.getElementById("room-password-toggle");
 const roomLockBadgeEl        = document.getElementById("room-lock-badge");
+// Dev-only persistent room ID field (hidden for regular users).
+const persistentRoomIdFieldEl = document.getElementById("persistent-room-id-field");
+const persistentRoomIdInputEl = document.getElementById("persistent-room-id-input");
 const guestPasswordModalEl   = document.getElementById("guest-password-modal");
 const guestPasswordDescEl    = document.getElementById("guest-password-modal-desc");
 const guestPasswordEntryEl   = document.getElementById("guest-password-entry");
@@ -710,9 +713,12 @@ async function openRoomBrowser() {
   lobbyScreenEl.classList.add("hidden");
   roomBrowserScreenEl.classList.remove("hidden");
 
-  // Populate welcome name
+  // Populate welcome name and permanent #ID pill
   const welcomeNameEl = document.getElementById("lob-username");
   if (welcomeNameEl) welcomeNameEl.textContent = "Welcome, " + screenName;
+
+  const myIdPillEl = document.getElementById("lob-my-id");
+  if (myIdPillEl) myIdPillEl.textContent = "#" + userNumber;
 
   // Clear the online pill until rooms load
   const onlinePillEl = document.getElementById("lob-count-pill");
@@ -769,7 +775,7 @@ rbJoinInputEl?.addEventListener("keydown", (e) => {
 });
 
 document.getElementById("rb-dashboard-btn")?.addEventListener("click", () => {
-  if (isCreator) openDevDashboard();
+  if (isCreator) window.location.href = "./Dev/";
 });
 
 document.getElementById("rb-uncreator-btn")?.addEventListener("click", () => {
@@ -795,10 +801,14 @@ function attemptContinue() {
   // If the user arrived via a ?room= link, drop them straight into that room.
   const pendingUrlRoom     = sessionStorage.getItem("coterie_url_room");
   const pendingUrlRoomName = sessionStorage.getItem("coterie_url_room_name") ?? "";
+  const pendingUrlPassword = sessionStorage.getItem("coterie_url_password") ?? "";
   if (pendingUrlRoom) {
     sessionStorage.removeItem("coterie_url_room");
     sessionStorage.removeItem("coterie_url_room_name");
+    sessionStorage.removeItem("coterie_url_password");
     if (pendingUrlRoomName) currentRoomName = pendingUrlRoomName;
+    // Pass the password forward so rooms.js can auto-submit it on the welcome message.
+    if (pendingUrlPassword) sessionStorage.setItem("coterie_pending_password", pendingUrlPassword);
     setLobbyStatus(pendingUrlRoomName ? 'Joining "' + pendingUrlRoomName + '"…' : "Joining room from link…");
     startJoinRoom(pendingUrlRoom);
     return;
@@ -856,19 +866,22 @@ let _resumedByPendingMove = false;
   const params      = new URLSearchParams(window.location.search);
   const urlRoomId   = params.get("room");
   const urlRoomName = (params.get("name") ?? "").trim();
+  const urlPassword = params.get("password") ?? "";
   if (!urlRoomId) return;
 
   const savedName = loadSavedUsername();
   if (!savedName) {
-    // Stash both — attemptContinue() will pick them up after the name is entered.
+    // Stash all three — attemptContinue() will pick them up after name entry.
     sessionStorage.setItem("coterie_url_room", urlRoomId);
     if (urlRoomName) sessionStorage.setItem("coterie_url_room_name", urlRoomName);
+    if (urlPassword) sessionStorage.setItem("coterie_url_password", urlPassword);
     return;
   }
 
   // Has a saved name — skip straight to joining the room.
   screenName = savedName;
   if (urlRoomName) currentRoomName = urlRoomName;
+  if (urlPassword) sessionStorage.setItem("coterie_pending_password", urlPassword);
   usernameScreenEl.classList.add("hidden");
   setLobbyStatus(urlRoomName ? 'Joining "' + urlRoomName + '"…' : "Joining room from link…");
   startJoinRoom(urlRoomId);
@@ -950,6 +963,13 @@ function openCreateRoomModal() {
   roomMaxSizeSelectEl.value     = "0";
   roomPasswordInputEl.value     = "";
   createRoomErrorEl.textContent = "";
+
+  // Show the persistent room ID field only to verified creators.
+  if (persistentRoomIdFieldEl) {
+    persistentRoomIdFieldEl.classList.toggle("hidden", !isCreator);
+    persistentRoomIdInputEl.value = "";
+  }
+
   createRoomModalEl.classList.remove("hidden");
   setTimeout(() => roomNameInputEl.focus(), 50);
 }
@@ -979,6 +999,33 @@ function submitCreateRoom() {
   currentRoomMaxSize = parseInt(roomMaxSizeSelectEl.value, 10);
   currentRoomPassword = roomPasswordInputEl.value;   // empty = open room
 
+  // ── Persistent room ID (dev-only) ────────────────────────────────────────
+  // Reserved internal prefixes that must never be used as custom IDs.
+  const RESERVED_ID_PREFIXES = ["coterie-fo-", "coterie-active-server-registry"];
+
+  let persistentRoomId = "";
+  if (isCreator && persistentRoomIdInputEl) {
+    const rawPersistentId = persistentRoomIdInputEl.value.trim().toLowerCase();
+    if (rawPersistentId.length > 0) {
+      if (!/^[a-z0-9-]+$/.test(rawPersistentId)) {
+        createRoomErrorEl.textContent = "Room ID: only lowercase letters, numbers, and hyphens allowed.";
+        return;
+      }
+      if (rawPersistentId.length < 4) {
+        createRoomErrorEl.textContent = "Room ID must be at least 4 characters.";
+        return;
+      }
+      const usesReservedPrefix = RESERVED_ID_PREFIXES.some((prefix) =>
+        rawPersistentId.startsWith(prefix)
+      );
+      if (usesReservedPrefix) {
+        createRoomErrorEl.textContent = "That Room ID is reserved for internal use.";
+        return;
+      }
+      persistentRoomId = rawPersistentId;
+    }
+  }
+
   closeCreateRoomModal();
 
   currentUsername          = screenName;
@@ -986,7 +1033,7 @@ function submitCreateRoom() {
   createRoomBtnEl.disabled = true;
   joinRoomBtnEl.disabled   = true;
   setLobbyStatus("Creating room...");
-  createRoom();
+  createRoom(persistentRoomId || undefined);
 }
 
 createRoomCancelBtnEl.addEventListener("click", () => closeCreateRoomModal());
@@ -1013,3 +1060,98 @@ window.addEventListener("pagehide",     () => { peer?.destroy(); });
 window.addEventListener("beforeunload", () => { peer?.destroy(); });
 
 // ═══════════════════════════════════════════════════
+//  TOAST NOTIFICATIONS
+//
+//  Replaces bare alert() calls with non-blocking slide-in toasts.
+//  Toasts stack from bottom-right and auto-dismiss after `durationMs`.
+//  Calling code can pass type: 'info' | 'success' | 'error' | 'warn'.
+// ═══════════════════════════════════════════════════
+
+const TOAST_ICONS = {
+  info:    'ℹ️',
+  success: '✅',
+  error:   '🚫',
+  warn:    '⚠️',
+};
+
+const TOAST_TITLES = {
+  info:    'Info',
+  success: 'Done',
+  error:   'Removed',
+  warn:    'Warning',
+};
+
+function showToast(message, type = 'info', durationMs = 5000) {
+  const containerEl = document.getElementById('toast-container');
+  if (!containerEl) return;
+
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast toast--${type}`;
+  toastEl.setAttribute('role', 'alert');
+
+  const iconEl = document.createElement('span');
+  iconEl.className     = 'toast-icon';
+  iconEl.textContent   = TOAST_ICONS[type] ?? 'ℹ️';
+  iconEl.setAttribute('aria-hidden', 'true');
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'toast-body';
+
+  const titleEl = document.createElement('div');
+  titleEl.className   = 'toast-title';
+  titleEl.textContent = TOAST_TITLES[type] ?? 'Notice';
+
+  const messageEl = document.createElement('div');
+  messageEl.className   = 'toast-message';
+  messageEl.textContent = message;
+
+  bodyEl.append(titleEl, messageEl);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className   = 'toast-close';
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('aria-label', 'Dismiss notification');
+  closeBtn.addEventListener('click', () => dismissToast(toastEl));
+
+  toastEl.append(iconEl, bodyEl, closeBtn);
+  containerEl.appendChild(toastEl);
+
+  // Auto-dismiss after the timeout.
+  const dismissTimer = setTimeout(() => dismissToast(toastEl), durationMs);
+
+  // Clear the auto-dismiss timer if the user manually closes it first.
+  closeBtn.addEventListener('click', () => clearTimeout(dismissTimer), { once: true });
+}
+
+function dismissToast(toastEl) {
+  if (!toastEl || !toastEl.isConnected) return;
+  toastEl.classList.add('toast--dismissing');
+  // Remove from DOM after the CSS fade-out completes.
+  toastEl.addEventListener('transitionend', () => toastEl.remove(), { once: true });
+  // Safety fallback in case transitionend never fires.
+  setTimeout(() => toastEl.remove(), 400);
+}
+
+// ═══════════════════════════════════════════════════
+//  CONNECTION STATUS PILL
+//
+//  Updates the #conn-status-dot element in the toolbar.
+//  The pill's visual style (colour, animation) is driven entirely by
+//  the data-status attribute — see .conn-status-dot[data-status="…"] in
+//  style.css.  Called by rooms.js whenever the PeerJS peer opens, errors,
+//  or the host connection closes.
+// ═══════════════════════════════════════════════════
+
+const CONNECTION_STATUS_LABELS = {
+  connecting:   'Connecting…',
+  connected:    'Connected',
+  disconnected: 'Disconnected',
+};
+
+function setConnectionStatus(status) {
+  const pillEl = document.getElementById('conn-status-dot');
+  if (!pillEl) return;
+  pillEl.dataset.status = status;
+  pillEl.textContent    = CONNECTION_STATUS_LABELS[status] ?? status;
+  pillEl.title          = CONNECTION_STATUS_LABELS[status] ?? status;
+}
