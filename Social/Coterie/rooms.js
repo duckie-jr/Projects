@@ -516,34 +516,40 @@ async function createRoom(persistentRoomId) {
   setLobbyStatus('Creating room…');
   if (rbCreateBtnEl) rbCreateBtnEl.disabled = true;
 
-  // Try to claim registry first (non-blocking — we show the room immediately).
-  _tryClaimRegistry();
-
   setConnectionStatus('connecting');
-  peer = createPeer(persistentRoomId);
 
-  // Race the PeerJS handshake and camera/mic acquisition in parallel —
-  // both are pure I/O with no dependency on each other, so there's no
-  // reason to do them sequentially.
-  const [opened] = await Promise.all([
-    new Promise((resolve) => {
-      peer.once('open',  ()    => { setConnectionStatus('connected'); resolve(true); });
-      peer.once('error', (err) => {
-        setConnectionStatus('disconnected');
-        setLobbyStatus('Could not create room: ' + err.type, true);
-        resolve(false);
-      });
-    }),
+  // Delay the registry claim by 300ms so the main room peer gets a head start
+  // on the signaling server WebSocket. Both would otherwise race for the same
+  // free-tier server simultaneously, which can cause transient failures.
+  setTimeout(() => _tryClaimRegistry(), 300);
+
+  // Race peer creation (with automatic retry) against camera/mic acquisition.
+  // Both are pure I/O with no dependency on each other.
+  let peerResult;
+  [peerResult] = await Promise.all([
+    createPeerWithRetry(persistentRoomId)
+      .then((openPeer) => ({ ok: true, peer: openPeer }))
+      .catch((errorType) => ({ ok: false, errorType })),
     acquireLocalMedia(),
   ]);
 
-  if (!opened) {
+  if (!peerResult.ok) {
+    setConnectionStatus('disconnected');
+    const errorType = peerResult.errorType ?? 'unknown';
+    const errorMessage = errorType === 'unavailable-id'
+      ? 'That Room ID is already taken — try a different one.'
+      : errorType === 'timeout'
+        ? 'Could not reach the signaling server. Check your connection and try again.'
+        : 'Could not create room (' + errorType + ')';
+    setLobbyStatus(errorMessage, true);
     if (rbCreateBtnEl) rbCreateBtnEl.disabled = false;
-    // Release any media that was acquired before the peer failed.
     localStream?.getTracks().forEach((track) => track.stop());
     localStream = null;
     return;
   }
+
+  peer = peerResult.peer;
+  setConnectionStatus('connected');
 
   currentRoomId  = peer.id;
   hostPeerId     = peer.id;
