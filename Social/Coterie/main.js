@@ -119,6 +119,72 @@ function createPeer(peerId) {
   return peerId ? new window.Peer(peerId, PEER_OPTIONS) : new window.Peer(PEER_OPTIONS);
 }
 
+// ─── Peer creation with retry + timeout ───────────────────────────────────────
+//
+// The public PeerJS signaling server is free-tier and occasionally hangs,
+// rejects connections, or returns transient errors. This wrapper:
+//
+//   1. Sets a hard 12-second timeout per attempt (peer.once('open') can
+//      hang forever if the server stops responding without sending an error).
+//   2. Retries up to MAX_PEER_RETRIES times on transient failures, with a
+//      short back-off between attempts.
+//   3. Does NOT retry on permanent errors: unavailable-id (ID already taken),
+//      invalid-id, or browser-incompatible.
+//
+// Returns the open Peer on success, or throws a string error type on failure.
+//
+const MAX_PEER_RETRIES    = 2;
+const PEER_OPEN_TIMEOUT_MS = 12_000;
+
+// Error types that are permanent — no point retrying.
+const PEER_PERMANENT_ERRORS = new Set([
+  'unavailable-id',
+  'invalid-id',
+  'browser-incompatible',
+  'ssl-unavailable',
+]);
+
+async function createPeerWithRetry(peerId) {
+  let lastErrorType = 'unknown';
+
+  for (let attempt = 0; attempt <= MAX_PEER_RETRIES; attempt++) {
+    // Brief back-off before each retry so we don't hammer the server.
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+    }
+
+    const candidatePeer = createPeer(peerId);
+
+    const result = await new Promise((resolve) => {
+      const openTimer = setTimeout(() => {
+        // Server stopped responding — kill this peer and signal a timeout.
+        try { candidatePeer.destroy(); } catch (_) {}
+        resolve({ ok: false, errorType: 'timeout' });
+      }, PEER_OPEN_TIMEOUT_MS);
+
+      candidatePeer.once('open', () => {
+        clearTimeout(openTimer);
+        resolve({ ok: true, peer: candidatePeer });
+      });
+
+      candidatePeer.once('error', (err) => {
+        clearTimeout(openTimer);
+        try { candidatePeer.destroy(); } catch (_) {}
+        resolve({ ok: false, errorType: err.type ?? 'unknown' });
+      });
+    });
+
+    if (result.ok) return result.peer;
+
+    lastErrorType = result.errorType;
+
+    // Stop immediately on errors the server will never recover from.
+    if (PEER_PERMANENT_ERRORS.has(lastErrorType)) break;
+  }
+
+  throw lastErrorType;
+}
+
 // ═══════════════════════════════════════════════════
 //  ROOMS STATE
 // ═══════════════════════════════════════════════════
