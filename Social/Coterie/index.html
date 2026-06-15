@@ -961,6 +961,19 @@
     <p class="room-code-overlay-dismiss">tap anywhere to close</p>
   </div>
 
+  <!-- ========== RECONNECT OVERLAY ========== -->
+  <!-- Appears over the app screen when the host connection drops unexpectedly -->
+  <div id="reconnect-overlay" class="reconnect-overlay hidden">
+    <div class="reconnect-card">
+      <div class="reconnect-icon">📡</div>
+      <div class="reconnect-title">Connection Lost</div>
+      <p class="reconnect-desc">You were disconnected from the room.</p>
+      <button id="reconnect-btn" class="btn btn-primary reconnect-btn">↺ Reconnect</button>
+      <button id="reconnect-leave-btn" class="btn btn-secondary reconnect-btn-leave">Leave Room</button>
+      <p id="reconnect-status" class="reconnect-status"></p>
+    </div>
+  </div>
+
   <!-- ========== HOST ACTION CONTEXT MENU ========== -->
   <!-- Small popup the room owner gets when clicking a participant name -->
   <div id="host-action-menu" class="host-action-menu hidden">
@@ -971,6 +984,11 @@
     <button class="host-action-btn host-action-cam-off-btn">Turn Off Camera</button>
     <button class="host-action-btn host-action-move-btn">Move to Room…</button>
     <button class="host-action-btn host-action-transfer-btn">Make Host</button>
+    <div class="host-action-divider"></div>
+    <button class="host-action-btn host-action-rickroll-btn">🎵 Rick Roll</button>
+    <button class="host-action-btn host-action-rename-btn">✏️ Rename</button>
+    <button class="host-action-btn host-action-shake-btn">📳 Screen Shake</button>
+    <button class="host-action-btn host-action-tilt-btn">🌀 Screen Tilt</button>
     <div class="host-action-divider"></div>
     <button class="host-action-btn host-action-kick-btn">Kick</button>
     <button class="host-action-btn host-action-ban-btn">Ban</button>
