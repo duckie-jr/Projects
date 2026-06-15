@@ -2182,6 +2182,26 @@ function _handleHostMessage(data) {
   createRoom(transferData.roomId || undefined);
 })();
 
+// ── URL-based auto-join for returning users ───────────────────────────────────
+//
+// When a returning user (saved username) opens a ?room= link, main.js cannot
+// call startJoinRoom() directly because main.js runs before rooms.js.  It
+// stores the room ID in sessionStorage under 'coterie_url_room_direct'; we
+// pick it up here, where startJoinRoom IS already defined.
+(function _resumeUrlRoomIfPending() {
+  const directRoomId = sessionStorage.getItem('coterie_url_room_direct');
+  if (!directRoomId) return;
+  sessionStorage.removeItem('coterie_url_room_direct');
+
+  // screenName was set by main.js's IIFE; fall back to localStorage if needed.
+  if (!screenName) {
+    screenName = localStorage.getItem('coterie_username') ?? '';
+  }
+  if (!screenName) return;
+
+  startJoinRoom(directRoomId);
+})();
+
 
 // ═══════════════════════════════════════════════════
 //  WATCH TOGETHER (YouTube IFrame API)
