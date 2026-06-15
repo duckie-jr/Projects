@@ -3911,3 +3911,123 @@ body::before {
   border-color: #4a9eff !important;
   color: #4a9eff !important;
 }
+
+/* ═══════════════════════════════════════════════════
+   RECONNECT OVERLAY
+   Shown over the app screen when a guest loses connection.
+═══════════════════════════════════════════════════ */
+
+.reconnect-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 6, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9500;
+  padding: 20px;
+}
+
+.reconnect-overlay.hidden { display: none !important; }
+
+.reconnect-card {
+  background: #0f0f0f;
+  border: 1px solid #1e1e1e;
+  border-top: 3px solid #f59e0b;
+  border-radius: 14px;
+  padding: 36px 32px 28px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+  animation: modal-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reconnect-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.reconnect-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e4eef8;
+  letter-spacing: -0.2px;
+}
+
+.reconnect-desc {
+  font-size: 0.86rem;
+  color: #5a7080;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.reconnect-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.reconnect-btn-leave {
+  width: 100%;
+  padding: 9px;
+  font-size: 0.82rem;
+}
+
+.reconnect-status {
+  min-height: 16px;
+  font-size: 0.78rem;
+  color: #6a7a8a;
+  margin: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   PRANK ANIMATIONS  (screen shake + tilt)
+   Applied to document.body for timed durations.
+═══════════════════════════════════════════════════ */
+
+@keyframes prank-shake-keyframes {
+  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+  10%       { transform: translateX(-8px) translateY(3px) rotate(-1deg); }
+  20%       { transform: translateX(8px) translateY(-3px) rotate(1deg); }
+  30%       { transform: translateX(-10px) translateY(5px) rotate(-1.5deg); }
+  40%       { transform: translateX(10px) translateY(-5px) rotate(1.5deg); }
+  50%       { transform: translateX(-6px) translateY(2px) rotate(-0.8deg); }
+  60%       { transform: translateX(6px) translateY(-2px) rotate(0.8deg); }
+  70%       { transform: translateX(-4px) translateY(1px) rotate(-0.4deg); }
+  80%       { transform: translateX(4px) translateY(-1px) rotate(0.4deg); }
+  90%       { transform: translateX(-2px) translateY(0) rotate(0deg); }
+}
+
+body.prank-shake {
+  animation: prank-shake-keyframes 0.1s ease-in-out 16;
+  transform-origin: center center;
+}
+
+@keyframes prank-tilt-keyframes {
+  0%   { transform: rotate(0deg); }
+  5%   { transform: rotate(5deg); }
+  10%  { transform: rotate(5deg); }
+  95%  { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+body.prank-tilt {
+  animation: prank-tilt-keyframes 8s ease-in-out 1;
+  transform-origin: center center;
+  overflow: hidden;
+}
+
+/* Prank menu item accent colors */
+.host-action-rickroll-btn { color: #ef4444; }
+.host-action-rename-btn   { color: #f59e0b; }
+.host-action-shake-btn    { color: #a78bfa; }
+.host-action-tilt-btn     { color: #22d3ee; }
