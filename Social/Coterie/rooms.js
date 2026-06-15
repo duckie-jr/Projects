@@ -522,17 +522,26 @@ async function createRoom(persistentRoomId) {
   setConnectionStatus('connecting');
   peer = createPeer(persistentRoomId);
 
-  const opened = await new Promise((resolve) => {
-    peer.once('open',  ()    => { setConnectionStatus('connected'); resolve(true); });
-    peer.once('error', (err) => {
-      setConnectionStatus('disconnected');
-      setLobbyStatus('Could not create room: ' + err.type, true);
-      resolve(false);
-    });
-  });
+  // Race the PeerJS handshake and camera/mic acquisition in parallel —
+  // both are pure I/O with no dependency on each other, so there's no
+  // reason to do them sequentially.
+  const [opened] = await Promise.all([
+    new Promise((resolve) => {
+      peer.once('open',  ()    => { setConnectionStatus('connected'); resolve(true); });
+      peer.once('error', (err) => {
+        setConnectionStatus('disconnected');
+        setLobbyStatus('Could not create room: ' + err.type, true);
+        resolve(false);
+      });
+    }),
+    acquireLocalMedia(),
+  ]);
 
   if (!opened) {
     if (rbCreateBtnEl) rbCreateBtnEl.disabled = false;
+    // Release any media that was acquired before the peer failed.
+    localStream?.getTracks().forEach((track) => track.stop());
+    localStream = null;
     return;
   }
 
@@ -558,7 +567,6 @@ async function createRoom(persistentRoomId) {
   peer.on('call',       _handleIncomingCall);
   peer.on('error',      (err) => appendChatMessage('System', 'Connection error: ' + err.type, true));
 
-  await acquireLocalMedia();
   showAppScreen();
   updateUsersBar();
   renderParticipantsList();
@@ -869,7 +877,7 @@ async function joinRoom(roomId) {
     if (appScreenEl?.classList.contains('hidden')) return;
     setConnectionStatus('disconnected');
     appendChatMessage('System', 'Disconnected from host.', true);
-    showToast('Connection to the room was lost.', 'warn', 8000);
+    _showReconnectOverlay();
   });
 
   hostConnection.on('error', (err) => {
@@ -2506,3 +2514,261 @@ function toggleFocusMode() {
 }
 
 document.getElementById('focus-mode-btn')?.addEventListener('click', () => toggleFocusMode());
+
+
+// ═══════════════════════════════════════════════════
+//  RECONNECT OVERLAY
+//
+//  When a guest's connection to the host drops unexpectedly,
+//  we show a full-screen overlay with a single ↺ Reconnect button
+//  instead of forcing a page reload.
+//
+//  Reconnect flow:
+//    1. Destroy the broken peer.
+//    2. Close all media calls (video tiles clear automatically).
+//    3. Re-acquire media if it was stopped.
+//    4. Call joinRoom(hostPeerId) — same room ID, fresh peer.
+//    5. On success, hide the overlay; on failure, show an error.
+// ═══════════════════════════════════════════════════
+
+const RICKROLL_VIDEO_ID = 'dQw4w9WgXcQ';
+
+function _showReconnectOverlay() {
+  const overlayEl = document.getElementById('reconnect-overlay');
+  const statusEl  = document.getElementById('reconnect-status');
+  if (!overlayEl) return;
+  if (statusEl) statusEl.textContent = '';
+  overlayEl.classList.remove('hidden');
+}
+
+function _hideReconnectOverlay() {
+  document.getElementById('reconnect-overlay')?.classList.add('hidden');
+}
+
+async function _attemptReconnect() {
+  const reconnectBtnEl = document.getElementById('reconnect-btn');
+  const statusEl       = document.getElementById('reconnect-status');
+
+  if (reconnectBtnEl) { reconnectBtnEl.disabled = true; reconnectBtnEl.textContent = 'Reconnecting…'; }
+  if (statusEl) statusEl.textContent = '';
+
+  // Tear down any broken state from the previous connection.
+  try { hostConnection?.close(); } catch (_) {}
+  hostConnection = null;
+  try { peer?.destroy(); } catch (_) {}
+  peer = null;
+
+  // Close stale media calls and clear video tiles (except local).
+  for (const call of mediaCallMap.values()) { try { call.close(); } catch (_) {} }
+  mediaCallMap.clear();
+  videoGridEl?.querySelectorAll('.video-tile:not([data-peer-id="local"])')
+    .forEach((tile) => tile.remove());
+
+  // Re-acquire local media if it was released.
+  if (!localStream) {
+    await acquireLocalMedia();
+  }
+
+  // Reconnect to the same room ID.
+  const targetRoomId = hostPeerId;
+  if (!targetRoomId) {
+    if (statusEl) statusEl.textContent = 'No room ID — cannot reconnect.';
+    if (reconnectBtnEl) { reconnectBtnEl.disabled = false; reconnectBtnEl.textContent = '↺ Reconnect'; }
+    return;
+  }
+
+  setConnectionStatus('connecting');
+  if (statusEl) statusEl.textContent = 'Connecting…';
+
+  await joinRoom(targetRoomId);
+
+  // joinRoom sets up hostConnection; success is indicated by a 'user_list'
+  // message arriving and showAppScreen() being called. We wait briefly to see
+  // if the peer opened. If it did, the overlay will be hidden via the user_list
+  // handler below.
+  const peerOpened = await new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), 8_000);
+    const checkInterval = setInterval(() => {
+      if (peer && !peer.destroyed) {
+        clearTimeout(timer);
+        clearInterval(checkInterval);
+        resolve(true);
+      }
+    }, 200);
+  });
+
+  if (!peerOpened) {
+    setConnectionStatus('disconnected');
+    if (statusEl) statusEl.textContent = 'Could not reach the room. The host may have left.';
+    if (reconnectBtnEl) { reconnectBtnEl.disabled = false; reconnectBtnEl.textContent = '↺ Try Again'; }
+    return;
+  }
+
+  // Peer opened — the user_list handler in _handleHostMessage will call
+  // showAppScreen() and we'll hide the overlay then.
+  _hideReconnectOverlay();
+  if (reconnectBtnEl) { reconnectBtnEl.disabled = false; reconnectBtnEl.textContent = '↺ Reconnect'; }
+}
+
+document.getElementById('reconnect-btn')?.addEventListener('click', () => _attemptReconnect());
+
+document.getElementById('reconnect-leave-btn')?.addEventListener('click', () => {
+  _hideReconnectOverlay();
+  leaveRoom();
+});
+
+// Also hide the overlay if we successfully rejoin (user_list arrives and
+// showAppScreen is called). We patch showAppScreen here.
+const _originalShowAppScreen = showAppScreen;
+function showAppScreen() {
+  _hideReconnectOverlay();
+  _originalShowAppScreen();
+}
+
+
+// ═══════════════════════════════════════════════════
+//  HOST PRANKS (targeted — host → specific guest)
+//
+//  Message type: { type: 'host_prank', action: '...', ...extra }
+//
+//  Prank actions:
+//    rickroll   — opens the Watch Together panel with Rick Astley's video
+//    rename     — temporarily renames the target's display name for 30s
+//    shake      — applies a CSS shake animation to the whole UI for 1.5s
+//    tilt       — applies a CSS tilt animation to the whole UI for 8s
+//
+//  Flow:
+//    Host → sends { type: 'host_prank', action } directly to one guest's conn
+//    Guest → receives in _handleHostMessage → dispatches to _applyHostPrank
+//    Host → also intercepts in handleGuestConnection via second data listener
+//           so that the host can apply pranks to themselves if needed,
+//           and the prank isn't forwarded to other guests.
+// ═══════════════════════════════════════════════════
+
+// ── Host side: send a prank to a specific guest ──────────────────────────────
+function sendHostPrankToGuest(targetPeerId, action, extra = {}) {
+  guestConnectionMap.get(targetPeerId)?.conn.send({
+    type:   'host_prank',
+    action,
+    ...extra,
+  });
+}
+
+// ── Guest side: apply a received prank ───────────────────────────────────────
+function _applyHostPrank(action, data) {
+  switch (action) {
+
+    case 'rickroll':
+      // Open Watch Together with Rick Astley whether or not the guest is the host.
+      _openWatchTogetherPanel(RICKROLL_VIDEO_ID, 0);
+      break;
+
+    case 'shake':
+      _applyBodyClass('prank-shake', 1_600);
+      break;
+
+    case 'tilt':
+      _applyBodyClass('prank-tilt', 8_000);
+      break;
+
+    case 'rename': {
+      const newPrankName    = (data.prankName ?? 'PoopyMcPoopface').slice(0, 30);
+      const originalName    = currentUsername;
+      currentUsername       = newPrankName;
+      appendChatMessage('System', `Your name was temporarily changed to "${newPrankName}" 😈`, true);
+      updateUsersBar();
+      // Revert after 30s.
+      setTimeout(() => {
+        currentUsername = originalName;
+        appendChatMessage('System', 'Your name has been restored.', true);
+        updateUsersBar();
+      }, 30_000);
+      break;
+    }
+  }
+}
+
+// Temporarily adds a CSS class to document.body for a timed prank effect.
+function _applyBodyClass(className, durationMs) {
+  document.body.classList.add(className);
+  setTimeout(() => document.body.classList.remove(className), durationMs);
+}
+
+// ── Wire prank handler into _handleHostMessage ────────────────────────────────
+// (Using the existing wrap-and-delegate pattern already in this file)
+const _originalHandleHostMessageForPranks = _handleHostMessage;
+function _handleHostMessage(data) {
+  if (data?.type === 'host_prank') {
+    _applyHostPrank(data.action, data);
+    return;
+  }
+  _originalHandleHostMessageForPranks(data);
+}
+
+// ── Host prank: rename — also updates host-side connectedUsers so everyone sees it ──
+function prankRenameGuest(targetPeerId) {
+  const currentName = guestConnectionMap.get(targetPeerId)?.username ?? '';
+  const prankName   = prompt(`Temporarily rename "${currentName}" to:`, 'PoopyMcPoopface');
+  if (!prankName?.trim()) return;
+
+  const trimmedPrankName = prankName.trim().slice(0, 30);
+
+  // Tell the target to rename themselves locally.
+  sendHostPrankToGuest(targetPeerId, 'rename', { prankName: trimmedPrankName });
+
+  // Also update the host-side user list so everyone in the room sees the rename.
+  const userEntry = connectedUsers.find((u) => u.peerId === targetPeerId);
+  if (userEntry) {
+    const originalName = userEntry.username;
+    userEntry.username = trimmedPrankName;
+    if (guestConnectionMap.has(targetPeerId)) {
+      guestConnectionMap.get(targetPeerId).username = trimmedPrankName;
+    }
+    _broadcastUserList();
+    updateUsersBar();
+    renderParticipantsList();
+
+    // Revert after 30s on the host side too.
+    setTimeout(() => {
+      const stillConnected = connectedUsers.find((u) => u.peerId === targetPeerId);
+      if (stillConnected) {
+        stillConnected.username = originalName;
+        if (guestConnectionMap.has(targetPeerId)) {
+          guestConnectionMap.get(targetPeerId).username = originalName;
+        }
+        _broadcastUserList();
+        updateUsersBar();
+        renderParticipantsList();
+      }
+    }, 30_000);
+  }
+}
+
+// ── Wire host action menu prank buttons ───────────────────────────────────────
+
+hostActionMenuEl?.querySelector('.host-action-rickroll-btn')?.addEventListener('click', () => {
+  const targetPeerId = hostActionMenuTargetPeerId;
+  closeHostActionMenu();
+  if (!targetPeerId) return;
+  sendHostPrankToGuest(targetPeerId, 'rickroll');
+  // Host also gets rickrolled 😈
+  _openWatchTogetherPanel(RICKROLL_VIDEO_ID, 0);
+});
+
+hostActionMenuEl?.querySelector('.host-action-rename-btn')?.addEventListener('click', () => {
+  const targetPeerId = hostActionMenuTargetPeerId;
+  closeHostActionMenu();
+  if (targetPeerId) prankRenameGuest(targetPeerId);
+});
+
+hostActionMenuEl?.querySelector('.host-action-shake-btn')?.addEventListener('click', () => {
+  const targetPeerId = hostActionMenuTargetPeerId;
+  closeHostActionMenu();
+  if (targetPeerId) sendHostPrankToGuest(targetPeerId, 'shake');
+});
+
+hostActionMenuEl?.querySelector('.host-action-tilt-btn')?.addEventListener('click', () => {
+  const targetPeerId = hostActionMenuTargetPeerId;
+  closeHostActionMenu();
+  if (targetPeerId) sendHostPrankToGuest(targetPeerId, 'tilt');
+});
