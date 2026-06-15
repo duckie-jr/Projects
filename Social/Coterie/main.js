@@ -878,13 +878,19 @@ let _resumedByPendingMove = false;
     return;
   }
 
-  // Has a saved name — skip straight to joining the room.
+  // Has a saved name — prepare shared state and hand off to rooms.js.
+  //
+  // We CANNOT call startJoinRoom() here: main.js executes before rooms.js
+  // (deferred scripts run in listed order), so startJoinRoom is not yet
+  // defined at this point. Instead we store the room ID in sessionStorage
+  // with a dedicated key; the _resumeUrlRoomIfPending IIFE at the bottom
+  // of rooms.js reads it and calls startJoinRoom() once the function exists.
   screenName = savedName;
   if (urlRoomName) currentRoomName = urlRoomName;
   if (urlPassword) sessionStorage.setItem("coterie_pending_password", urlPassword);
+  sessionStorage.setItem("coterie_url_room_direct", urlRoomId);
   usernameScreenEl.classList.add("hidden");
   setLobbyStatus(urlRoomName ? 'Joining "' + urlRoomName + '"…' : "Joining room from link…");
-  startJoinRoom(urlRoomId);
 })();
 
 // ═══════════════════════════════════════════════════
