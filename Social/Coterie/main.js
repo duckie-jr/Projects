@@ -100,7 +100,7 @@ let PEER_OPTIONS = { config: { iceServers: [...STUN_SERVERS, ...TURN_SERVERS] } 
       // PeerJS returns a UUID — detect it to confirm the server is really there.
       if (/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(text.trim())) {
         PEER_OPTIONS = {
-          host:   window.location.hostname,
+          host:   'coterie-peerjs.onrender.com',
           port:   Number(window.location.port) || (window.location.protocol === 'https:' ? 443 : 80),
           path:   '/peerjs',
           secure: window.location.protocol === 'https:',
