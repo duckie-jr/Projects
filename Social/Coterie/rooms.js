@@ -332,13 +332,26 @@ async function createHelperPeer() {
 // ═══════════════════════════════════════════════════
 
 async function acquireLocalMedia() {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-  } catch (_) {
+  // getUserMedia can hang indefinitely if the browser shows a permission prompt
+  // that the user never dismisses (common in sandboxed environments like CoderPad).
+  // We race it against a 9-second timeout so it can never block room creation.
+  const MEDIA_ACQUIRE_TIMEOUT_MS = 9_000;
+
+  const tryGetMedia = async () => {
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    } catch (_) { localStream = null; }
-  }
+      return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    } catch (_) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      } catch (_) { return null; }
+    }
+  };
+
+  localStream = await Promise.race([
+    tryGetMedia(),
+    new Promise((resolve) => setTimeout(() => resolve(null), MEDIA_ACQUIRE_TIMEOUT_MS)),
+  ]);
+
   if (!localStream) return;
   addVideoTile('local', currentUsername, localStream, true);
   localStream.getAudioTracks().forEach((t) => { t.enabled = !isMuted; });
