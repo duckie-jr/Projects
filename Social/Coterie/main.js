@@ -133,8 +133,8 @@ function createPeer(peerId) {
 //
 // Returns the open Peer on success, or throws a string error type on failure.
 //
-const MAX_PEER_RETRIES    = 2;
-const PEER_OPEN_TIMEOUT_MS = 12_000;
+const MAX_PEER_RETRIES    = 1;   // 2 total attempts; fail fast then let user retry
+const PEER_OPEN_TIMEOUT_MS = 8_000;  // 8s per attempt — enough for any healthy server
 
 // Error types that are permanent — no point retrying.
 const PEER_PERMANENT_ERRORS = new Set([
