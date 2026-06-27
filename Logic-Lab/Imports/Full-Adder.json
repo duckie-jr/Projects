@@ -1,0 +1,37 @@
+{
+  "components": [
+    { "id": 1, "type": "SWITCH", "x": 60, "y": 90, "state": { "on": false } },
+    { "id": 2, "type": "SWITCH", "x": 60, "y": 220, "state": { "on": false } },
+    { "id": 3, "type": "SWITCH", "x": 60, "y": 350, "state": { "on": false } },
+
+    { "id": 4, "type": "XOR", "x": 260, "y": 110, "state": {} },
+    { "id": 5, "type": "AND", "x": 260, "y": 250, "state": {} },
+
+    { "id": 6, "type": "XOR", "x": 470, "y": 120, "state": {} },
+    { "id": 7, "type": "AND", "x": 470, "y": 270, "state": {} },
+
+    { "id": 8, "type": "OR", "x": 690, "y": 300, "state": {} },
+
+    { "id": 9, "type": "LED", "x": 690, "y": 130, "state": {} },
+    { "id": 10, "type": "LED", "x": 880, "y": 305, "state": {} }
+  ],
+  "wires": [
+    { "fromComponentId": 1, "fromPin": 0, "toComponentId": 4, "toPin": 0 },
+    { "fromComponentId": 2, "fromPin": 0, "toComponentId": 4, "toPin": 1 },
+
+    { "fromComponentId": 1, "fromPin": 0, "toComponentId": 5, "toPin": 0 },
+    { "fromComponentId": 2, "fromPin": 0, "toComponentId": 5, "toPin": 1 },
+
+    { "fromComponentId": 4, "fromPin": 0, "toComponentId": 6, "toPin": 0 },
+    { "fromComponentId": 3, "fromPin": 0, "toComponentId": 6, "toPin": 1 },
+
+    { "fromComponentId": 4, "fromPin": 0, "toComponentId": 7, "toPin": 0 },
+    { "fromComponentId": 3, "fromPin": 0, "toComponentId": 7, "toPin": 1 },
+
+    { "fromComponentId": 5, "fromPin": 0, "toComponentId": 8, "toPin": 0 },
+    { "fromComponentId": 7, "fromPin": 0, "toComponentId": 8, "toPin": 1 },
+
+    { "fromComponentId": 6, "fromPin": 0, "toComponentId": 9, "toPin": 0 },
+    { "fromComponentId": 8, "fromPin": 0, "toComponentId": 10, "toPin": 0 }
+  ]
+}
