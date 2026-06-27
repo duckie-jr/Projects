@@ -40,9 +40,19 @@ const interaction = {
   panStart: { x: 0, y: 0 },
   pointerMoved: false,
   pressedButton: null,
+  pressedSwitch: null,
 };
 
 const simulation = { running: true, ticksPerFrame: 6, lastFrameMs: 0 };
+
+/**
+ * Interaction mode. "edit" allows placing, dragging, wiring and deleting parts;
+ * "view" locks the layout so you can only toggle switches and press buttons
+ * without accidentally moving or rewiring anything.
+ */
+const EDIT_MODE = "edit";
+const VIEW_MODE = "view";
+let interactionMode = EDIT_MODE;
 
 let canvas;
 let context;
@@ -145,6 +155,7 @@ function bindControlButtons() {
   document.getElementById("btn-load").addEventListener("click", loadFromStorage);
   document.getElementById("btn-export").addEventListener("click", exportCircuit);
   document.getElementById("btn-reset-view").addEventListener("click", resetView);
+  document.getElementById("btn-mode").addEventListener("click", toggleMode);
 
   const speedInput = document.getElementById("speed-input");
   speedInput.addEventListener("input", () => {
@@ -152,6 +163,39 @@ function bindControlButtons() {
     document.getElementById("speed-value").textContent =
       simulation.ticksPerFrame;
   });
+
+  setMode(interactionMode);
+}
+
+function toggleMode() {
+  setMode(interactionMode === EDIT_MODE ? VIEW_MODE : EDIT_MODE);
+}
+
+/**
+ * Switch between Edit and View modes. Clears any in-progress interaction so a
+ * half-finished drag or wire never carries across a mode change, updates the
+ * toggle button label, and tags the document so the CSS can lock the toolbar.
+ */
+function setMode(nextMode) {
+  interactionMode = nextMode;
+
+  interaction.selectedComponent = null;
+  interaction.hoveredWire = null;
+  interaction.pendingWire = null;
+  interaction.draggingComponent = null;
+  interaction.pressedSwitch = null;
+  interaction.isPanning = false;
+
+  const isViewMode = interactionMode === VIEW_MODE;
+  document.body.classList.toggle("view-mode", isViewMode);
+
+  const modeButton = document.getElementById("btn-mode");
+  modeButton.textContent = isViewMode ? "✎ Edit mode" : "👆 View mode";
+  modeButton.title = isViewMode
+    ? "Switch to Edit mode to add, move, wire and delete parts"
+    : "Switch to View mode to flip switches without moving parts";
+
+  flashStatus(isViewMode ? "View mode" : "Edit mode");
 }
 
 function toggleSimulation() {
@@ -179,6 +223,8 @@ function resetView() {
 /* ------------------------------------------------------------------ */
 
 function addComponentToViewCenter(type) {
+  if (interactionMode !== EDIT_MODE) return;
+
   const center = screenToWorld(canvas.width / 2, canvas.height / 2);
   const component = circuit.addComponent(type, center.x - 40, center.y - 25);
   interaction.selectedComponent = component;
@@ -213,6 +259,11 @@ function onPointerDown(event) {
   canvas.setPointerCapture(event.pointerId);
   interaction.pointerMoved = false;
   const world = pointerToWorld(event);
+
+  if (interactionMode === VIEW_MODE) {
+    onViewModePointerDown(event, world);
+    return;
+  }
 
   const pin = findPinAt(circuit, world.x, world.y);
   if (pin) {
@@ -251,6 +302,30 @@ function onPointerDown(event) {
 
   interaction.selectedComponent = null;
   interaction.hoveredWire = null;
+  interaction.isPanning = true;
+  interaction.panStart = {
+    x: event.clientX - view.offsetX,
+    y: event.clientY - view.offsetY,
+  };
+}
+
+/**
+ * Pointer handling for View mode: only switches and buttons respond, and the
+ * empty background still pans. Components can never be moved, wired or deleted,
+ * so you can click freely without disturbing the layout.
+ */
+function onViewModePointerDown(event, world) {
+  const component = findComponentAt(circuit, world.x, world.y);
+  if (component) {
+    if (component.type === "BUTTON") {
+      component.state.pressed = true;
+      interaction.pressedButton = component;
+    } else if (component.type === "SWITCH") {
+      interaction.pressedSwitch = component;
+    }
+    return;
+  }
+
   interaction.isPanning = true;
   interaction.panStart = {
     x: event.clientX - view.offsetX,
@@ -304,6 +379,13 @@ function onPointerUp(event) {
   ) {
     const switchComponent = interaction.draggingComponent;
     switchComponent.state.on = !switchComponent.state.on;
+  }
+
+  if (interaction.pressedSwitch) {
+    if (!interaction.pointerMoved) {
+      interaction.pressedSwitch.state.on = !interaction.pressedSwitch.state.on;
+    }
+    interaction.pressedSwitch = null;
   }
 
   if (interaction.pressedButton) {
@@ -374,6 +456,7 @@ function bindKeyboard() {
   window.addEventListener("keydown", (event) => {
     const isDelete = event.key === "Delete" || event.key === "Backspace";
     if (!isDelete) return;
+    if (interactionMode !== EDIT_MODE) return;
 
     const activeTag = document.activeElement?.tagName;
     if (activeTag === "INPUT" || activeTag === "SELECT") return;
@@ -395,19 +478,37 @@ function bindKeyboard() {
 /* ------------------------------------------------------------------ */
 
 function saveToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(circuit.toJSON()));
-  flashStatus("Saved");
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(circuit.toJSON()));
+    flashStatus("Saved");
+  } catch (error) {
+    console.error("Failed to save circuit", error);
+    flashStatus("Save unavailable here");
+  }
 }
 
 function loadFromStorage() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+  let raw = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Storage unavailable", error);
+    flashStatus("Storage blocked");
+    return;
+  }
+
+  if (!raw) {
+    flashStatus("Nothing saved yet");
+    return;
+  }
+
   try {
     circuit.loadJSON(JSON.parse(raw));
     interaction.selectedComponent = null;
     flashStatus("Loaded");
   } catch (error) {
     console.error("Failed to load saved circuit", error);
+    flashStatus("Load failed");
   }
 }
 
