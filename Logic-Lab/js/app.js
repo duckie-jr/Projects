@@ -15,6 +15,7 @@ import { Circuit, COMPONENT_SPECS } from "./simulation.js";
 import {
   render,
   getPinPosition,
+  getComponentSize,
   findComponentAt,
   findPinAt,
   findWireAt,
@@ -25,6 +26,13 @@ const STORAGE_KEY = "logic-sim-circuit";
 
 /** Upper bound on a Delay's tick length so huge buffers can't lag the app. */
 const MAX_DELAY_TICKS = 1000;
+
+/**
+ * Zoom limits. The minimum is intentionally low so very tall circuits such as
+ * the 32-bit ripple-carry adder can be fully framed and navigated.
+ */
+const MIN_ZOOM = 0.04;
+const MAX_ZOOM = 3;
 
 const circuit = new Circuit();
 
@@ -140,7 +148,7 @@ function buildExampleMenu() {
     if (example) {
       circuit.loadJSON(example.build());
       interaction.selectedComponent = null;
-      resetView();
+      fitViewToCircuit();
     }
     select.value = "";
   });
@@ -216,6 +224,46 @@ function resetView() {
   view.offsetX = 0;
   view.offsetY = 0;
   view.scale = 1;
+}
+
+/**
+ * Zoom and pan so the entire current circuit fits inside the canvas, centred.
+ * Used when loading an example so large circuits (e.g. the 32-bit adder) are
+ * fully visible instead of dumping the user at the top-left corner.
+ */
+function fitViewToCircuit() {
+  const components = [...circuit.components.values()];
+  if (components.length === 0) {
+    resetView();
+    return;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const component of components) {
+    const { width, height } = getComponentSize(component);
+    minX = Math.min(minX, component.x);
+    minY = Math.min(minY, component.y);
+    maxX = Math.max(maxX, component.x + width);
+    maxY = Math.max(maxY, component.y + height);
+  }
+
+  const padding = 80;
+  const contentWidth = maxX - minX + padding * 2;
+  const contentHeight = maxY - minY + padding * 2;
+
+  const scaleToFit = Math.min(
+    canvas.width / contentWidth,
+    canvas.height / contentHeight
+  );
+  const scale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scaleToFit));
+
+  view.scale = scale;
+  view.offsetX = (canvas.width - (minX + maxX) * scale) / 2;
+  view.offsetY = (canvas.height - (minY + maxY) * scale) / 2;
 }
 
 /* ------------------------------------------------------------------ */
@@ -446,7 +494,7 @@ function onWheel(event) {
 
   const worldBefore = screenToWorld(pointerX, pointerY);
   const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-  view.scale = Math.min(3, Math.max(0.3, view.scale * zoomFactor));
+  view.scale = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.scale * zoomFactor));
 
   view.offsetX = pointerX - worldBefore.x * view.scale;
   view.offsetY = pointerY - worldBefore.y * view.scale;
@@ -728,6 +776,134 @@ function buildBlueprint(nodes, links) {
   return { components, wires };
 }
 
+/**
+ * Append one full-adder stage (two half adders + an OR for carry) to the given
+ * blueprint arrays. The stage adds bit `aName` + bit `bName` + `carryInName`
+ * and returns the node name carrying its carry-out, so stages can be chained
+ * into a ripple-carry adder. The `prefix` keeps every generated node name
+ * unique across stages.
+ */
+function appendFullAdderStage(nodes, links, options) {
+  const { prefix, aName, bName, carryInName, originX, originY } = options;
+
+  const sumXorOne = `${prefix}_sumXor1`;
+  const carryAndOne = `${prefix}_carryAnd1`;
+  const sumXorTwo = `${prefix}_sumXor2`;
+  const carryAndTwo = `${prefix}_carryAnd2`;
+  const carryOr = `${prefix}_carryOr`;
+
+  nodes.push(
+    { name: sumXorOne, type: "XOR", x: originX, y: originY },
+    { name: carryAndOne, type: "AND", x: originX, y: originY + 120 },
+    { name: sumXorTwo, type: "XOR", x: originX + 190, y: originY + 30 },
+    { name: carryAndTwo, type: "AND", x: originX + 190, y: originY + 160 },
+    { name: carryOr, type: "OR", x: originX + 380, y: originY + 150 }
+  );
+
+  links.push(
+    [aName, 0, sumXorOne, 0],
+    [bName, 0, sumXorOne, 1],
+    [aName, 0, carryAndOne, 0],
+    [bName, 0, carryAndOne, 1],
+    [sumXorOne, 0, sumXorTwo, 0],
+    [carryInName, 0, sumXorTwo, 1],
+    [sumXorOne, 0, carryAndTwo, 0],
+    [carryInName, 0, carryAndTwo, 1],
+    [carryAndOne, 0, carryOr, 0],
+    [carryAndTwo, 0, carryOr, 1]
+  );
+
+  return { sumName: sumXorTwo, carryOutName: carryOr };
+}
+
+/** Single full adder: A + B + Carry-in -> Sum and Carry-out. */
+function buildFullAdder() {
+  const nodes = [
+    { name: "A", type: "SWITCH", x: 60, y: 110 },
+    { name: "B", type: "SWITCH", x: 60, y: 210 },
+    { name: "carryIn", type: "SWITCH", x: 60, y: 340 },
+  ];
+  const links = [];
+
+  const stage = appendFullAdderStage(nodes, links, {
+    prefix: "fa",
+    aName: "A",
+    bName: "B",
+    carryInName: "carryIn",
+    originX: 260,
+    originY: 120,
+  });
+
+  nodes.push(
+    { name: "sumLed", type: "LED", x: 650, y: 150 },
+    { name: "carryLed", type: "LED", x: 850, y: 280 }
+  );
+  links.push(
+    [stage.sumName, 0, "sumLed", 0],
+    [stage.carryOutName, 0, "carryLed", 0]
+  );
+
+  return buildBlueprint(nodes, links);
+}
+
+/**
+ * N-bit ripple-carry adder built by chaining `appendFullAdderStage`. Bits are
+ * stacked most-significant-first so the column reads like a written binary
+ * number (e.g. for 6 bits: 32, 16, 8, 4, 2, 1 from top to bottom). The carry
+ * still ripples from the LSB upward, and the final carry-out drives its own LED
+ * beside the most-significant stage.
+ */
+function buildRippleCarryAdder(bitCount) {
+  const nodes = [];
+  const links = [];
+
+  const stageSpacingY = 260;
+  const topY = 60;
+
+  const carryInName = "carryIn";
+  nodes.push({
+    name: carryInName,
+    type: "SWITCH",
+    x: 40,
+    y: topY + bitCount * stageSpacingY,
+  });
+
+  let carrySourceName = carryInName;
+
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const rowFromTop = bitCount - 1 - bitIndex;
+    const baseY = topY + rowFromTop * stageSpacingY;
+
+    const aName = `a${bitIndex}`;
+    const bName = `b${bitIndex}`;
+    const sumLedName = `sum${bitIndex}`;
+
+    nodes.push(
+      { name: aName, type: "SWITCH", x: 40, y: baseY },
+      { name: bName, type: "SWITCH", x: 40, y: baseY + 90 }
+    );
+
+    const stage = appendFullAdderStage(nodes, links, {
+      prefix: `bit${bitIndex}`,
+      aName,
+      bName,
+      carryInName: carrySourceName,
+      originX: 230,
+      originY: baseY,
+    });
+
+    nodes.push({ name: sumLedName, type: "LED", x: 650, y: baseY + 40 });
+    links.push([stage.sumName, 0, sumLedName, 0]);
+
+    carrySourceName = stage.carryOutName;
+  }
+
+  nodes.push({ name: "carryOutLed", type: "LED", x: 850, y: topY + 150 });
+  links.push([carrySourceName, 0, "carryOutLed", 0]);
+
+  return buildBlueprint(nodes, links);
+}
+
 const EXAMPLE_CIRCUITS = [
   {
     id: "half-adder",
@@ -751,6 +927,26 @@ const EXAMPLE_CIRCUITS = [
           ["carryGate", 0, "carryLed", 0],
         ]
       ),
+  },
+  {
+    id: "full-adder",
+    name: "Full adder (A+B+Carry)",
+    build: buildFullAdder,
+  },
+  {
+    id: "ripple-adder-4bit",
+    name: "4-bit adder (ripple carry)",
+    build: () => buildRippleCarryAdder(4),
+  },
+  {
+    id: "ripple-adder-8bit",
+    name: "8-bit adder (ripple carry)",
+    build: () => buildRippleCarryAdder(8),
+  },
+  {
+    id: "ripple-adder-32bit",
+    name: "32-bit adder (ripple carry)",
+    build: () => buildRippleCarryAdder(32),
   },
   {
     id: "sr-latch",
