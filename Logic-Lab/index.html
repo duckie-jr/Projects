@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logic Lab — Build & Learn Digital Circuits</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app-shell">
+      <aside id="sidebar">
+        <h1 class="app-title">Logic Lab</h1>
+        <p class="app-tagline">Build gates, memory, clocks & whole computers.</p>
+
+        <div id="toolbar"></div>
+
+        <div class="sidebar-section">
+          <label class="field-label" for="example-select">Load an example</label>
+          <select id="example-select">
+            <option value="">Choose…</option>
+          </select>
+        </div>
+
+        <div class="sidebar-section">
+          <label class="field-label" for="import-url">Import from URL (.json)</label>
+          <input
+            id="import-url"
+            type="text"
+            placeholder="raw GitHub .json link…"
+          />
+          <button id="btn-import" class="control-button full-width">
+            Import circuit
+          </button>
+        </div>
+
+        <div id="inspector" class="sidebar-section" hidden>
+          <label class="field-label">Selected: Delay</label>
+          <label class="field-label" for="delay-ticks">Delay length (ticks)</label>
+          <input id="delay-ticks" type="number" min="1" max="1000" step="1" value="4" />
+          <p class="inspector-hint">
+            Higher = slower. A NOT → Delay loop blinks at this rate.
+          </p>
+        </div>
+
+        <div class="help-panel">
+          <h2>How to use</h2>
+          <ul>
+            <li>Click a part above to drop it on the board.</li>
+            <li>Drag a part to move it.</li>
+            <li>Drag from one pin to another to wire them.</li>
+            <li>Click a <strong>Switch</strong> to flip 0/1.</li>
+            <li>Hold a <strong>Button</strong> for a quick pulse.</li>
+            <li>Double-click a <strong>Delay</strong> to set its tick length.</li>
+            <li>Build your own clock: loop a <strong>NOT</strong> back through a <strong>Delay</strong>.</li>
+            <li>Select a part or wire, press <kbd>Delete</kbd> to remove.</li>
+            <li>Scroll to zoom, drag the background to pan.</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main id="workspace">
+        <div id="controls">
+          <button id="btn-play" class="control-button">⏸ Pause</button>
+          <button id="btn-clear" class="control-button">Clear</button>
+          <button id="btn-save" class="control-button">Save</button>
+          <button id="btn-load" class="control-button">Load</button>
+          <button id="btn-export" class="control-button">Export .json</button>
+          <button id="btn-reset-view" class="control-button">Reset View</button>
+
+          <label class="speed-control">
+            Speed
+            <input
+              id="speed-input"
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              value="6"
+            />
+            <span id="speed-value">6</span>
+          </label>
+
+          <span id="status"></span>
+        </div>
+
+        <div id="canvas-wrapper">
+          <canvas id="circuit-canvas"></canvas>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="./js/simulation.js"></script>
+    <script type="module" src="./js/renderer.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
