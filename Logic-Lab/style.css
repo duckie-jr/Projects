@@ -279,3 +279,33 @@ kbd {
   cursor: crosshair;
   touch-action: none;
 }
+
+/* ------------------------------------------------------------------ */
+/* Edit / View mode                                                    */
+/* ------------------------------------------------------------------ */
+
+.mode-button {
+  background: var(--accent-soft);
+  border-color: #3c557d;
+  font-weight: 600;
+}
+
+/*
+ * In View mode the layout is locked: the toolbar can't place new parts and the
+ * canvas shows a pointer cursor instead of the wiring crosshair, so clicking
+ * switches feels safe and obvious.
+ */
+body.view-mode .mode-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #10271a;
+}
+
+body.view-mode #toolbar {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+body.view-mode #circuit-canvas {
+  cursor: pointer;
+}
