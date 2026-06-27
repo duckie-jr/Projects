@@ -1,19 +1,19 @@
 {
   "components": [
-    { "id": 1, "type": "SWITCH", "x": 60, "y": 90, "state": { "on": false } },
-    { "id": 2, "type": "SWITCH", "x": 60, "y": 220, "state": { "on": false } },
-    { "id": 3, "type": "SWITCH", "x": 60, "y": 350, "state": { "on": false } },
+    { "id": 1, "type": "SWITCH", "x": 60, "y": 110, "state": { "on": false } },
+    { "id": 2, "type": "SWITCH", "x": 60, "y": 210, "state": { "on": false } },
+    { "id": 3, "type": "SWITCH", "x": 60, "y": 340, "state": { "on": false } },
 
-    { "id": 4, "type": "XOR", "x": 260, "y": 110, "state": {} },
-    { "id": 5, "type": "AND", "x": 260, "y": 250, "state": {} },
+    { "id": 4, "type": "XOR", "x": 260, "y": 120, "state": {} },
+    { "id": 5, "type": "AND", "x": 260, "y": 240, "state": {} },
 
-    { "id": 6, "type": "XOR", "x": 470, "y": 120, "state": {} },
-    { "id": 7, "type": "AND", "x": 470, "y": 270, "state": {} },
+    { "id": 6, "type": "XOR", "x": 450, "y": 150, "state": {} },
+    { "id": 7, "type": "AND", "x": 450, "y": 280, "state": {} },
 
-    { "id": 8, "type": "OR", "x": 690, "y": 300, "state": {} },
+    { "id": 8, "type": "OR", "x": 640, "y": 270, "state": {} },
 
-    { "id": 9, "type": "LED", "x": 690, "y": 130, "state": {} },
-    { "id": 10, "type": "LED", "x": 880, "y": 305, "state": {} }
+    { "id": 9, "type": "LED", "x": 650, "y": 150, "state": {} },
+    { "id": 10, "type": "LED", "x": 850, "y": 280, "state": {} }
   ],
   "wires": [
     { "fromComponentId": 1, "fromPin": 0, "toComponentId": 4, "toPin": 0 },
