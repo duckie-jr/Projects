@@ -49,6 +49,27 @@ if you freeze the counter exactly on it.
   lights up.
 - Make it harder/easier with the speed slider (or by editing the clock Delay).
 
+### Play a game: "Flappy LED"
+
+The **🐤 Flappy LED: dodge the gaps** example (also saved as
+`imports/Flappy-Bird.json`) is a real reflex game built entirely from gates,
+delays and lamps — no special game code. Two `NOT → Delay` ring oscillators make
+a *pipe* bit and a *gap-side* bit that ripple **left** through a chain of
+`Delay` stages, so a wall of pipes visibly scrolls toward the **BIRD** on the
+left. Each column lights a top/bottom lamp for the pipe's solid half; the dark
+cell is the gap to fly through.
+
+- Press **Run**, then flip **RESET** off to play.
+- The **BIRD** is one bit: flip **FLAP** on to sit in the top cell, off for the
+  bottom cell.
+- Line the bird up with each gap before the pipe reaches it. Get caught in a
+  solid cell and a `NAND` latch lights **GAME OVER** and freezes your run.
+- Flip **RESET** to revive and try again; use the speed slider to change pace.
+
+The whole thing is generated and *verified against the real engine* by
+`scripts/generate-flappy.mjs` (run `node scripts/generate-flappy.mjs`), which
+also writes the shareable `imports/Flappy-Bird.json`.
+
 ## How to use
 
 - Click a part in the left toolbar to drop it on the board.
