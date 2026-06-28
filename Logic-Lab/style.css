@@ -109,6 +109,9 @@ body {
 .tool-output {
   border-left: 3px solid #ff6b6b;
 }
+.tool-annotation {
+  border-left: 3px solid #d9b54a;
+}
 
 .sidebar-section {
   margin-top: 18px;
