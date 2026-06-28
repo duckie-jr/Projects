@@ -22,11 +22,23 @@ const CATEGORY_FILL = {
   gate: "#2b3142",
   timing: "#3a2f4a",
   output: "#3a2d2d",
+  annotation: "#3b371f",
 };
 
-/** Width/height of a component's body, derived from its pin counts. */
+/**
+ * Width/height of a component's body. Most kinds are sized from their pin
+ * counts; a Text label instead grows to fit its caption so it reads like a
+ * sticky note you can drop anywhere to annotate the board.
+ */
 export function getComponentSize(component) {
   const spec = component.spec;
+
+  if (component.type === "TEXT") {
+    const text = component.state.text || "";
+    const width = Math.max(96, Math.round(text.length * 8.4) + 28);
+    return { width, height: 44 };
+  }
+
   const maxPins = Math.max(spec.inputs, spec.outputs, 1);
   const height = Math.max(50, maxPins * PIN_SPACING + 14);
   return { width: COMPONENT_WIDTH, height };
@@ -231,12 +243,31 @@ function drawBezier(context, start, end) {
 function drawComponent(context, component, isSelected) {
   const spec = component.spec;
   const { width, height } = getComponentSize(component);
+  const isLitLed = component.type === "LED" && component.state.lit === true;
 
-  context.fillStyle = CATEGORY_FILL[spec.category] || "#2b3142";
-  context.strokeStyle = isSelected ? "#f0c040" : "#525c70";
-  context.lineWidth = isSelected ? 3 : 1.5;
   roundedRect(context, component.x, component.y, width, height, 8);
-  context.fill();
+
+  if (isLitLed) {
+    context.save();
+    context.shadowColor = "rgba(255, 90, 90, 0.85)";
+    context.shadowBlur = 26;
+    context.fillStyle = "#ff5656";
+    context.fill();
+    context.restore();
+  } else {
+    context.fillStyle =
+      component.type === "LED"
+        ? "#3a2222"
+        : CATEGORY_FILL[spec.category] || "#2b3142";
+    context.fill();
+  }
+
+  context.strokeStyle = isSelected
+    ? "#f0c040"
+    : isLitLed
+      ? "#ffcaca"
+      : "#525c70";
+  context.lineWidth = isSelected ? 3 : 1.5;
   context.stroke();
 
   drawComponentLabel(context, component, width, height);
@@ -279,24 +310,27 @@ function drawComponentLabel(context, component, width, height) {
     drawLed(context, component, centerX, centerY);
     return;
   }
+  if (component.type === "TEXT") {
+    const text = component.state.text || "";
+    context.fillStyle = text ? "#f4eccf" : "#988b63";
+    context.font = "bold 14px 'Segoe UI', sans-serif";
+    context.fillText(text || "double-click to edit", centerX, centerY);
+    return;
+  }
 
   context.fillText(component.spec.name, centerX, centerY);
 }
 
-/** The LED's lit state mirrors whatever its (single) input wire is feeding it. */
+/**
+ * The LED's lit state mirrors whatever its (single) input wire is feeding it.
+ * The whole body glows (handled in `drawComponent`); here we just stamp a
+ * readable ON/OFF label tuned for each background.
+ */
 function drawLed(context, component, centerX, centerY) {
   const isLit = component.state.lit === true;
-  context.beginPath();
-  context.arc(centerX, centerY - 4, 11, 0, Math.PI * 2);
-  context.fillStyle = isLit ? "#ff5a5a" : "#5a2d2d";
-  context.fill();
-  context.strokeStyle = "#2b1c1c";
-  context.lineWidth = 2;
-  context.stroke();
-
-  context.fillStyle = "#9aa4ba";
-  context.font = "10px 'Segoe UI', sans-serif";
-  context.fillText("LED", centerX, centerY + 14);
+  context.fillStyle = isLit ? "#43090b" : "#caa0a0";
+  context.font = "bold 14px 'Segoe UI', sans-serif";
+  context.fillText(isLit ? "ON" : "OFF", centerX, centerY);
 }
 
 function drawPins(context, component, kind, count) {
