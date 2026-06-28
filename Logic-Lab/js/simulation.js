@@ -97,6 +97,13 @@ export const COMPONENT_SPECS = {
     inputs: 1,
     outputs: 0,
   },
+  TEXT: {
+    name: "Text label",
+    category: "annotation",
+    inputs: 0,
+    outputs: 0,
+    interaction: "config",
+  },
 };
 
 let nextComponentId = 1;
@@ -134,6 +141,8 @@ function createInitialState(type) {
       return {};
     case "DELAY":
       return { ticks: 4, buffer: [] };
+    case "TEXT":
+      return { text: "Label" };
     default:
       return {};
   }
