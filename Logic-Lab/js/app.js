@@ -6,7 +6,7 @@
  *  - Click a toolbar button to drop a component into the middle of the view.
  *  - Drag a component body to move it.
  *  - Drag from any pin to another pin (output -> input) to lay a wire.
- *  - Click a Switch to toggle it; hold a Button for a momentary pulse.
+ *  - Click a Switch to toggle it; hold a Button for a momentary pulse. 
  *  - Double-click a Delay to change its tick length.
  *  - Select a component or wire and press Delete/Backspace to remove it.
  *  - Drag the empty background to pan; scroll to zoom.
@@ -106,6 +106,7 @@ function buildToolbar() {
     gate: "Gates",
     timing: "Timing",
     output: "Outputs",
+    annotation: "Labels",
   };
 
   const groups = new Map();
@@ -478,12 +479,28 @@ function onDoubleClick(event) {
 
   interaction.selectedComponent = component;
 
+  if (component.type === "TEXT") {
+    editTextLabel(component);
+    return;
+  }
+
   if (component.type === "DELAY") {
     syncInspector();
     const ticksInput = document.getElementById("delay-ticks");
     ticksInput.focus();
     ticksInput.select();
   }
+}
+
+/**
+ * Edit a Text label's caption. Uses a simple prompt so it works the same in
+ * Edit and View mode (and never interferes with wiring), then the new text is
+ * picked up by the next render frame.
+ */
+function editTextLabel(component) {
+  const nextText = window.prompt("Label text:", component.state.text ?? "");
+  if (nextText === null) return;
+  component.state.text = nextText;
 }
 
 function onWheel(event) {
@@ -904,6 +921,372 @@ function buildRippleCarryAdder(bitCount) {
   return buildBlueprint(nodes, links);
 }
 
+/* ------------------------------------------------------------------ */
+/* Sequential building blocks: the parts that make a "computer"        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Append one edge-triggered (master-slave) D flip-flop built from NAND gates.
+ * The master latch captures D while clk is high; the slave copies the master
+ * out when clk goes low, so Q updates cleanly on the clock's falling edge. This
+ * 1-bit memory cell is the foundation of registers, counters and the computer.
+ *
+ * Requires a shared `clkName` and its complement `notClkName` (a single NOT
+ * gate the caller wires up once). Returns the Q and Q-bar node names.
+ */
+function appendDFlipFlop(nodes, links, options) {
+  const { prefix, dName, clkName, notClkName, originX, originY } = options;
+
+  const notD = `${prefix}_notD`;
+  const masterSet = `${prefix}_masterSet`;
+  const masterReset = `${prefix}_masterReset`;
+  const masterQ = `${prefix}_masterQ`;
+  const masterQBar = `${prefix}_masterQBar`;
+  const notMasterQ = `${prefix}_notMasterQ`;
+  const slaveSet = `${prefix}_slaveSet`;
+  const slaveReset = `${prefix}_slaveReset`;
+  const q = `${prefix}_q`;
+  const qBar = `${prefix}_qBar`;
+
+  nodes.push(
+    { name: notD, type: "NOT", x: originX, y: originY - 30 },
+    { name: masterSet, type: "NAND", x: originX + 140, y: originY - 40 },
+    { name: masterReset, type: "NAND", x: originX + 140, y: originY + 70 },
+    { name: masterQ, type: "NAND", x: originX + 280, y: originY - 40 },
+    { name: masterQBar, type: "NAND", x: originX + 280, y: originY + 70 },
+    { name: notMasterQ, type: "NOT", x: originX + 420, y: originY - 120 },
+    { name: slaveSet, type: "NAND", x: originX + 420, y: originY - 30 },
+    { name: slaveReset, type: "NAND", x: originX + 420, y: originY + 80 },
+    { name: q, type: "NAND", x: originX + 560, y: originY - 20 },
+    { name: qBar, type: "NAND", x: originX + 560, y: originY + 90 }
+  );
+
+  links.push(
+    [dName, 0, notD, 0],
+    [dName, 0, masterSet, 0],
+    [clkName, 0, masterSet, 1],
+    [notD, 0, masterReset, 0],
+    [clkName, 0, masterReset, 1],
+    [masterSet, 0, masterQ, 0],
+    [masterQBar, 0, masterQ, 1],
+    [masterReset, 0, masterQBar, 0],
+    [masterQ, 0, masterQBar, 1],
+    [masterQ, 0, notMasterQ, 0],
+    [masterQ, 0, slaveSet, 0],
+    [notClkName, 0, slaveSet, 1],
+    [notMasterQ, 0, slaveReset, 0],
+    [notClkName, 0, slaveReset, 1],
+    [slaveSet, 0, q, 0],
+    [qBar, 0, q, 1],
+    [slaveReset, 0, qBar, 0],
+    [q, 0, qBar, 1]
+  );
+
+  return { qName: q, qBarName: qBar };
+}
+
+/** Single D flip-flop: set D, tap Clock, and the bit is stored in Q. */
+function buildDFlipFlop() {
+  const nodes = [
+    { name: "D", type: "SWITCH", x: 60, y: 210 },
+    { name: "CLK", type: "BUTTON", x: 60, y: 380 },
+    { name: "notClk", type: "NOT", x: 230, y: 390 },
+  ];
+  const links = [["CLK", 0, "notClk", 0]];
+
+  const ff = appendDFlipFlop(nodes, links, {
+    prefix: "dff",
+    dName: "D",
+    clkName: "CLK",
+    notClkName: "notClk",
+    originX: 380,
+    originY: 240,
+  });
+
+  nodes.push(
+    { name: "qLed", type: "LED", x: 1080, y: 220 },
+    { name: "qBarLed", type: "LED", x: 1080, y: 330 }
+  );
+  links.push([ff.qName, 0, "qLed", 0], [ff.qBarName, 0, "qBarLed", 0]);
+
+  return buildBlueprint(nodes, links);
+}
+
+/**
+ * N-bit register: a bank of D flip-flops sharing one clock. Set the data
+ * switches, tap Clock, and the whole word is latched at once. Bits are stacked
+ * most-significant-first.
+ */
+function buildRegister(bitCount) {
+  const nodes = [
+    { name: "CLK", type: "BUTTON", x: 60, y: 60 },
+    { name: "notClk", type: "NOT", x: 240, y: 70 },
+  ];
+  const links = [["CLK", 0, "notClk", 0]];
+
+  const rowSpacing = 280;
+  const topY = 220;
+
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const rowFromTop = bitCount - 1 - bitIndex;
+    const baseY = topY + rowFromTop * rowSpacing;
+    const dName = `D${bitIndex}`;
+
+    nodes.push({ name: dName, type: "SWITCH", x: 60, y: baseY });
+    const ff = appendDFlipFlop(nodes, links, {
+      prefix: `reg${bitIndex}`,
+      dName,
+      clkName: "CLK",
+      notClkName: "notClk",
+      originX: 260,
+      originY: baseY,
+    });
+
+    nodes.push({ name: `Q${bitIndex}`, type: "LED", x: 1000, y: baseY });
+    links.push([ff.qName, 0, `Q${bitIndex}`, 0]);
+  }
+
+  return buildBlueprint(nodes, links);
+}
+
+/**
+ * A tiny working "computer": an accumulator datapath wiring together every core
+ * piece of a CPU. A free-running clock (NOT looped through a Delay) drives an
+ * N-bit register whose value is fed back through the ripple-carry adder (the
+ * ALU); each clock tick the register loads `register + addend`, so it counts /
+ * accumulates on its own. The RESET line clears the register to a defined zero,
+ * and it starts asserted so the machine powers up cleanly before running.
+ *
+ * Flip RESET off to let it run; change the Addend switches to step by any value.
+ */
+function buildAccumulatorComputer(bitCount) {
+  const clockTicks = Math.max(64, bitCount * 12);
+
+  const nodes = [
+    { name: "clk", type: "NOT", x: 80, y: 70 },
+    { name: "clkDelay", type: "DELAY", x: 260, y: 70, state: { ticks: clockTicks } },
+    { name: "clkLed", type: "LED", x: 260, y: 190 },
+    { name: "notClk", type: "NOT", x: 80, y: 180 },
+    { name: "RESET", type: "SWITCH", x: 470, y: 70, state: { on: true } },
+    { name: "notReset", type: "NOT", x: 640, y: 80 },
+    { name: "ZERO", type: "SWITCH", x: 470, y: 190 },
+  ];
+  const links = [
+    ["clk", 0, "clkDelay", 0],
+    ["clkDelay", 0, "clk", 0],
+    ["clk", 0, "notClk", 0],
+    ["clk", 0, "clkLed", 0],
+    ["RESET", 0, "notReset", 0],
+  ];
+
+  const rowSpacing = 300;
+  const topY = 380;
+
+  const registerQNames = [];
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const rowFromTop = bitCount - 1 - bitIndex;
+    const baseY = topY + rowFromTop * rowSpacing;
+    const ff = appendDFlipFlop(nodes, links, {
+      prefix: `reg${bitIndex}`,
+      dName: `D${bitIndex}`,
+      clkName: "clk",
+      notClkName: "notClk",
+      originX: 220,
+      originY: baseY,
+    });
+    registerQNames.push(ff.qName);
+  }
+
+  let carryName = "ZERO";
+  const sumNames = [];
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const rowFromTop = bitCount - 1 - bitIndex;
+    const baseY = topY + rowFromTop * rowSpacing;
+
+    nodes.push({
+      name: `B${bitIndex}`,
+      type: "SWITCH",
+      x: 900,
+      y: baseY + 40,
+      state: bitIndex === 0 ? { on: true } : {},
+    });
+
+    const stage = appendFullAdderStage(nodes, links, {
+      prefix: `add${bitIndex}`,
+      aName: registerQNames[bitIndex],
+      bName: `B${bitIndex}`,
+      carryInName: carryName,
+      originX: 1080,
+      originY: baseY,
+    });
+    sumNames.push(stage.sumName);
+    carryName = stage.carryOutName;
+  }
+
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const rowFromTop = bitCount - 1 - bitIndex;
+    const baseY = topY + rowFromTop * rowSpacing;
+
+    nodes.push({ name: `D${bitIndex}`, type: "AND", x: 1560, y: baseY + 40 });
+    links.push(
+      [sumNames[bitIndex], 0, `D${bitIndex}`, 0],
+      ["notReset", 0, `D${bitIndex}`, 1]
+    );
+
+    nodes.push({ name: `Q${bitIndex}`, type: "LED", x: 1820, y: baseY });
+    links.push([registerQNames[bitIndex], 0, `Q${bitIndex}`, 0]);
+  }
+
+  nodes.push({ name: "carryLed", type: "LED", x: 1560, y: topY - 180 });
+  links.push([carryName, 0, "carryLed", 0]);
+
+  return buildBlueprint(nodes, links);
+}
+
+/**
+ * A full little computer you can *play*: "Stop the Counter".
+ *
+ * The machine free-runs an N-bit counter (register + adder, exactly like the
+ * accumulator) and shows it on a row of DISPLAY lamps. A 2:1 mux on each
+ * register input lets the player FREEZE the count: while STOP is on the register
+ * reloads its own value instead of `value + 1`. A comparator (XNOR per bit,
+ * AND-reduced) lights MATCH whenever the display equals the player's TARGET, and
+ * WIN = STOP AND MATCH lights only if you froze the counter exactly on target.
+ *
+ * How to play: press Run, flip RESET off to start the count, set TARGET to the
+ * number you want, then flip STOP the instant the display shows it. Land it and
+ * WIN lights up. Use the speed slider (or the clock Delay) to change difficulty.
+ */
+function buildComputerGame(bitCount) {
+  const clockTicks = Math.max(70, bitCount * 14);
+  const bitMask = (1 << bitCount) - 1;
+  const defaultTarget = 10 & bitMask;
+
+  const nodes = [
+    { name: "clk", type: "NOT", x: 80, y: 70 },
+    { name: "clkDelay", type: "DELAY", x: 260, y: 70, state: { ticks: clockTicks } },
+    { name: "clkLed", type: "LED", x: 260, y: 190 },
+    { name: "notClk", type: "NOT", x: 80, y: 180 },
+    { name: "RESET", type: "SWITCH", x: 470, y: 70, state: { on: true } },
+    { name: "notReset", type: "NOT", x: 650, y: 80 },
+    { name: "STOP", type: "SWITCH", x: 470, y: 190 },
+    { name: "notStop", type: "NOT", x: 650, y: 200 },
+    { name: "ZERO", type: "SWITCH", x: 850, y: 120 },
+  ];
+  const links = [
+    ["clk", 0, "clkDelay", 0],
+    ["clkDelay", 0, "clk", 0],
+    ["clk", 0, "notClk", 0],
+    ["clk", 0, "clkLed", 0],
+    ["RESET", 0, "notReset", 0],
+    ["STOP", 0, "notStop", 0],
+  ];
+
+  const rowSpacing = 300;
+  const topY = 420;
+  const rowY = (bitIndex) => topY + (bitCount - 1 - bitIndex) * rowSpacing;
+
+  const registerQNames = [];
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const ff = appendDFlipFlop(nodes, links, {
+      prefix: `reg${bitIndex}`,
+      dName: `D${bitIndex}`,
+      clkName: "clk",
+      notClkName: "notClk",
+      originX: 220,
+      originY: rowY(bitIndex),
+    });
+    registerQNames.push(ff.qName);
+  }
+
+  let carryName = "ZERO";
+  const sumNames = [];
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    nodes.push({
+      name: `addend${bitIndex}`,
+      type: "SWITCH",
+      x: 60,
+      y: rowY(bitIndex) + 40,
+      state: bitIndex === 0 ? { on: true } : {},
+    });
+    const stage = appendFullAdderStage(nodes, links, {
+      prefix: `add${bitIndex}`,
+      aName: registerQNames[bitIndex],
+      bName: `addend${bitIndex}`,
+      carryInName: carryName,
+      originX: 1080,
+      originY: rowY(bitIndex),
+    });
+    sumNames.push(stage.sumName);
+    carryName = stage.carryOutName;
+  }
+
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const baseY = rowY(bitIndex);
+    nodes.push(
+      { name: `runAnd${bitIndex}`, type: "AND", x: 1580, y: baseY - 10 },
+      { name: `holdAnd${bitIndex}`, type: "AND", x: 1580, y: baseY + 100 },
+      { name: `muxOr${bitIndex}`, type: "OR", x: 1740, y: baseY + 45 },
+      { name: `D${bitIndex}`, type: "AND", x: 1900, y: baseY + 45 }
+    );
+    links.push(
+      [sumNames[bitIndex], 0, `runAnd${bitIndex}`, 0],
+      ["notStop", 0, `runAnd${bitIndex}`, 1],
+      [registerQNames[bitIndex], 0, `holdAnd${bitIndex}`, 0],
+      ["STOP", 0, `holdAnd${bitIndex}`, 1],
+      [`runAnd${bitIndex}`, 0, `muxOr${bitIndex}`, 0],
+      [`holdAnd${bitIndex}`, 0, `muxOr${bitIndex}`, 1],
+      [`muxOr${bitIndex}`, 0, `D${bitIndex}`, 0],
+      ["notReset", 0, `D${bitIndex}`, 1]
+    );
+  }
+
+  const equalNames = [];
+  for (let bitIndex = 0; bitIndex < bitCount; bitIndex++) {
+    const baseY = rowY(bitIndex);
+    nodes.push({ name: `display${bitIndex}`, type: "LED", x: 2120, y: baseY });
+    links.push([registerQNames[bitIndex], 0, `display${bitIndex}`, 0]);
+
+    nodes.push(
+      {
+        name: `target${bitIndex}`,
+        type: "SWITCH",
+        x: 2340,
+        y: baseY,
+        state: ((defaultTarget >> bitIndex) & 1) === 1 ? { on: true } : {},
+      },
+      { name: `eq${bitIndex}`, type: "XNOR", x: 2500, y: baseY }
+    );
+    links.push(
+      [registerQNames[bitIndex], 0, `eq${bitIndex}`, 0],
+      [`target${bitIndex}`, 0, `eq${bitIndex}`, 1]
+    );
+    equalNames.push(`eq${bitIndex}`);
+  }
+
+  let matchName = equalNames[0];
+  for (let bitIndex = 1; bitIndex < bitCount; bitIndex++) {
+    const name = `matchAcc${bitIndex}`;
+    nodes.push({ name, type: "AND", x: 2680, y: topY + (bitIndex - 1) * 150 });
+    links.push([matchName, 0, name, 0], [equalNames[bitIndex], 0, name, 1]);
+    matchName = name;
+  }
+
+  nodes.push(
+    { name: "winAnd", type: "AND", x: 2900, y: topY - 150 },
+    { name: "WIN", type: "LED", x: 3100, y: topY - 160 },
+    { name: "MATCH", type: "LED", x: 2900, y: topY + 20 }
+  );
+  links.push(
+    ["STOP", 0, "winAnd", 0],
+    [matchName, 0, "winAnd", 1],
+    ["winAnd", 0, "WIN", 0],
+    [matchName, 0, "MATCH", 0]
+  );
+
+  return buildBlueprint(nodes, links);
+}
+
 const EXAMPLE_CIRCUITS = [
   {
     id: "half-adder",
@@ -947,6 +1330,31 @@ const EXAMPLE_CIRCUITS = [
     id: "ripple-adder-32bit",
     name: "32-bit adder (ripple carry)",
     build: () => buildRippleCarryAdder(32),
+  },
+  {
+    id: "d-flip-flop",
+    name: "D flip-flop (1-bit memory)",
+    build: buildDFlipFlop,
+  },
+  {
+    id: "register-4bit",
+    name: "4-bit register",
+    build: () => buildRegister(4),
+  },
+  {
+    id: "computer-4bit",
+    name: "Computer: 4-bit accumulator (ALU+register+clock)",
+    build: () => buildAccumulatorComputer(4),
+  },
+  {
+    id: "computer-8bit",
+    name: "Computer: 8-bit accumulator (ALU+register+clock)",
+    build: () => buildAccumulatorComputer(8),
+  },
+  {
+    id: "computer-game",
+    name: "🎮 Computer game: Stop the Counter",
+    build: () => buildComputerGame(4),
   },
   {
     id: "sr-latch",
