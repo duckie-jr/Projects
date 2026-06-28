@@ -758,6 +758,150 @@
       "x": 2900,
       "y": 440,
       "state": {}
+    },
+    {
+      "id": 108,
+      "type": "TEXT",
+      "x": 80,
+      "y": -300,
+      "state": {
+        "text": "STOP THE COUNTER  —  a computer you can play"
+      }
+    },
+    {
+      "id": 109,
+      "type": "TEXT",
+      "x": 80,
+      "y": -256,
+      "state": {
+        "text": "HOW TO PLAY:"
+      }
+    },
+    {
+      "id": 110,
+      "type": "TEXT",
+      "x": 80,
+      "y": -212,
+      "state": {
+        "text": "1) Click  Run  in the top toolbar to power on"
+      }
+    },
+    {
+      "id": 111,
+      "type": "TEXT",
+      "x": 80,
+      "y": -168,
+      "state": {
+        "text": "2) Flip  RESET  OFF to start the counter"
+      }
+    },
+    {
+      "id": 112,
+      "type": "TEXT",
+      "x": 80,
+      "y": -124,
+      "state": {
+        "text": "3) Set the  TARGET  switches to your number"
+      }
+    },
+    {
+      "id": 113,
+      "type": "TEXT",
+      "x": 80,
+      "y": -80,
+      "state": {
+        "text": "4) Tap  STOP  the instant DISPLAY = TARGET"
+      }
+    },
+    {
+      "id": 114,
+      "type": "TEXT",
+      "x": 80,
+      "y": -36,
+      "state": {
+        "text": "5) WIN lights if you stopped on the target!"
+      }
+    },
+    {
+      "id": 115,
+      "type": "TEXT",
+      "x": 70,
+      "y": 18,
+      "state": {
+        "text": "CLOCK heartbeat"
+      }
+    },
+    {
+      "id": 116,
+      "type": "TEXT",
+      "x": 455,
+      "y": 18,
+      "state": {
+        "text": "RESET: OFF = run"
+      }
+    },
+    {
+      "id": 117,
+      "type": "TEXT",
+      "x": 455,
+      "y": 250,
+      "state": {
+        "text": "STOP: freezes the count"
+      }
+    },
+    {
+      "id": 118,
+      "type": "TEXT",
+      "x": 40,
+      "y": 360,
+      "state": {
+        "text": "STEP = +1 (addend)"
+      }
+    },
+    {
+      "id": 119,
+      "type": "TEXT",
+      "x": 1000,
+      "y": 360,
+      "state": {
+        "text": "COUNTER (register + adder = ALU)"
+      }
+    },
+    {
+      "id": 120,
+      "type": "TEXT",
+      "x": 2083,
+      "y": 360,
+      "state": {
+        "text": "DISPLAY (count)"
+      }
+    },
+    {
+      "id": 121,
+      "type": "TEXT",
+      "x": 2303,
+      "y": 360,
+      "state": {
+        "text": "TARGET (your number)"
+      }
+    },
+    {
+      "id": 122,
+      "type": "TEXT",
+      "x": 3090,
+      "y": 200,
+      "state": {
+        "text": "WIN!"
+      }
+    },
+    {
+      "id": 123,
+      "type": "TEXT",
+      "x": 3010,
+      "y": 450,
+      "state": {
+        "text": "MATCH"
+      }
     }
   ],
   "wires": [
