@@ -1,0 +1,1011 @@
+{
+  "components": [
+    {
+      "id": 1,
+      "type": "SWITCH",
+      "x": 20,
+      "y": 130,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 2,
+      "type": "SWITCH",
+      "x": 20,
+      "y": 300,
+      "state": {
+        "on": true
+      }
+    },
+    {
+      "id": 3,
+      "type": "LED",
+      "x": 170,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 4,
+      "type": "LED",
+      "x": 170,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 5,
+      "type": "NOT",
+      "x": 60,
+      "y": 470,
+      "state": {}
+    },
+    {
+      "id": 6,
+      "type": "NOT",
+      "x": 1300,
+      "y": 820,
+      "state": {}
+    },
+    {
+      "id": 7,
+      "type": "DELAY",
+      "x": 1420,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 8,
+      "type": "NOT",
+      "x": 1300,
+      "y": 980,
+      "state": {}
+    },
+    {
+      "id": 9,
+      "type": "DELAY",
+      "x": 1420,
+      "y": 980,
+      "state": {
+        "ticks": 240
+      }
+    },
+    {
+      "id": 10,
+      "type": "LED",
+      "x": 1420,
+      "y": 660,
+      "state": {}
+    },
+    {
+      "id": 11,
+      "type": "DELAY",
+      "x": 1110,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 12,
+      "type": "DELAY",
+      "x": 1110,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 13,
+      "type": "NOT",
+      "x": 1110,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 14,
+      "type": "AND",
+      "x": 1110,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 15,
+      "type": "AND",
+      "x": 1110,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 16,
+      "type": "LED",
+      "x": 1110,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 17,
+      "type": "LED",
+      "x": 1110,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 18,
+      "type": "DELAY",
+      "x": 960,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 19,
+      "type": "DELAY",
+      "x": 960,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 20,
+      "type": "NOT",
+      "x": 960,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 21,
+      "type": "AND",
+      "x": 960,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 22,
+      "type": "AND",
+      "x": 960,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 23,
+      "type": "LED",
+      "x": 960,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 24,
+      "type": "LED",
+      "x": 960,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 25,
+      "type": "DELAY",
+      "x": 810,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 26,
+      "type": "DELAY",
+      "x": 810,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 27,
+      "type": "NOT",
+      "x": 810,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 28,
+      "type": "AND",
+      "x": 810,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 29,
+      "type": "AND",
+      "x": 810,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 30,
+      "type": "LED",
+      "x": 810,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 31,
+      "type": "LED",
+      "x": 810,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 32,
+      "type": "DELAY",
+      "x": 660,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 33,
+      "type": "DELAY",
+      "x": 660,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 34,
+      "type": "NOT",
+      "x": 660,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 35,
+      "type": "AND",
+      "x": 660,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 36,
+      "type": "AND",
+      "x": 660,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 37,
+      "type": "LED",
+      "x": 660,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 38,
+      "type": "LED",
+      "x": 660,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 39,
+      "type": "DELAY",
+      "x": 510,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 40,
+      "type": "DELAY",
+      "x": 510,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 41,
+      "type": "NOT",
+      "x": 510,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 42,
+      "type": "AND",
+      "x": 510,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 43,
+      "type": "AND",
+      "x": 510,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 44,
+      "type": "LED",
+      "x": 510,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 45,
+      "type": "LED",
+      "x": 510,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 46,
+      "type": "DELAY",
+      "x": 360,
+      "y": 820,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 47,
+      "type": "DELAY",
+      "x": 360,
+      "y": 980,
+      "state": {
+        "ticks": 120
+      }
+    },
+    {
+      "id": 48,
+      "type": "NOT",
+      "x": 360,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 49,
+      "type": "AND",
+      "x": 360,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 50,
+      "type": "AND",
+      "x": 360,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 51,
+      "type": "LED",
+      "x": 360,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 52,
+      "type": "LED",
+      "x": 360,
+      "y": 280,
+      "state": {}
+    },
+    {
+      "id": 53,
+      "type": "XOR",
+      "x": 170,
+      "y": 1240,
+      "state": {}
+    },
+    {
+      "id": 54,
+      "type": "AND",
+      "x": 170,
+      "y": 1360,
+      "state": {}
+    },
+    {
+      "id": 55,
+      "type": "NOT",
+      "x": 170,
+      "y": 1500,
+      "state": {}
+    },
+    {
+      "id": 56,
+      "type": "AND",
+      "x": 170,
+      "y": 1620,
+      "state": {}
+    },
+    {
+      "id": 57,
+      "type": "NOT",
+      "x": 170,
+      "y": 1740,
+      "state": {}
+    },
+    {
+      "id": 58,
+      "type": "NAND",
+      "x": 320,
+      "y": 1680,
+      "state": {}
+    },
+    {
+      "id": 59,
+      "type": "NAND",
+      "x": 320,
+      "y": 1820,
+      "state": {}
+    },
+    {
+      "id": 60,
+      "type": "LED",
+      "x": 110,
+      "y": 1680,
+      "state": {}
+    },
+    {
+      "id": 61,
+      "type": "LED",
+      "x": 110,
+      "y": 1500,
+      "state": {}
+    },
+    {
+      "id": 62,
+      "type": "TEXT",
+      "x": 20,
+      "y": -180,
+      "state": {
+        "text": "FLAPPY LED  —  dodge the gaps!"
+      }
+    },
+    {
+      "id": 63,
+      "type": "TEXT",
+      "x": 20,
+      "y": -136,
+      "state": {
+        "text": "HOW TO PLAY:"
+      }
+    },
+    {
+      "id": 64,
+      "type": "TEXT",
+      "x": 20,
+      "y": -92,
+      "state": {
+        "text": "1) Press Run, then flip RESET off to play"
+      }
+    },
+    {
+      "id": 65,
+      "type": "TEXT",
+      "x": 20,
+      "y": -48,
+      "state": {
+        "text": "2) Pipes scroll left toward the BIRD"
+      }
+    },
+    {
+      "id": 66,
+      "type": "TEXT",
+      "x": 20,
+      "y": -4,
+      "state": {
+        "text": "3) FLAP up / down so the BIRD lines up with the gap"
+      }
+    },
+    {
+      "id": 67,
+      "type": "TEXT",
+      "x": 20,
+      "y": 40,
+      "state": {
+        "text": "4) Touch a pipe and GAME OVER latches — flip RESET to retry"
+      }
+    },
+    {
+      "id": 68,
+      "type": "TEXT",
+      "x": 160,
+      "y": 60,
+      "state": {
+        "text": "BIRD"
+      }
+    },
+    {
+      "id": 69,
+      "type": "TEXT",
+      "x": 350,
+      "y": 20,
+      "state": {
+        "text": "<<<  PIPES SCROLL THIS WAY"
+      }
+    },
+    {
+      "id": 70,
+      "type": "TEXT",
+      "x": 1280,
+      "y": 760,
+      "state": {
+        "text": "PIPE MAKER"
+      }
+    },
+    {
+      "id": 71,
+      "type": "TEXT",
+      "x": 110,
+      "y": 1450,
+      "state": {
+        "text": "ALIVE / GAME OVER"
+      }
+    }
+  ],
+  "wires": [
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 3,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 5,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 5,
+      "fromPin": 0,
+      "toComponentId": 4,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 7,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 6,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 9,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 9,
+      "fromPin": 0,
+      "toComponentId": 8,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 10,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 11,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 12,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 12,
+      "fromPin": 0,
+      "toComponentId": 13,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 11,
+      "fromPin": 0,
+      "toComponentId": 14,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 13,
+      "fromPin": 0,
+      "toComponentId": 14,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 11,
+      "fromPin": 0,
+      "toComponentId": 15,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 12,
+      "fromPin": 0,
+      "toComponentId": 15,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 14,
+      "fromPin": 0,
+      "toComponentId": 16,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 15,
+      "fromPin": 0,
+      "toComponentId": 17,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 11,
+      "fromPin": 0,
+      "toComponentId": 18,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 12,
+      "fromPin": 0,
+      "toComponentId": 19,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 19,
+      "fromPin": 0,
+      "toComponentId": 20,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 21,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 21,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 22,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 19,
+      "fromPin": 0,
+      "toComponentId": 22,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 23,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 24,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 25,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 19,
+      "fromPin": 0,
+      "toComponentId": 26,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 27,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 28,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 28,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 29,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 29,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 30,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 29,
+      "fromPin": 0,
+      "toComponentId": 31,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 32,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 33,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 34,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 35,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 35,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 36,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 36,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 37,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 38,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 39,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 40,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 40,
+      "fromPin": 0,
+      "toComponentId": 41,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 39,
+      "fromPin": 0,
+      "toComponentId": 42,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 41,
+      "fromPin": 0,
+      "toComponentId": 42,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 39,
+      "fromPin": 0,
+      "toComponentId": 43,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 40,
+      "fromPin": 0,
+      "toComponentId": 43,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 42,
+      "fromPin": 0,
+      "toComponentId": 44,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 43,
+      "fromPin": 0,
+      "toComponentId": 45,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 39,
+      "fromPin": 0,
+      "toComponentId": 46,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 40,
+      "fromPin": 0,
+      "toComponentId": 47,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 47,
+      "fromPin": 0,
+      "toComponentId": 48,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 46,
+      "fromPin": 0,
+      "toComponentId": 49,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 49,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 46,
+      "fromPin": 0,
+      "toComponentId": 50,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 47,
+      "fromPin": 0,
+      "toComponentId": 50,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 49,
+      "fromPin": 0,
+      "toComponentId": 51,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 50,
+      "fromPin": 0,
+      "toComponentId": 52,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 53,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 47,
+      "fromPin": 0,
+      "toComponentId": 53,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 46,
+      "fromPin": 0,
+      "toComponentId": 54,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 53,
+      "fromPin": 0,
+      "toComponentId": 54,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 2,
+      "fromPin": 0,
+      "toComponentId": 55,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 54,
+      "fromPin": 0,
+      "toComponentId": 56,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 55,
+      "fromPin": 0,
+      "toComponentId": 56,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 56,
+      "fromPin": 0,
+      "toComponentId": 57,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 57,
+      "fromPin": 0,
+      "toComponentId": 58,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 59,
+      "fromPin": 0,
+      "toComponentId": 58,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 55,
+      "fromPin": 0,
+      "toComponentId": 59,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 58,
+      "fromPin": 0,
+      "toComponentId": 59,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 58,
+      "fromPin": 0,
+      "toComponentId": 60,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 59,
+      "fromPin": 0,
+      "toComponentId": 61,
+      "toPin": 0
+    }
+  ]
+}
