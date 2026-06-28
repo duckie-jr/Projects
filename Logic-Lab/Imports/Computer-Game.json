@@ -1,0 +1,1797 @@
+{
+  "components": [
+    {
+      "id": 1,
+      "type": "NOT",
+      "x": 80,
+      "y": 70,
+      "state": {}
+    },
+    {
+      "id": 2,
+      "type": "DELAY",
+      "x": 260,
+      "y": 70,
+      "state": {
+        "ticks": 70
+      }
+    },
+    {
+      "id": 3,
+      "type": "LED",
+      "x": 260,
+      "y": 190,
+      "state": {}
+    },
+    {
+      "id": 4,
+      "type": "NOT",
+      "x": 80,
+      "y": 180,
+      "state": {}
+    },
+    {
+      "id": 5,
+      "type": "SWITCH",
+      "x": 470,
+      "y": 70,
+      "state": {
+        "on": true
+      }
+    },
+    {
+      "id": 6,
+      "type": "NOT",
+      "x": 650,
+      "y": 80,
+      "state": {}
+    },
+    {
+      "id": 7,
+      "type": "SWITCH",
+      "x": 470,
+      "y": 190,
+      "state": {}
+    },
+    {
+      "id": 8,
+      "type": "NOT",
+      "x": 650,
+      "y": 200,
+      "state": {}
+    },
+    {
+      "id": 9,
+      "type": "SWITCH",
+      "x": 850,
+      "y": 120,
+      "state": {}
+    },
+    {
+      "id": 10,
+      "type": "NOT",
+      "x": 220,
+      "y": 1290,
+      "state": {}
+    },
+    {
+      "id": 11,
+      "type": "NAND",
+      "x": 360,
+      "y": 1280,
+      "state": {}
+    },
+    {
+      "id": 12,
+      "type": "NAND",
+      "x": 360,
+      "y": 1390,
+      "state": {}
+    },
+    {
+      "id": 13,
+      "type": "NAND",
+      "x": 500,
+      "y": 1280,
+      "state": {}
+    },
+    {
+      "id": 14,
+      "type": "NAND",
+      "x": 500,
+      "y": 1390,
+      "state": {}
+    },
+    {
+      "id": 15,
+      "type": "NOT",
+      "x": 640,
+      "y": 1200,
+      "state": {}
+    },
+    {
+      "id": 16,
+      "type": "NAND",
+      "x": 640,
+      "y": 1290,
+      "state": {}
+    },
+    {
+      "id": 17,
+      "type": "NAND",
+      "x": 640,
+      "y": 1400,
+      "state": {}
+    },
+    {
+      "id": 18,
+      "type": "NAND",
+      "x": 780,
+      "y": 1300,
+      "state": {}
+    },
+    {
+      "id": 19,
+      "type": "NAND",
+      "x": 780,
+      "y": 1410,
+      "state": {}
+    },
+    {
+      "id": 20,
+      "type": "NOT",
+      "x": 220,
+      "y": 990,
+      "state": {}
+    },
+    {
+      "id": 21,
+      "type": "NAND",
+      "x": 360,
+      "y": 980,
+      "state": {}
+    },
+    {
+      "id": 22,
+      "type": "NAND",
+      "x": 360,
+      "y": 1090,
+      "state": {}
+    },
+    {
+      "id": 23,
+      "type": "NAND",
+      "x": 500,
+      "y": 980,
+      "state": {}
+    },
+    {
+      "id": 24,
+      "type": "NAND",
+      "x": 500,
+      "y": 1090,
+      "state": {}
+    },
+    {
+      "id": 25,
+      "type": "NOT",
+      "x": 640,
+      "y": 900,
+      "state": {}
+    },
+    {
+      "id": 26,
+      "type": "NAND",
+      "x": 640,
+      "y": 990,
+      "state": {}
+    },
+    {
+      "id": 27,
+      "type": "NAND",
+      "x": 640,
+      "y": 1100,
+      "state": {}
+    },
+    {
+      "id": 28,
+      "type": "NAND",
+      "x": 780,
+      "y": 1000,
+      "state": {}
+    },
+    {
+      "id": 29,
+      "type": "NAND",
+      "x": 780,
+      "y": 1110,
+      "state": {}
+    },
+    {
+      "id": 30,
+      "type": "NOT",
+      "x": 220,
+      "y": 690,
+      "state": {}
+    },
+    {
+      "id": 31,
+      "type": "NAND",
+      "x": 360,
+      "y": 680,
+      "state": {}
+    },
+    {
+      "id": 32,
+      "type": "NAND",
+      "x": 360,
+      "y": 790,
+      "state": {}
+    },
+    {
+      "id": 33,
+      "type": "NAND",
+      "x": 500,
+      "y": 680,
+      "state": {}
+    },
+    {
+      "id": 34,
+      "type": "NAND",
+      "x": 500,
+      "y": 790,
+      "state": {}
+    },
+    {
+      "id": 35,
+      "type": "NOT",
+      "x": 640,
+      "y": 600,
+      "state": {}
+    },
+    {
+      "id": 36,
+      "type": "NAND",
+      "x": 640,
+      "y": 690,
+      "state": {}
+    },
+    {
+      "id": 37,
+      "type": "NAND",
+      "x": 640,
+      "y": 800,
+      "state": {}
+    },
+    {
+      "id": 38,
+      "type": "NAND",
+      "x": 780,
+      "y": 700,
+      "state": {}
+    },
+    {
+      "id": 39,
+      "type": "NAND",
+      "x": 780,
+      "y": 810,
+      "state": {}
+    },
+    {
+      "id": 40,
+      "type": "NOT",
+      "x": 220,
+      "y": 390,
+      "state": {}
+    },
+    {
+      "id": 41,
+      "type": "NAND",
+      "x": 360,
+      "y": 380,
+      "state": {}
+    },
+    {
+      "id": 42,
+      "type": "NAND",
+      "x": 360,
+      "y": 490,
+      "state": {}
+    },
+    {
+      "id": 43,
+      "type": "NAND",
+      "x": 500,
+      "y": 380,
+      "state": {}
+    },
+    {
+      "id": 44,
+      "type": "NAND",
+      "x": 500,
+      "y": 490,
+      "state": {}
+    },
+    {
+      "id": 45,
+      "type": "NOT",
+      "x": 640,
+      "y": 300,
+      "state": {}
+    },
+    {
+      "id": 46,
+      "type": "NAND",
+      "x": 640,
+      "y": 390,
+      "state": {}
+    },
+    {
+      "id": 47,
+      "type": "NAND",
+      "x": 640,
+      "y": 500,
+      "state": {}
+    },
+    {
+      "id": 48,
+      "type": "NAND",
+      "x": 780,
+      "y": 400,
+      "state": {}
+    },
+    {
+      "id": 49,
+      "type": "NAND",
+      "x": 780,
+      "y": 510,
+      "state": {}
+    },
+    {
+      "id": 50,
+      "type": "SWITCH",
+      "x": 60,
+      "y": 1360,
+      "state": {
+        "on": true
+      }
+    },
+    {
+      "id": 51,
+      "type": "XOR",
+      "x": 1080,
+      "y": 1320,
+      "state": {}
+    },
+    {
+      "id": 52,
+      "type": "AND",
+      "x": 1080,
+      "y": 1440,
+      "state": {}
+    },
+    {
+      "id": 53,
+      "type": "XOR",
+      "x": 1270,
+      "y": 1350,
+      "state": {}
+    },
+    {
+      "id": 54,
+      "type": "AND",
+      "x": 1270,
+      "y": 1480,
+      "state": {}
+    },
+    {
+      "id": 55,
+      "type": "OR",
+      "x": 1460,
+      "y": 1470,
+      "state": {}
+    },
+    {
+      "id": 56,
+      "type": "SWITCH",
+      "x": 60,
+      "y": 1060,
+      "state": {}
+    },
+    {
+      "id": 57,
+      "type": "XOR",
+      "x": 1080,
+      "y": 1020,
+      "state": {}
+    },
+    {
+      "id": 58,
+      "type": "AND",
+      "x": 1080,
+      "y": 1140,
+      "state": {}
+    },
+    {
+      "id": 59,
+      "type": "XOR",
+      "x": 1270,
+      "y": 1050,
+      "state": {}
+    },
+    {
+      "id": 60,
+      "type": "AND",
+      "x": 1270,
+      "y": 1180,
+      "state": {}
+    },
+    {
+      "id": 61,
+      "type": "OR",
+      "x": 1460,
+      "y": 1170,
+      "state": {}
+    },
+    {
+      "id": 62,
+      "type": "SWITCH",
+      "x": 60,
+      "y": 760,
+      "state": {}
+    },
+    {
+      "id": 63,
+      "type": "XOR",
+      "x": 1080,
+      "y": 720,
+      "state": {}
+    },
+    {
+      "id": 64,
+      "type": "AND",
+      "x": 1080,
+      "y": 840,
+      "state": {}
+    },
+    {
+      "id": 65,
+      "type": "XOR",
+      "x": 1270,
+      "y": 750,
+      "state": {}
+    },
+    {
+      "id": 66,
+      "type": "AND",
+      "x": 1270,
+      "y": 880,
+      "state": {}
+    },
+    {
+      "id": 67,
+      "type": "OR",
+      "x": 1460,
+      "y": 870,
+      "state": {}
+    },
+    {
+      "id": 68,
+      "type": "SWITCH",
+      "x": 60,
+      "y": 460,
+      "state": {}
+    },
+    {
+      "id": 69,
+      "type": "XOR",
+      "x": 1080,
+      "y": 420,
+      "state": {}
+    },
+    {
+      "id": 70,
+      "type": "AND",
+      "x": 1080,
+      "y": 540,
+      "state": {}
+    },
+    {
+      "id": 71,
+      "type": "XOR",
+      "x": 1270,
+      "y": 450,
+      "state": {}
+    },
+    {
+      "id": 72,
+      "type": "AND",
+      "x": 1270,
+      "y": 580,
+      "state": {}
+    },
+    {
+      "id": 73,
+      "type": "OR",
+      "x": 1460,
+      "y": 570,
+      "state": {}
+    },
+    {
+      "id": 74,
+      "type": "AND",
+      "x": 1580,
+      "y": 1310,
+      "state": {}
+    },
+    {
+      "id": 75,
+      "type": "AND",
+      "x": 1580,
+      "y": 1420,
+      "state": {}
+    },
+    {
+      "id": 76,
+      "type": "OR",
+      "x": 1740,
+      "y": 1365,
+      "state": {}
+    },
+    {
+      "id": 77,
+      "type": "AND",
+      "x": 1900,
+      "y": 1365,
+      "state": {}
+    },
+    {
+      "id": 78,
+      "type": "AND",
+      "x": 1580,
+      "y": 1010,
+      "state": {}
+    },
+    {
+      "id": 79,
+      "type": "AND",
+      "x": 1580,
+      "y": 1120,
+      "state": {}
+    },
+    {
+      "id": 80,
+      "type": "OR",
+      "x": 1740,
+      "y": 1065,
+      "state": {}
+    },
+    {
+      "id": 81,
+      "type": "AND",
+      "x": 1900,
+      "y": 1065,
+      "state": {}
+    },
+    {
+      "id": 82,
+      "type": "AND",
+      "x": 1580,
+      "y": 710,
+      "state": {}
+    },
+    {
+      "id": 83,
+      "type": "AND",
+      "x": 1580,
+      "y": 820,
+      "state": {}
+    },
+    {
+      "id": 84,
+      "type": "OR",
+      "x": 1740,
+      "y": 765,
+      "state": {}
+    },
+    {
+      "id": 85,
+      "type": "AND",
+      "x": 1900,
+      "y": 765,
+      "state": {}
+    },
+    {
+      "id": 86,
+      "type": "AND",
+      "x": 1580,
+      "y": 410,
+      "state": {}
+    },
+    {
+      "id": 87,
+      "type": "AND",
+      "x": 1580,
+      "y": 520,
+      "state": {}
+    },
+    {
+      "id": 88,
+      "type": "OR",
+      "x": 1740,
+      "y": 465,
+      "state": {}
+    },
+    {
+      "id": 89,
+      "type": "AND",
+      "x": 1900,
+      "y": 465,
+      "state": {}
+    },
+    {
+      "id": 90,
+      "type": "LED",
+      "x": 2120,
+      "y": 1320,
+      "state": {}
+    },
+    {
+      "id": 91,
+      "type": "SWITCH",
+      "x": 2340,
+      "y": 1320,
+      "state": {}
+    },
+    {
+      "id": 92,
+      "type": "XNOR",
+      "x": 2500,
+      "y": 1320,
+      "state": {}
+    },
+    {
+      "id": 93,
+      "type": "LED",
+      "x": 2120,
+      "y": 1020,
+      "state": {}
+    },
+    {
+      "id": 94,
+      "type": "SWITCH",
+      "x": 2340,
+      "y": 1020,
+      "state": {
+        "on": true
+      }
+    },
+    {
+      "id": 95,
+      "type": "XNOR",
+      "x": 2500,
+      "y": 1020,
+      "state": {}
+    },
+    {
+      "id": 96,
+      "type": "LED",
+      "x": 2120,
+      "y": 720,
+      "state": {}
+    },
+    {
+      "id": 97,
+      "type": "SWITCH",
+      "x": 2340,
+      "y": 720,
+      "state": {}
+    },
+    {
+      "id": 98,
+      "type": "XNOR",
+      "x": 2500,
+      "y": 720,
+      "state": {}
+    },
+    {
+      "id": 99,
+      "type": "LED",
+      "x": 2120,
+      "y": 420,
+      "state": {}
+    },
+    {
+      "id": 100,
+      "type": "SWITCH",
+      "x": 2340,
+      "y": 420,
+      "state": {
+        "on": true
+      }
+    },
+    {
+      "id": 101,
+      "type": "XNOR",
+      "x": 2500,
+      "y": 420,
+      "state": {}
+    },
+    {
+      "id": 102,
+      "type": "AND",
+      "x": 2680,
+      "y": 420,
+      "state": {}
+    },
+    {
+      "id": 103,
+      "type": "AND",
+      "x": 2680,
+      "y": 570,
+      "state": {}
+    },
+    {
+      "id": 104,
+      "type": "AND",
+      "x": 2680,
+      "y": 720,
+      "state": {}
+    },
+    {
+      "id": 105,
+      "type": "AND",
+      "x": 2900,
+      "y": 270,
+      "state": {}
+    },
+    {
+      "id": 106,
+      "type": "LED",
+      "x": 3100,
+      "y": 260,
+      "state": {}
+    },
+    {
+      "id": 107,
+      "type": "LED",
+      "x": 2900,
+      "y": 440,
+      "state": {}
+    }
+  ],
+  "wires": [
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 2,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 2,
+      "fromPin": 0,
+      "toComponentId": 1,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 4,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 3,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 5,
+      "fromPin": 0,
+      "toComponentId": 6,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 8,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 77,
+      "fromPin": 0,
+      "toComponentId": 10,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 77,
+      "fromPin": 0,
+      "toComponentId": 11,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 11,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 10,
+      "fromPin": 0,
+      "toComponentId": 12,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 12,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 11,
+      "fromPin": 0,
+      "toComponentId": 13,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 14,
+      "fromPin": 0,
+      "toComponentId": 13,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 12,
+      "fromPin": 0,
+      "toComponentId": 14,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 13,
+      "fromPin": 0,
+      "toComponentId": 14,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 13,
+      "fromPin": 0,
+      "toComponentId": 15,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 13,
+      "fromPin": 0,
+      "toComponentId": 16,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 16,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 15,
+      "fromPin": 0,
+      "toComponentId": 17,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 17,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 16,
+      "fromPin": 0,
+      "toComponentId": 18,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 19,
+      "fromPin": 0,
+      "toComponentId": 18,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 17,
+      "fromPin": 0,
+      "toComponentId": 19,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 19,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 81,
+      "fromPin": 0,
+      "toComponentId": 20,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 81,
+      "fromPin": 0,
+      "toComponentId": 21,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 21,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 22,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 22,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 23,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 23,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 24,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 24,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 25,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 26,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 26,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 27,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 27,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 28,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 29,
+      "fromPin": 0,
+      "toComponentId": 28,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 29,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 29,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 85,
+      "fromPin": 0,
+      "toComponentId": 30,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 85,
+      "fromPin": 0,
+      "toComponentId": 31,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 31,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 32,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 32,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 33,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 33,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 34,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 34,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 35,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 36,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 36,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 37,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 37,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 38,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 39,
+      "fromPin": 0,
+      "toComponentId": 38,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 39,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 39,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 89,
+      "fromPin": 0,
+      "toComponentId": 40,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 89,
+      "fromPin": 0,
+      "toComponentId": 41,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 41,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 40,
+      "fromPin": 0,
+      "toComponentId": 42,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 1,
+      "fromPin": 0,
+      "toComponentId": 42,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 41,
+      "fromPin": 0,
+      "toComponentId": 43,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 44,
+      "fromPin": 0,
+      "toComponentId": 43,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 42,
+      "fromPin": 0,
+      "toComponentId": 44,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 43,
+      "fromPin": 0,
+      "toComponentId": 44,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 43,
+      "fromPin": 0,
+      "toComponentId": 45,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 43,
+      "fromPin": 0,
+      "toComponentId": 46,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 46,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 45,
+      "fromPin": 0,
+      "toComponentId": 47,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 4,
+      "fromPin": 0,
+      "toComponentId": 47,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 46,
+      "fromPin": 0,
+      "toComponentId": 48,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 49,
+      "fromPin": 0,
+      "toComponentId": 48,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 47,
+      "fromPin": 0,
+      "toComponentId": 49,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 49,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 51,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 50,
+      "fromPin": 0,
+      "toComponentId": 51,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 52,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 50,
+      "fromPin": 0,
+      "toComponentId": 52,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 51,
+      "fromPin": 0,
+      "toComponentId": 53,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 9,
+      "fromPin": 0,
+      "toComponentId": 53,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 51,
+      "fromPin": 0,
+      "toComponentId": 54,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 9,
+      "fromPin": 0,
+      "toComponentId": 54,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 52,
+      "fromPin": 0,
+      "toComponentId": 55,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 54,
+      "fromPin": 0,
+      "toComponentId": 55,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 57,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 56,
+      "fromPin": 0,
+      "toComponentId": 57,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 58,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 56,
+      "fromPin": 0,
+      "toComponentId": 58,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 57,
+      "fromPin": 0,
+      "toComponentId": 59,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 55,
+      "fromPin": 0,
+      "toComponentId": 59,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 57,
+      "fromPin": 0,
+      "toComponentId": 60,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 55,
+      "fromPin": 0,
+      "toComponentId": 60,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 58,
+      "fromPin": 0,
+      "toComponentId": 61,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 60,
+      "fromPin": 0,
+      "toComponentId": 61,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 63,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 62,
+      "fromPin": 0,
+      "toComponentId": 63,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 64,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 62,
+      "fromPin": 0,
+      "toComponentId": 64,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 63,
+      "fromPin": 0,
+      "toComponentId": 65,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 61,
+      "fromPin": 0,
+      "toComponentId": 65,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 63,
+      "fromPin": 0,
+      "toComponentId": 66,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 61,
+      "fromPin": 0,
+      "toComponentId": 66,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 64,
+      "fromPin": 0,
+      "toComponentId": 67,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 66,
+      "fromPin": 0,
+      "toComponentId": 67,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 69,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 68,
+      "fromPin": 0,
+      "toComponentId": 69,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 70,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 68,
+      "fromPin": 0,
+      "toComponentId": 70,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 69,
+      "fromPin": 0,
+      "toComponentId": 71,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 67,
+      "fromPin": 0,
+      "toComponentId": 71,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 69,
+      "fromPin": 0,
+      "toComponentId": 72,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 67,
+      "fromPin": 0,
+      "toComponentId": 72,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 70,
+      "fromPin": 0,
+      "toComponentId": 73,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 72,
+      "fromPin": 0,
+      "toComponentId": 73,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 53,
+      "fromPin": 0,
+      "toComponentId": 74,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 74,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 75,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 75,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 74,
+      "fromPin": 0,
+      "toComponentId": 76,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 75,
+      "fromPin": 0,
+      "toComponentId": 76,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 76,
+      "fromPin": 0,
+      "toComponentId": 77,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 77,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 59,
+      "fromPin": 0,
+      "toComponentId": 78,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 78,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 79,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 79,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 78,
+      "fromPin": 0,
+      "toComponentId": 80,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 79,
+      "fromPin": 0,
+      "toComponentId": 80,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 80,
+      "fromPin": 0,
+      "toComponentId": 81,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 81,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 65,
+      "fromPin": 0,
+      "toComponentId": 82,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 82,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 83,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 83,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 82,
+      "fromPin": 0,
+      "toComponentId": 84,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 83,
+      "fromPin": 0,
+      "toComponentId": 84,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 84,
+      "fromPin": 0,
+      "toComponentId": 85,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 85,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 71,
+      "fromPin": 0,
+      "toComponentId": 86,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 8,
+      "fromPin": 0,
+      "toComponentId": 86,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 87,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 87,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 86,
+      "fromPin": 0,
+      "toComponentId": 88,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 87,
+      "fromPin": 0,
+      "toComponentId": 88,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 88,
+      "fromPin": 0,
+      "toComponentId": 89,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 6,
+      "fromPin": 0,
+      "toComponentId": 89,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 90,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 18,
+      "fromPin": 0,
+      "toComponentId": 92,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 91,
+      "fromPin": 0,
+      "toComponentId": 92,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 93,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 28,
+      "fromPin": 0,
+      "toComponentId": 95,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 94,
+      "fromPin": 0,
+      "toComponentId": 95,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 96,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 38,
+      "fromPin": 0,
+      "toComponentId": 98,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 97,
+      "fromPin": 0,
+      "toComponentId": 98,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 99,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 48,
+      "fromPin": 0,
+      "toComponentId": 101,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 100,
+      "fromPin": 0,
+      "toComponentId": 101,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 92,
+      "fromPin": 0,
+      "toComponentId": 102,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 95,
+      "fromPin": 0,
+      "toComponentId": 102,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 102,
+      "fromPin": 0,
+      "toComponentId": 103,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 98,
+      "fromPin": 0,
+      "toComponentId": 103,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 103,
+      "fromPin": 0,
+      "toComponentId": 104,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 101,
+      "fromPin": 0,
+      "toComponentId": 104,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 7,
+      "fromPin": 0,
+      "toComponentId": 105,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 104,
+      "fromPin": 0,
+      "toComponentId": 105,
+      "toPin": 1
+    },
+    {
+      "fromComponentId": 105,
+      "fromPin": 0,
+      "toComponentId": 106,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 104,
+      "fromPin": 0,
+      "toComponentId": 107,
+      "toPin": 0
+    }
+  ]
+}
