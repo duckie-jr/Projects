@@ -3,1187 +3,1227 @@
     {
       "id": 1,
       "type": "TEXT",
-      "x": 160,
-      "y": 60,
+      "x": 240,
+      "y": 70,
       "state": {
-        "text": "8×8 PIXEL SCREEN  |  flip a switch to light its pixel"
+        "text": "8×8 PIXEL SCREEN  |  flip a ROW or COLUMN switch to light a whole band"
       }
     },
     {
-      "id": 2,
+      "id": 20,
+      "type": "SWITCH",
+      "x": 240,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 900,
       "type": "TEXT",
-      "x": 170,
-      "y": 95,
+      "x": 295,
+      "y": 132,
       "state": {
         "text": "C0"
       }
     },
     {
-      "id": 3,
+      "id": 21,
+      "type": "SWITCH",
+      "x": 370,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 901,
       "type": "TEXT",
-      "x": 270,
-      "y": 95,
+      "x": 425,
+      "y": 132,
       "state": {
         "text": "C1"
       }
     },
     {
-      "id": 4,
+      "id": 22,
+      "type": "SWITCH",
+      "x": 500,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 902,
       "type": "TEXT",
-      "x": 370,
-      "y": 95,
+      "x": 555,
+      "y": 132,
       "state": {
         "text": "C2"
       }
     },
     {
-      "id": 5,
+      "id": 23,
+      "type": "SWITCH",
+      "x": 630,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 903,
       "type": "TEXT",
-      "x": 470,
-      "y": 95,
+      "x": 685,
+      "y": 132,
       "state": {
         "text": "C3"
       }
     },
     {
-      "id": 6,
+      "id": 24,
+      "type": "SWITCH",
+      "x": 760,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 904,
       "type": "TEXT",
-      "x": 570,
-      "y": 95,
+      "x": 815,
+      "y": 132,
       "state": {
         "text": "C4"
       }
     },
     {
-      "id": 7,
+      "id": 25,
+      "type": "SWITCH",
+      "x": 890,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 905,
       "type": "TEXT",
-      "x": 670,
-      "y": 95,
+      "x": 945,
+      "y": 132,
       "state": {
         "text": "C5"
       }
     },
     {
-      "id": 8,
+      "id": 26,
+      "type": "SWITCH",
+      "x": 1020,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 906,
       "type": "TEXT",
-      "x": 770,
-      "y": 95,
+      "x": 1075,
+      "y": 132,
       "state": {
         "text": "C6"
       }
     },
     {
-      "id": 9,
+      "id": 27,
+      "type": "SWITCH",
+      "x": 1150,
+      "y": 120,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 907,
       "type": "TEXT",
-      "x": 870,
-      "y": 95,
+      "x": 1205,
+      "y": 132,
       "state": {
         "text": "C7"
       }
     },
     {
-      "id": 10,
-      "type": "TEXT",
+      "id": 30,
+      "type": "SWITCH",
       "x": 80,
-      "y": 124,
+      "y": 240,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 910,
+      "type": "TEXT",
+      "x": 150,
+      "y": 252,
       "state": {
         "text": "R0"
       }
     },
     {
-      "id": 11,
-      "type": "TEXT",
+      "id": 31,
+      "type": "SWITCH",
       "x": 80,
-      "y": 204,
+      "y": 330,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 911,
+      "type": "TEXT",
+      "x": 150,
+      "y": 342,
       "state": {
         "text": "R1"
       }
     },
     {
-      "id": 12,
-      "type": "TEXT",
+      "id": 32,
+      "type": "SWITCH",
       "x": 80,
-      "y": 284,
+      "y": 420,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 912,
+      "type": "TEXT",
+      "x": 150,
+      "y": 432,
       "state": {
         "text": "R2"
       }
     },
     {
-      "id": 13,
-      "type": "TEXT",
+      "id": 33,
+      "type": "SWITCH",
       "x": 80,
-      "y": 364,
+      "y": 510,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 913,
+      "type": "TEXT",
+      "x": 150,
+      "y": 522,
       "state": {
         "text": "R3"
       }
     },
     {
-      "id": 14,
-      "type": "TEXT",
+      "id": 34,
+      "type": "SWITCH",
       "x": 80,
-      "y": 444,
+      "y": 600,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 914,
+      "type": "TEXT",
+      "x": 150,
+      "y": 612,
       "state": {
         "text": "R4"
       }
     },
     {
-      "id": 15,
-      "type": "TEXT",
+      "id": 35,
+      "type": "SWITCH",
       "x": 80,
-      "y": 524,
+      "y": 690,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 915,
+      "type": "TEXT",
+      "x": 150,
+      "y": 702,
       "state": {
         "text": "R5"
       }
     },
     {
-      "id": 16,
-      "type": "TEXT",
+      "id": 36,
+      "type": "SWITCH",
       "x": 80,
-      "y": 604,
+      "y": 780,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 916,
+      "type": "TEXT",
+      "x": 150,
+      "y": 792,
       "state": {
         "text": "R6"
       }
     },
     {
-      "id": 17,
-      "type": "TEXT",
+      "id": 37,
+      "type": "SWITCH",
       "x": 80,
-      "y": 684,
+      "y": 870,
+      "state": {
+        "on": false
+      }
+    },
+    {
+      "id": 917,
+      "type": "TEXT",
+      "x": 150,
+      "y": 882,
       "state": {
         "text": "R7"
       }
     },
     {
       "id": 100,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 200,
       "type": "LED",
-      "x": 210,
-      "y": 120,
+      "x": 300,
+      "y": 240,
       "state": {}
     },
     {
       "id": 101,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 201,
       "type": "LED",
-      "x": 310,
-      "y": 120,
+      "x": 430,
+      "y": 240,
       "state": {}
     },
     {
       "id": 102,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 202,
       "type": "LED",
-      "x": 410,
-      "y": 120,
+      "x": 560,
+      "y": 240,
       "state": {}
     },
     {
       "id": 103,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 203,
       "type": "LED",
-      "x": 510,
-      "y": 120,
+      "x": 690,
+      "y": 240,
       "state": {}
     },
     {
       "id": 104,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 204,
       "type": "LED",
-      "x": 610,
-      "y": 120,
+      "x": 820,
+      "y": 240,
       "state": {}
     },
     {
       "id": 105,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 205,
       "type": "LED",
-      "x": 710,
-      "y": 120,
+      "x": 950,
+      "y": 240,
       "state": {}
     },
     {
       "id": 106,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 206,
       "type": "LED",
-      "x": 810,
-      "y": 120,
+      "x": 1080,
+      "y": 240,
       "state": {}
     },
     {
       "id": 107,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 120,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 240,
+      "state": {}
     },
     {
       "id": 207,
       "type": "LED",
-      "x": 910,
-      "y": 120,
+      "x": 1210,
+      "y": 240,
       "state": {}
     },
     {
       "id": 108,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 208,
       "type": "LED",
-      "x": 210,
-      "y": 200,
+      "x": 300,
+      "y": 330,
       "state": {}
     },
     {
       "id": 109,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 209,
       "type": "LED",
-      "x": 310,
-      "y": 200,
+      "x": 430,
+      "y": 330,
       "state": {}
     },
     {
       "id": 110,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 210,
       "type": "LED",
-      "x": 410,
-      "y": 200,
+      "x": 560,
+      "y": 330,
       "state": {}
     },
     {
       "id": 111,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 211,
       "type": "LED",
-      "x": 510,
-      "y": 200,
+      "x": 690,
+      "y": 330,
       "state": {}
     },
     {
       "id": 112,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 212,
       "type": "LED",
-      "x": 610,
-      "y": 200,
+      "x": 820,
+      "y": 330,
       "state": {}
     },
     {
       "id": 113,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 213,
       "type": "LED",
-      "x": 710,
-      "y": 200,
+      "x": 950,
+      "y": 330,
       "state": {}
     },
     {
       "id": 114,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 214,
       "type": "LED",
-      "x": 810,
-      "y": 200,
+      "x": 1080,
+      "y": 330,
       "state": {}
     },
     {
       "id": 115,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 200,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 330,
+      "state": {}
     },
     {
       "id": 215,
       "type": "LED",
-      "x": 910,
-      "y": 200,
+      "x": 1210,
+      "y": 330,
       "state": {}
     },
     {
       "id": 116,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 216,
       "type": "LED",
-      "x": 210,
-      "y": 280,
+      "x": 300,
+      "y": 420,
       "state": {}
     },
     {
       "id": 117,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 217,
       "type": "LED",
-      "x": 310,
-      "y": 280,
+      "x": 430,
+      "y": 420,
       "state": {}
     },
     {
       "id": 118,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 218,
       "type": "LED",
-      "x": 410,
-      "y": 280,
+      "x": 560,
+      "y": 420,
       "state": {}
     },
     {
       "id": 119,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 219,
       "type": "LED",
-      "x": 510,
-      "y": 280,
+      "x": 690,
+      "y": 420,
       "state": {}
     },
     {
       "id": 120,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 220,
       "type": "LED",
-      "x": 610,
-      "y": 280,
+      "x": 820,
+      "y": 420,
       "state": {}
     },
     {
       "id": 121,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 221,
       "type": "LED",
-      "x": 710,
-      "y": 280,
+      "x": 950,
+      "y": 420,
       "state": {}
     },
     {
       "id": 122,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 222,
       "type": "LED",
-      "x": 810,
-      "y": 280,
+      "x": 1080,
+      "y": 420,
       "state": {}
     },
     {
       "id": 123,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 280,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 420,
+      "state": {}
     },
     {
       "id": 223,
       "type": "LED",
-      "x": 910,
-      "y": 280,
+      "x": 1210,
+      "y": 420,
       "state": {}
     },
     {
       "id": 124,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 224,
       "type": "LED",
-      "x": 210,
-      "y": 360,
+      "x": 300,
+      "y": 510,
       "state": {}
     },
     {
       "id": 125,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 225,
       "type": "LED",
-      "x": 310,
-      "y": 360,
+      "x": 430,
+      "y": 510,
       "state": {}
     },
     {
       "id": 126,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 226,
       "type": "LED",
-      "x": 410,
-      "y": 360,
+      "x": 560,
+      "y": 510,
       "state": {}
     },
     {
       "id": 127,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 227,
       "type": "LED",
-      "x": 510,
-      "y": 360,
+      "x": 690,
+      "y": 510,
       "state": {}
     },
     {
       "id": 128,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 228,
       "type": "LED",
-      "x": 610,
-      "y": 360,
+      "x": 820,
+      "y": 510,
       "state": {}
     },
     {
       "id": 129,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 229,
       "type": "LED",
-      "x": 710,
-      "y": 360,
+      "x": 950,
+      "y": 510,
       "state": {}
     },
     {
       "id": 130,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 230,
       "type": "LED",
-      "x": 810,
-      "y": 360,
+      "x": 1080,
+      "y": 510,
       "state": {}
     },
     {
       "id": 131,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 360,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 510,
+      "state": {}
     },
     {
       "id": 231,
       "type": "LED",
-      "x": 910,
-      "y": 360,
+      "x": 1210,
+      "y": 510,
       "state": {}
     },
     {
       "id": 132,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 232,
       "type": "LED",
-      "x": 210,
-      "y": 440,
+      "x": 300,
+      "y": 600,
       "state": {}
     },
     {
       "id": 133,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 233,
       "type": "LED",
-      "x": 310,
-      "y": 440,
+      "x": 430,
+      "y": 600,
       "state": {}
     },
     {
       "id": 134,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 234,
       "type": "LED",
-      "x": 410,
-      "y": 440,
+      "x": 560,
+      "y": 600,
       "state": {}
     },
     {
       "id": 135,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 235,
       "type": "LED",
-      "x": 510,
-      "y": 440,
+      "x": 690,
+      "y": 600,
       "state": {}
     },
     {
       "id": 136,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 236,
       "type": "LED",
-      "x": 610,
-      "y": 440,
+      "x": 820,
+      "y": 600,
       "state": {}
     },
     {
       "id": 137,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 237,
       "type": "LED",
-      "x": 710,
-      "y": 440,
+      "x": 950,
+      "y": 600,
       "state": {}
     },
     {
       "id": 138,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 238,
       "type": "LED",
-      "x": 810,
-      "y": 440,
+      "x": 1080,
+      "y": 600,
       "state": {}
     },
     {
       "id": 139,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 440,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 600,
+      "state": {}
     },
     {
       "id": 239,
       "type": "LED",
-      "x": 910,
-      "y": 440,
+      "x": 1210,
+      "y": 600,
       "state": {}
     },
     {
       "id": 140,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 240,
       "type": "LED",
-      "x": 210,
-      "y": 520,
+      "x": 300,
+      "y": 690,
       "state": {}
     },
     {
       "id": 141,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 241,
       "type": "LED",
-      "x": 310,
-      "y": 520,
+      "x": 430,
+      "y": 690,
       "state": {}
     },
     {
       "id": 142,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 242,
       "type": "LED",
-      "x": 410,
-      "y": 520,
+      "x": 560,
+      "y": 690,
       "state": {}
     },
     {
       "id": 143,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 243,
       "type": "LED",
-      "x": 510,
-      "y": 520,
+      "x": 690,
+      "y": 690,
       "state": {}
     },
     {
       "id": 144,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 244,
       "type": "LED",
-      "x": 610,
-      "y": 520,
+      "x": 820,
+      "y": 690,
       "state": {}
     },
     {
       "id": 145,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 245,
       "type": "LED",
-      "x": 710,
-      "y": 520,
+      "x": 950,
+      "y": 690,
       "state": {}
     },
     {
       "id": 146,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 246,
       "type": "LED",
-      "x": 810,
-      "y": 520,
+      "x": 1080,
+      "y": 690,
       "state": {}
     },
     {
       "id": 147,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 520,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 690,
+      "state": {}
     },
     {
       "id": 247,
       "type": "LED",
-      "x": 910,
-      "y": 520,
+      "x": 1210,
+      "y": 690,
       "state": {}
     },
     {
       "id": 148,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 248,
       "type": "LED",
-      "x": 210,
-      "y": 600,
+      "x": 300,
+      "y": 780,
       "state": {}
     },
     {
       "id": 149,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 249,
       "type": "LED",
-      "x": 310,
-      "y": 600,
+      "x": 430,
+      "y": 780,
       "state": {}
     },
     {
       "id": 150,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 250,
       "type": "LED",
-      "x": 410,
-      "y": 600,
+      "x": 560,
+      "y": 780,
       "state": {}
     },
     {
       "id": 151,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 251,
       "type": "LED",
-      "x": 510,
-      "y": 600,
+      "x": 690,
+      "y": 780,
       "state": {}
     },
     {
       "id": 152,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 252,
       "type": "LED",
-      "x": 610,
-      "y": 600,
+      "x": 820,
+      "y": 780,
       "state": {}
     },
     {
       "id": 153,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 253,
       "type": "LED",
-      "x": 710,
-      "y": 600,
+      "x": 950,
+      "y": 780,
       "state": {}
     },
     {
       "id": 154,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 254,
       "type": "LED",
-      "x": 810,
-      "y": 600,
+      "x": 1080,
+      "y": 780,
       "state": {}
     },
     {
       "id": 155,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 600,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 780,
+      "state": {}
     },
     {
       "id": 255,
       "type": "LED",
-      "x": 910,
-      "y": 600,
+      "x": 1210,
+      "y": 780,
       "state": {}
     },
     {
       "id": 156,
-      "type": "SWITCH",
-      "x": 160,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 240,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 256,
       "type": "LED",
-      "x": 210,
-      "y": 680,
+      "x": 300,
+      "y": 870,
       "state": {}
     },
     {
       "id": 157,
-      "type": "SWITCH",
-      "x": 260,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 370,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 257,
       "type": "LED",
-      "x": 310,
-      "y": 680,
+      "x": 430,
+      "y": 870,
       "state": {}
     },
     {
       "id": 158,
-      "type": "SWITCH",
-      "x": 360,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 500,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 258,
       "type": "LED",
-      "x": 410,
-      "y": 680,
+      "x": 560,
+      "y": 870,
       "state": {}
     },
     {
       "id": 159,
-      "type": "SWITCH",
-      "x": 460,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 630,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 259,
       "type": "LED",
-      "x": 510,
-      "y": 680,
+      "x": 690,
+      "y": 870,
       "state": {}
     },
     {
       "id": 160,
-      "type": "SWITCH",
-      "x": 560,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 760,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 260,
       "type": "LED",
-      "x": 610,
-      "y": 680,
+      "x": 820,
+      "y": 870,
       "state": {}
     },
     {
       "id": 161,
-      "type": "SWITCH",
-      "x": 660,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 890,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 261,
       "type": "LED",
-      "x": 710,
-      "y": 680,
+      "x": 950,
+      "y": 870,
       "state": {}
     },
     {
       "id": 162,
-      "type": "SWITCH",
-      "x": 760,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1020,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 262,
       "type": "LED",
-      "x": 810,
-      "y": 680,
+      "x": 1080,
+      "y": 870,
       "state": {}
     },
     {
       "id": 163,
-      "type": "SWITCH",
-      "x": 860,
-      "y": 680,
-      "state": {
-        "on": false
-      }
+      "type": "OR",
+      "x": 1150,
+      "y": 870,
+      "state": {}
     },
     {
       "id": 263,
       "type": "LED",
-      "x": 910,
-      "y": 680,
+      "x": 1210,
+      "y": 870,
       "state": {}
     }
   ],
   "wires": [
     {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 100,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 100,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 100,
       "fromPin": 0,
       "toComponentId": 200,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 101,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 101,
+      "toPin": 1
     },
     {
       "fromComponentId": 101,
@@ -1192,10 +1232,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 102,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 102,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 102,
       "fromPin": 0,
       "toComponentId": 202,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 103,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 103,
+      "toPin": 1
     },
     {
       "fromComponentId": 103,
@@ -1204,10 +1268,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 104,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 104,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 104,
       "fromPin": 0,
       "toComponentId": 204,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 105,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 105,
+      "toPin": 1
     },
     {
       "fromComponentId": 105,
@@ -1216,10 +1304,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 106,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 106,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 106,
       "fromPin": 0,
       "toComponentId": 206,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 30,
+      "fromPin": 0,
+      "toComponentId": 107,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 107,
+      "toPin": 1
     },
     {
       "fromComponentId": 107,
@@ -1228,10 +1340,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 108,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 108,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 108,
       "fromPin": 0,
       "toComponentId": 208,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 109,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 109,
+      "toPin": 1
     },
     {
       "fromComponentId": 109,
@@ -1240,10 +1376,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 110,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 110,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 110,
       "fromPin": 0,
       "toComponentId": 210,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 111,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 111,
+      "toPin": 1
     },
     {
       "fromComponentId": 111,
@@ -1252,10 +1412,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 112,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 112,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 112,
       "fromPin": 0,
       "toComponentId": 212,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 113,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 113,
+      "toPin": 1
     },
     {
       "fromComponentId": 113,
@@ -1264,10 +1448,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 114,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 114,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 114,
       "fromPin": 0,
       "toComponentId": 214,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 31,
+      "fromPin": 0,
+      "toComponentId": 115,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 115,
+      "toPin": 1
     },
     {
       "fromComponentId": 115,
@@ -1276,10 +1484,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 116,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 116,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 116,
       "fromPin": 0,
       "toComponentId": 216,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 117,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 117,
+      "toPin": 1
     },
     {
       "fromComponentId": 117,
@@ -1288,10 +1520,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 118,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 118,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 118,
       "fromPin": 0,
       "toComponentId": 218,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 119,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 119,
+      "toPin": 1
     },
     {
       "fromComponentId": 119,
@@ -1300,10 +1556,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 120,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 120,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 120,
       "fromPin": 0,
       "toComponentId": 220,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 121,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 121,
+      "toPin": 1
     },
     {
       "fromComponentId": 121,
@@ -1312,10 +1592,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 122,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 122,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 122,
       "fromPin": 0,
       "toComponentId": 222,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 32,
+      "fromPin": 0,
+      "toComponentId": 123,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 123,
+      "toPin": 1
     },
     {
       "fromComponentId": 123,
@@ -1324,10 +1628,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 124,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 124,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 124,
       "fromPin": 0,
       "toComponentId": 224,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 125,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 125,
+      "toPin": 1
     },
     {
       "fromComponentId": 125,
@@ -1336,10 +1664,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 126,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 126,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 126,
       "fromPin": 0,
       "toComponentId": 226,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 127,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 127,
+      "toPin": 1
     },
     {
       "fromComponentId": 127,
@@ -1348,10 +1700,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 128,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 128,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 128,
       "fromPin": 0,
       "toComponentId": 228,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 129,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 129,
+      "toPin": 1
     },
     {
       "fromComponentId": 129,
@@ -1360,10 +1736,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 130,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 130,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 130,
       "fromPin": 0,
       "toComponentId": 230,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 33,
+      "fromPin": 0,
+      "toComponentId": 131,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 131,
+      "toPin": 1
     },
     {
       "fromComponentId": 131,
@@ -1372,10 +1772,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 132,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 132,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 132,
       "fromPin": 0,
       "toComponentId": 232,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 133,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 133,
+      "toPin": 1
     },
     {
       "fromComponentId": 133,
@@ -1384,10 +1808,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 134,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 134,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 134,
       "fromPin": 0,
       "toComponentId": 234,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 135,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 135,
+      "toPin": 1
     },
     {
       "fromComponentId": 135,
@@ -1396,10 +1844,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 136,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 136,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 136,
       "fromPin": 0,
       "toComponentId": 236,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 137,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 137,
+      "toPin": 1
     },
     {
       "fromComponentId": 137,
@@ -1408,10 +1880,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 138,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 138,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 138,
       "fromPin": 0,
       "toComponentId": 238,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 34,
+      "fromPin": 0,
+      "toComponentId": 139,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 139,
+      "toPin": 1
     },
     {
       "fromComponentId": 139,
@@ -1420,10 +1916,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 140,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 140,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 140,
       "fromPin": 0,
       "toComponentId": 240,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 141,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 141,
+      "toPin": 1
     },
     {
       "fromComponentId": 141,
@@ -1432,10 +1952,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 142,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 142,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 142,
       "fromPin": 0,
       "toComponentId": 242,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 143,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 143,
+      "toPin": 1
     },
     {
       "fromComponentId": 143,
@@ -1444,10 +1988,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 144,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 144,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 144,
       "fromPin": 0,
       "toComponentId": 244,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 145,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 145,
+      "toPin": 1
     },
     {
       "fromComponentId": 145,
@@ -1456,10 +2024,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 146,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 146,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 146,
       "fromPin": 0,
       "toComponentId": 246,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 35,
+      "fromPin": 0,
+      "toComponentId": 147,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 147,
+      "toPin": 1
     },
     {
       "fromComponentId": 147,
@@ -1468,10 +2060,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 148,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 148,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 148,
       "fromPin": 0,
       "toComponentId": 248,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 149,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 149,
+      "toPin": 1
     },
     {
       "fromComponentId": 149,
@@ -1480,10 +2096,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 150,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 150,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 150,
       "fromPin": 0,
       "toComponentId": 250,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 151,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 151,
+      "toPin": 1
     },
     {
       "fromComponentId": 151,
@@ -1492,10 +2132,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 152,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 152,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 152,
       "fromPin": 0,
       "toComponentId": 252,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 153,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 153,
+      "toPin": 1
     },
     {
       "fromComponentId": 153,
@@ -1504,10 +2168,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 154,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 154,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 154,
       "fromPin": 0,
       "toComponentId": 254,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 36,
+      "fromPin": 0,
+      "toComponentId": 155,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 155,
+      "toPin": 1
     },
     {
       "fromComponentId": 155,
@@ -1516,10 +2204,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 156,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 20,
+      "fromPin": 0,
+      "toComponentId": 156,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 156,
       "fromPin": 0,
       "toComponentId": 256,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 157,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 21,
+      "fromPin": 0,
+      "toComponentId": 157,
+      "toPin": 1
     },
     {
       "fromComponentId": 157,
@@ -1528,10 +2240,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 158,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 22,
+      "fromPin": 0,
+      "toComponentId": 158,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 158,
       "fromPin": 0,
       "toComponentId": 258,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 159,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 23,
+      "fromPin": 0,
+      "toComponentId": 159,
+      "toPin": 1
     },
     {
       "fromComponentId": 159,
@@ -1540,10 +2276,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 160,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 24,
+      "fromPin": 0,
+      "toComponentId": 160,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 160,
       "fromPin": 0,
       "toComponentId": 260,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 161,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 25,
+      "fromPin": 0,
+      "toComponentId": 161,
+      "toPin": 1
     },
     {
       "fromComponentId": 161,
@@ -1552,10 +2312,34 @@
       "toPin": 0
     },
     {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 162,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 26,
+      "fromPin": 0,
+      "toComponentId": 162,
+      "toPin": 1
+    },
+    {
       "fromComponentId": 162,
       "fromPin": 0,
       "toComponentId": 262,
       "toPin": 0
+    },
+    {
+      "fromComponentId": 37,
+      "fromPin": 0,
+      "toComponentId": 163,
+      "toPin": 0
+    },
+    {
+      "fromComponentId": 27,
+      "fromPin": 0,
+      "toComponentId": 163,
+      "toPin": 1
     },
     {
       "fromComponentId": 163,
